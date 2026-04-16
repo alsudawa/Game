@@ -206,6 +206,20 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.74);
     }
 
+    // Mute button (top-right corner)
+    var muteSize = Math.min(cw * 0.06, 24);
+    var muteX = cw - muteSize - 10;
+    var muteY = 10;
+    var isMuted = SB.audio.muted;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = muteSize + 'px ' + this.font;
+    ctx.fillStyle = isMuted ? 'rgba(255,100,100,0.7)' : 'rgba(255,255,255,0.5)';
+    ctx.fillText(isMuted ? 'MUTE' : 'SND', muteX + muteSize / 2, muteY + muteSize / 2);
+    ctx.restore();
+    SB._muteBtn = { x: muteX, y: muteY, w: muteSize + 4, h: muteSize + 4 };
+
     // Leaderboard top 3
     var board = SB.Storage.getLeaderboard();
     if (board.length > 0) {
@@ -335,37 +349,100 @@ SB.UI.prototype._drawSkinSelector = function(ctx, cw, y, skinManager, playerLeve
     ctx.fillText('SKINS', cw / 2, y - btnR - 8);
 };
 
-SB.UI.prototype.drawTutorial = function(ctx, cw, ch) {
+SB.UI.prototype.drawTutorial = function(ctx, cw, ch, tutorialStep) {
     ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
     ctx.fillRect(0, 0, cw, ch);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // Left arrow
-    ctx.font = 'bold ' + Math.min(cw * 0.08, 32) + 'px ' + this.font;
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.fillText('\u2190', cw * 0.2, ch * 0.5);
-    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
-    ctx.fillText('Tap left', cw * 0.2, ch * 0.5 + 30);
+    var step = tutorialStep || 0;
+    var fontSize = Math.min(cw * 0.045, 18);
+    var smallFont = Math.min(cw * 0.032, 13);
 
-    // Right arrow
-    ctx.font = 'bold ' + Math.min(cw * 0.08, 32) + 'px ' + this.font;
-    ctx.fillStyle = 'rgba(255,255,255,0.7)';
-    ctx.fillText('\u2192', cw * 0.8, ch * 0.5);
-    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
-    ctx.fillText('Tap right', cw * 0.8, ch * 0.5 + 30);
+    if (step === 0) {
+        // Step 1: Tap to bounce + directional control
+        ctx.font = 'bold ' + Math.min(cw * 0.055, 22) + 'px ' + this.font;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText('Tap anywhere to bounce!', cw / 2, ch * 0.25);
 
-    // Center instruction
-    ctx.font = 'bold ' + Math.min(cw * 0.05, 20) + 'px ' + this.font;
-    ctx.fillStyle = 'rgba(255,255,255,0.9)';
-    ctx.fillText('Tap anywhere to bounce!', cw / 2, ch * 0.3);
+        ctx.font = 'bold ' + Math.min(cw * 0.07, 28) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.fillText('\u2190', cw * 0.2, ch * 0.45);
+        ctx.fillText('\u2192', cw * 0.8, ch * 0.45);
 
+        ctx.font = fontSize + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillText('Tap left side', cw * 0.2, ch * 0.45 + 28);
+        ctx.fillText('Tap right side', cw * 0.8, ch * 0.45 + 28);
+
+        ctx.font = smallFont + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fillText('Steer the ball left or right', cw / 2, ch * 0.58);
+    } else if (step === 1) {
+        // Step 2: Obstacles
+        ctx.font = 'bold ' + Math.min(cw * 0.055, 22) + 'px ' + this.font;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText('Avoid obstacles!', cw / 2, ch * 0.25);
+
+        ctx.font = fontSize + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(231,76,60,0.8)';
+        ctx.fillText('Platforms, spikes, blades', cw / 2, ch * 0.38);
+
+        ctx.font = smallFont + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.5)';
+        ctx.fillText('They get faster as your score grows', cw / 2, ch * 0.48);
+
+        // Draw mini obstacle icons
+        ctx.fillStyle = '#CC4444';
+        ctx.fillRect(cw * 0.25, ch * 0.55, 50, 8); // platform
+        // spike triangle
+        ctx.beginPath();
+        ctx.moveTo(cw * 0.5 - 10, ch * 0.56);
+        ctx.lineTo(cw * 0.5, ch * 0.55 - 12);
+        ctx.lineTo(cw * 0.5 + 10, ch * 0.56);
+        ctx.closePath();
+        ctx.fill();
+        // blade circle
+        ctx.beginPath();
+        ctx.arc(cw * 0.72, ch * 0.55, 10, 0, SB.TAU);
+        ctx.stroke();
+    } else if (step === 2) {
+        // Step 3: Stars + powerups
+        ctx.font = 'bold ' + Math.min(cw * 0.055, 22) + 'px ' + this.font;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText('Collect stars & powerups!', cw / 2, ch * 0.25);
+
+        ctx.font = fontSize + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,215,0,0.8)';
+        ctx.fillText('Stars = +5 points + 1 coin', cw / 2, ch * 0.38);
+
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillText('Combo: collect 2+ in 2 seconds!', cw / 2, ch * 0.46);
+
+        // Powerup colors
+        ctx.font = smallFont + 'px ' + this.font;
+        ctx.fillStyle = '#5DADE2';
+        ctx.fillText('Shield - absorb one hit', cw / 2, ch * 0.56);
+        ctx.fillStyle = '#AF7AC5';
+        ctx.fillText('Magnet - attract stars', cw / 2, ch * 0.62);
+        ctx.fillStyle = '#58D68D';
+        ctx.fillText('Slow - slow obstacles', cw / 2, ch * 0.68);
+    }
+
+    // Step indicator
+    ctx.font = smallFont + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    var dots = '';
+    for (var i = 0; i < 3; i++) dots += (i === step ? ' \u25CF ' : ' \u25CB ');
+    ctx.fillText(dots, cw / 2, ch * 0.82);
+
+    // Continue hint
     var blinkAlpha = (Math.sin(this.blinkPhase * 2) + 1) / 2 * 0.5 + 0.5;
-    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+    ctx.font = smallFont + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255,215,0,' + blinkAlpha + ')';
-    ctx.fillText('Tap to continue', cw / 2, ch * 0.7);
+    ctx.fillText('Tap to continue', cw / 2, ch * 0.88);
 
     ctx.restore();
 };
@@ -520,7 +597,7 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     if (this.runStats) {
         ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.45) + ')';
-        var statsText = Math.floor(this.runStats.time) + 's  |  ' + this.runStats.stars + ' stars';
+        var statsText = Math.floor(this.runStats.time) + 's  |  ' + this.runStats.stars + ' stars  |  +' + (this.runStats.coins || 0) + ' coins';
         if (this.runStats.maxCombo >= 2) statsText += '  |  ' + this.runStats.maxCombo + 'x combo';
         ctx.fillText(statsText, cw / 2, ch * 0.40);
     }

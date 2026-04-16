@@ -7,8 +7,12 @@ SB.Ball = function() {
     this.vy = 0;
     this.baseRadius = 14;
     this.radius = 14;
-    this.trail = [];
+    // Ring buffer for trail (avoids shift/splice GC pressure)
     this.maxTrail = 8;
+    this._trailBuf = new Array(this.maxTrail);
+    for (var i = 0; i < this.maxTrail; i++) this._trailBuf[i] = { x: 0, y: 0 };
+    this._trailHead = 0;
+    this._trailLen = 0;
     this.glowColor = '#FFD700';
     this.coreColor = '#FFFFFF';
     this.trailColor = 'rgba(255,215,0,';
@@ -21,7 +25,8 @@ SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
     this.y = canvasHeight * 0.4;
     this.vx = 0;
     this.vy = 0;
-    this.trail = [];
+    this._trailHead = 0;
+    this._trailLen = 0;
     this.radius = this.baseRadius;
     this.gravityMult = 1;
     this.blinking = false;
@@ -60,10 +65,11 @@ SB.Ball.prototype.update = function(dt) {
         this.vy = Math.abs(this.vy) * 0.3;
     }
 
-    this.trail.push({ x: this.x, y: this.y });
-    if (this.trail.length > this.maxTrail) {
-        this.trail.shift();
-    }
+    // Ring buffer push (no allocation, no shift)
+    this._trailBuf[this._trailHead].x = this.x;
+    this._trailBuf[this._trailHead].y = this.y;
+    this._trailHead = (this._trailHead + 1) % this.maxTrail;
+    if (this._trailLen < this.maxTrail) this._trailLen++;
 };
 
 SB.Ball.prototype.draw = function(ctx) {
@@ -72,10 +78,14 @@ SB.Ball.prototype.draw = function(ctx) {
         return;
     }
 
-    for (var i = 0; i < this.trail.length; i++) {
-        var t = this.trail[i];
-        var alpha = (i / this.trail.length) * 0.3;
-        var size = this.radius * (0.4 + 0.6 * (i / this.trail.length));
+    // Draw trail from ring buffer (oldest to newest)
+    var start = (this._trailHead - this._trailLen + this.maxTrail) % this.maxTrail;
+    for (var i = 0; i < this._trailLen; i++) {
+        var idx = (start + i) % this.maxTrail;
+        var t = this._trailBuf[idx];
+        var frac = i / this._trailLen;
+        var alpha = frac * 0.3;
+        var size = this.radius * (0.4 + 0.6 * frac);
         ctx.beginPath();
         ctx.arc(t.x, t.y, size, 0, SB.TAU);
         ctx.fillStyle = this.trailColor + alpha + ')';

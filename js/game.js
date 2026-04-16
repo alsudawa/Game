@@ -48,6 +48,7 @@ SB.Game = function(canvas) {
     this.showTutorial = false;
     this.showAchievementViewer = false;
     this.tutorialTimer = 0;
+    this.tutorialStep = 0;
     this.xpResult = null;
     this.transitionAlpha = 0;
     this.runMaxCombo = 0;
@@ -149,14 +150,18 @@ SB.Game.prototype._updateStart = function(dt) {
 SB.Game.prototype._updatePlaying = function(dt) {
     var slowMult = this.powerupEffects.getSpeedMultiplier();
 
-    // Tutorial auto-dismiss
+    // Multi-step tutorial
     if (this.showTutorial) {
         this.tutorialTimer += dt;
         if (this.input.consumeTap()) {
             this.ball.bounce(this.input.tapX);
             this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
             SB.audio.playBounce();
-            if (this.tutorialTimer > 0.5) this.showTutorial = false;
+            if (this.tutorialTimer > 0.4) {
+                this.tutorialStep++;
+                this.tutorialTimer = 0;
+                if (this.tutorialStep >= 3) this.showTutorial = false;
+            }
         }
     } else if (this.input.consumeTap()) {
         this.ball.bounce(this.input.tapX);
@@ -387,6 +392,14 @@ SB.Game.prototype._updateZone = function() {
     if (prevZone !== this.currentZone && prevZone !== null) {
         this.ui.zoneMsg = this.currentZone.name;
         this.ui.zoneMsgTimer = 2.0;
+        // Zone transition sound
+        if (this.currentZone === SB.ZONES.EXTREME) {
+            SB.audio.playZoneWarning(2);
+        } else if (this.currentZone === SB.ZONES.INTENSE) {
+            SB.audio.playZoneWarning(1);
+        } else if (this.currentZone === SB.ZONES.RISING) {
+            SB.audio.playZoneWarning(0);
+        }
     }
 };
 
@@ -418,6 +431,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.comboCount = 0;
         this.runStars = 0;
         this.tutorialTimer = 0;
+        this.tutorialStep = 0;
         this.xpResult = null;
         this.showAchievementViewer = false;
         this.runMaxCombo = 0;
@@ -513,7 +527,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
             this._renderGameplay(ctx, cw, ch);
             this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone);
             if (this.showTutorial) {
-                this.ui.drawTutorial(ctx, cw, ch);
+                this.ui.drawTutorial(ctx, cw, ch, this.tutorialStep);
             }
             // Danger indicator: red vignette when ball in bottom 25%
             if (this.ball.y > ch * 0.75) {

@@ -4,6 +4,24 @@ SB.Audio = function() {
     this.ctx = null;
     this.masterGain = null;
     this.initialized = false;
+    this.muted = false;
+};
+
+SB.Audio.prototype.toggleMute = function() {
+    this.muted = !this.muted;
+    if (this.masterGain) {
+        this.masterGain.gain.value = this.muted ? 0 : 0.3;
+    }
+    try {
+        localStorage.setItem('skyBounce_muted', this.muted ? '1' : '0');
+    } catch (e) {}
+    return this.muted;
+};
+
+SB.Audio.prototype.loadMuteState = function() {
+    try {
+        this.muted = localStorage.getItem('skyBounce_muted') === '1';
+    } catch (e) {}
 };
 
 SB.Audio.prototype.init = function() {
@@ -11,7 +29,7 @@ SB.Audio.prototype.init = function() {
     try {
         this.ctx = new (window.AudioContext || window.webkitAudioContext)();
         this.masterGain = this.ctx.createGain();
-        this.masterGain.gain.value = 0.3;
+        this.masterGain.gain.value = this.muted ? 0 : 0.3;
         this.masterGain.connect(this.ctx.destination);
         this.initialized = true;
     } catch (e) {
@@ -166,6 +184,27 @@ SB.Audio.prototype.playShieldBreak = function() {
     osc.stop(now + 0.2);
 };
 
+SB.Audio.prototype.playZoneWarning = function(level) {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    // Rising urgency: higher level = higher pitch, more notes
+    var baseFreqs = [[330, 440], [440, 554, 660], [554, 660, 880, 1047]];
+    var notes = baseFreqs[Math.min(level, 2)];
+    for (var i = 0; i < notes.length; i++) {
+        var osc = this.ctx.createOscillator();
+        var gain = this.ctx.createGain();
+        osc.type = level >= 2 ? 'square' : 'triangle';
+        osc.frequency.value = notes[i];
+        var t = now + i * 0.08;
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.15);
+    }
+};
+
 SB.Audio.prototype.playRevive = function() {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;
@@ -255,3 +294,4 @@ SB.Audio.prototype.stopBGM = function() {
 };
 
 SB.audio = new SB.Audio();
+SB.audio.loadMuteState();

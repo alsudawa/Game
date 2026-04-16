@@ -19,6 +19,7 @@ SB.Input = function(canvas) {
         self._checkSkinButton(touch.clientX, touch.clientY);
         self._checkAchButton(touch.clientX, touch.clientY);
         self._checkReviveButton(touch.clientX, touch.clientY);
+        self._checkMuteButton(touch.clientX, touch.clientY);
         self.tapped = true;
         self._handleFirstInteraction();
     }, { passive: false });
@@ -30,6 +31,7 @@ SB.Input = function(canvas) {
         self._checkSkinButton(e.clientX, e.clientY);
         self._checkAchButton(e.clientX, e.clientY);
         self._checkReviveButton(e.clientX, e.clientY);
+        self._checkMuteButton(e.clientX, e.clientY);
         self.tapped = true;
         self._handleFirstInteraction();
     });
@@ -78,6 +80,17 @@ SB.Input.prototype._checkAchButton = function(x, y) {
         var btn = SB._achBtn;
         if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
             SB._achBtnTapped = true;
+            this.tapped = false;
+            return;
+        }
+    }
+};
+
+SB.Input.prototype._checkMuteButton = function(x, y) {
+    if (SB._muteBtn) {
+        var btn = SB._muteBtn;
+        if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+            SB.audio.toggleMute();
             this.tapped = false;
             return;
         }
