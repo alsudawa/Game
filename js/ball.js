@@ -8,11 +8,12 @@ SB.Ball = function() {
     this.baseRadius = 14;
     this.radius = 14;
     // Ring buffer for trail (avoids shift/splice GC pressure)
-    this.maxTrail = 8;
+    this.maxTrail = 14;
     this._trailBuf = new Array(this.maxTrail);
     for (var i = 0; i < this.maxTrail; i++) this._trailBuf[i] = { x: 0, y: 0 };
     this._trailHead = 0;
     this._trailLen = 0;
+    this._activeTrailLen = 8;
     this.glowColor = '#FFD700';
     this.coreColor = '#FFFFFF';
     this.trailColor = 'rgba(255,215,0,';
@@ -105,11 +106,15 @@ SB.Ball.prototype.draw = function(ctx) {
     var comboBoost = this.comboIntensity;
     var trailAlphaMult = 1 + speedFrac * 1.5 + comboBoost * 1.0;
     var trailSizeMult = 1 + speedFrac * 0.3 + comboBoost * 0.2;
-    var start = (this._trailHead - this._trailLen + this.maxTrail) % this.maxTrail;
-    for (var i = 0; i < this._trailLen; i++) {
+    // Dynamic trail length: 8 base, up to 14 at high speed/combo
+    var targetLen = Math.floor(8 + speedFrac * 4 + comboBoost * 2);
+    this._activeTrailLen = targetLen;
+    var drawLen = Math.min(this._trailLen, this._activeTrailLen);
+    var start = (this._trailHead - drawLen + this.maxTrail) % this.maxTrail;
+    for (var i = 0; i < drawLen; i++) {
         var idx = (start + i) % this.maxTrail;
         var t = this._trailBuf[idx];
-        var frac = i / this._trailLen;
+        var frac = i / drawLen;
         var alpha = Math.min(frac * 0.3 * trailAlphaMult, 0.6);
         var size = this.radius * (0.4 + 0.6 * frac) * trailSizeMult;
         ctx.beginPath();

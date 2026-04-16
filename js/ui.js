@@ -593,7 +593,7 @@ SB.UI.prototype.drawTutorial = function(ctx, cw, ch, tutorialStep) {
     ctx.restore();
 };
 
-SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cachedHighScore, comboTimer, comboCount, difficulty, ballY) {
+SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cachedHighScore, comboTimer, comboCount, difficulty, ballY, scoreShake) {
     // Smooth score counter (lerp toward actual)
     if (this.displayScore < score) {
         var diff = score - this.displayScore;
@@ -614,10 +614,16 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
 
     var scoreText = SB.formatNum(Math.floor(this.displayScore));
+    var ssOx = 0, ssOy = 0;
+    if (scoreShake > 0) {
+        var ssFrac = scoreShake / 0.2;
+        ssOx = Math.sin(scoreShake * 80) * ssFrac * 4;
+        ssOy = Math.cos(scoreShake * 60) * ssFrac * 2;
+    }
     ctx.fillStyle = 'rgba(0, 0, 0, ' + (0.2 * hudAlpha).toFixed(2) + ')';
-    ctx.fillText(scoreText, cw / 2 + 2, 22);
+    ctx.fillText(scoreText, cw / 2 + 2 + ssOx, 22 + ssOy);
     ctx.fillStyle = 'rgba(255, 255, 255, ' + (0.85 * hudAlpha).toFixed(2) + ')';
-    ctx.fillText(scoreText, cw / 2, 20);
+    ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
 
     // Score multiplier badge with countdown
     if (this.powerupEffectsRef && this.powerupEffectsRef.scoreMult) {

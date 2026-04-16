@@ -70,6 +70,9 @@ SB.Game = function(canvas) {
     this.deathCause = '';
     this.wallFlashSide = 0;
     this.wallFlashTimer = 0;
+    this.wallBounceStreak = 0;
+    this.wallBounceStreakTimer = 0;
+    this.scoreShake = 0;
 
     SB.REVIVE_COST = 20;
 };
@@ -108,6 +111,11 @@ SB.Game.prototype.update = function(dt) {
     if (this.screenShake > 0) this.screenShake -= dt;
     if (this.screenFlash > 0) this.screenFlash -= dt;
     if (this.wallFlashTimer > 0) this.wallFlashTimer -= dt;
+    if (this.wallBounceStreakTimer > 0) {
+        this.wallBounceStreakTimer -= dt;
+        if (this.wallBounceStreakTimer <= 0) this.wallBounceStreak = 0;
+    }
+    if (this.scoreShake > 0) this.scoreShake -= dt;
     if (this.transitionAlpha > 0) this.transitionAlpha -= dt * 3;
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
@@ -291,6 +299,17 @@ SB.Game.prototype._updatePlaying = function(dt) {
         });
         this.wallFlashSide = this.ball.wallHitSide;
         this.wallFlashTimer = 0.15;
+        if (this.wallBounceStreakTimer > 0) {
+            this.wallBounceStreak++;
+        } else {
+            this.wallBounceStreak = 1;
+        }
+        this.wallBounceStreakTimer = 1.5;
+        if (this.wallBounceStreak >= 3) {
+            var wbBonus = this.wallBounceStreak;
+            this.score += wbBonus;
+            this.ui.addScorePopup(this.ball.x, this.ball.y - 20, 'WALL x' + this.wallBounceStreak + ' +' + wbBonus, '#5DADE2');
+        }
         SB.audio.playWallHit();
         this.achievements.onWallBounce();
     }
@@ -525,6 +544,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.score += bonus;
             var popColor = isCoin ? '#FFB300' : (this.comboCount >= 5 ? '#FF4444' : (this.comboCount >= 3 ? '#FF6B6B' : (this.comboCount >= 2 ? '#FF8C42' : '#FFD700')));
             this.ui.addScorePopup(col.x, col.y - 15, '+' + bonus + (cv > 1 ? ' +' + cv + 'c' : ''), popColor);
+            if (bonus >= 10) this.scoreShake = 0.2;
             this.achievements.onStarCollect();
             this.achievements.onCoinEarn(cv);
             this.achievements.onCombo(this.comboCount);
@@ -991,7 +1011,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
         case SB.STATES.PLAYING:
             this._renderGameplay(ctx, cw, ch);
-            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty, this.ball.y);
+            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty, this.ball.y, this.scoreShake);
             // Grace period countdown: 3, 2, 1, GO!
             if (this.spawner.graceTimer < this.spawner.gracePeriod + 0.4 && !this.showTutorial) {
                 var graceLeft = this.spawner.gracePeriod - this.spawner.graceTimer;
@@ -1058,7 +1078,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
         case SB.STATES.PAUSED:
             this._renderGameplay(ctx, cw, ch);
-            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty, this.ball.y);
+            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty, this.ball.y, this.scoreShake);
             this.ui.drawPauseScreen(ctx, cw, ch);
             break;
 
@@ -1284,6 +1304,22 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             ctx.lineWidth = 2;
             ctx.stroke();
         }
+        ctx.restore();
+    }
+
+    // Combo timer bar (small bar below ball when combo active)
+    if (this.comboTimer > 0 && this.comboCount >= 2) {
+        var cbW = 30;
+        var cbH = 3;
+        var cbX = this.ball.x - cbW / 2;
+        var cbY = this.ball.y + this.ball.radius + 22;
+        var cbFrac = this.comboTimer / 2.0;
+        var cbColor = this.comboCount >= 5 ? '255,68,68' : (this.comboCount >= 3 ? '255,140,66' : '255,215,0');
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(cbX, cbY, cbW, cbH);
+        ctx.fillStyle = 'rgba(' + cbColor + ',0.6)';
+        ctx.fillRect(cbX, cbY, cbW * cbFrac, cbH);
         ctx.restore();
     }
 };

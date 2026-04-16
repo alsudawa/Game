@@ -130,6 +130,8 @@ SB.Obstacle.prototype.draw = function(ctx) {
     if (fadeIn < 1) {
         ctx.save();
         ctx.globalAlpha = fadeIn;
+        var swoosh = (1 - fadeIn) * (1 - fadeIn) * 20;
+        ctx.translate(0, -swoosh);
     }
 
     // Danger proximity glow
