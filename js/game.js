@@ -815,6 +815,12 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 ctx.fillStyle = 'rgba(231, 76, 60, ' + dangerAlpha.toFixed(2) + ')';
                 ctx.fillRect(0, ch * 0.6, cw, ch * 0.4);
             }
+            // Slow-motion powerup tint (subtle green overlay)
+            if (this.powerupEffects.slow) {
+                var slowPulse = (Math.sin((SB.frameTime || 0) * 0.003) + 1) / 2 * 0.02 + 0.02;
+                ctx.fillStyle = 'rgba(46, 204, 113, ' + slowPulse.toFixed(3) + ')';
+                ctx.fillRect(0, 0, cw, ch);
+            }
             // Zone edge glow (subtle colored border for INTENSE/EXTREME)
             if (this.currentZone === SB.ZONES.INTENSE || this.currentZone === SB.ZONES.EXTREME) {
                 var zGlowAlpha = this.currentZone === SB.ZONES.EXTREME ? 0.06 : 0.03;
@@ -939,27 +945,58 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
 
     if (this.powerupEffects.shield) {
         ctx.save();
-        var shimmer = Math.sin((SB.frameTime || 0) * 0.005) * 0.15 + 0.35;
-        ctx.beginPath();
-        ctx.arc(this.ball.x, this.ball.y, this.ball.radius + 8, 0, SB.TAU);
-        ctx.strokeStyle = 'rgba(52, 152, 219, ' + shimmer + ')';
-        ctx.lineWidth = 3;
+        var ft = (SB.frameTime || 0) * 0.001;
+        var shimmer = Math.sin(ft * 5) * 0.15 + 0.35;
+        var shieldR = this.ball.radius + 8;
+        ctx.translate(this.ball.x, this.ball.y);
         ctx.shadowColor = 'rgba(52, 152, 219, 0.6)';
-        ctx.shadowBlur = 12;
+        ctx.shadowBlur = 12 + Math.sin(ft * 3) * 4;
+        // Draw 6 hexagonal segments with rotating gaps
+        var segments = 6;
+        var gapAngle = 0.12;
+        var segAngle = (SB.TAU / segments) - gapAngle;
+        var rotation = ft * 0.8;
+        ctx.strokeStyle = 'rgba(52, 152, 219, ' + shimmer.toFixed(2) + ')';
+        ctx.lineWidth = 2.5;
+        for (var si = 0; si < segments; si++) {
+            var startA = rotation + si * (SB.TAU / segments);
+            ctx.beginPath();
+            ctx.arc(0, 0, shieldR, startA, startA + segAngle);
+            ctx.stroke();
+        }
+        // Inner faint ring
+        ctx.strokeStyle = 'rgba(52, 152, 219, ' + (shimmer * 0.3).toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(0, 0, shieldR - 3, 0, SB.TAU);
         ctx.stroke();
         ctx.restore();
     }
 
     if (this.powerupEffects.magnet) {
         ctx.save();
-        var magnetAlpha = Math.sin((SB.frameTime || 0) * 0.004) * 0.08 + 0.12;
+        var mft = (SB.frameTime || 0) * 0.001;
+        var magnetAlpha = Math.sin(mft * 4) * 0.08 + 0.12;
+        // Pulsing radius ring
+        var magnetR = 120 + Math.sin(mft * 3) * 5;
         ctx.beginPath();
-        ctx.arc(this.ball.x, this.ball.y, 120, 0, SB.TAU);
-        ctx.strokeStyle = 'rgba(155, 89, 182, ' + magnetAlpha + ')';
+        ctx.arc(this.ball.x, this.ball.y, magnetR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(155, 89, 182, ' + magnetAlpha.toFixed(2) + ')';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([6, 8]);
         ctx.stroke();
         ctx.setLineDash([]);
+        // Converging dots (4 rotating dots spiraling inward)
+        ctx.fillStyle = 'rgba(155, 89, 182, 0.4)';
+        for (var mi = 0; mi < 4; mi++) {
+            var mAngle = mft * 2 + mi * (SB.TAU / 4);
+            var mDist = 30 + (((mft * 80 + mi * 30) % 90));
+            var mx = this.ball.x + Math.cos(mAngle) * mDist;
+            var my = this.ball.y + Math.sin(mAngle) * mDist;
+            ctx.beginPath();
+            ctx.arc(mx, my, 1.5, 0, SB.TAU);
+            ctx.fill();
+        }
         ctx.restore();
     }
 };

@@ -291,8 +291,9 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
 
     var hc = SB.highContrast;
     if (this.laserPhase === 'warning') {
+        var warnPulse = 0.25 + Math.sin(this.laserTimer * 8) * 0.15;
         ctx.save();
-        ctx.strokeStyle = hc ? 'rgba(255, 255, 0, 0.6)' : 'rgba(255, 50, 50, 0.35)';
+        ctx.strokeStyle = hc ? 'rgba(255, 255, 0, 0.6)' : 'rgba(255, 50, 50, ' + warnPulse.toFixed(2) + ')';
         ctx.lineWidth = hc ? 2 : 1;
         ctx.setLineDash([8, 8]);
         ctx.beginPath();
@@ -300,20 +301,26 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         ctx.lineTo(cw, this.y);
         ctx.stroke();
         ctx.setLineDash([]);
-        // Small warning indicators on edges
-        ctx.fillStyle = hc ? 'rgba(255, 255, 0, 0.8)' : 'rgba(255, 50, 50, 0.5)';
+        // Pulsing warning indicators on edges
+        var dotR = 3 + Math.sin(this.laserTimer * 10) * 1.5;
+        ctx.fillStyle = hc ? 'rgba(255, 255, 0, 0.8)' : 'rgba(255, 50, 50, ' + (warnPulse + 0.2).toFixed(2) + ')';
+        ctx.shadowColor = 'rgba(255, 50, 50, 0.5)';
+        ctx.shadowBlur = 6;
         ctx.beginPath();
-        ctx.arc(8, this.y, 4, 0, SB.TAU);
+        ctx.arc(8, this.y, dotR, 0, SB.TAU);
         ctx.fill();
         ctx.beginPath();
-        ctx.arc(cw - 8, this.y, 4, 0, SB.TAU);
+        ctx.arc(cw - 8, this.y, dotR, 0, SB.TAU);
         ctx.fill();
         ctx.restore();
     } else if (this.laserPhase === 'charge') {
-        var pulse = 0.5 + Math.sin(this.laserTimer * 25) * 0.3;
+        var pulse = 0.5 + Math.sin(this.laserTimer * 35) * 0.4;
+        var chargeW = 2 + this.laserTimer / 0.3 * 4; // widens as it charges
         ctx.save();
-        ctx.strokeStyle = 'rgba(255, 50, 50, ' + pulse + ')';
-        ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(255, 50, 50, 0.6)';
+        ctx.shadowBlur = 10;
+        ctx.strokeStyle = 'rgba(255, 50, 50, ' + pulse.toFixed(2) + ')';
+        ctx.lineWidth = chargeW;
         ctx.beginPath();
         ctx.moveTo(0, this.y);
         ctx.lineTo(cw, this.y);
@@ -330,7 +337,7 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
             ctx.strokeRect(0, this.y - beamH / 2, cw, beamH);
         } else {
             ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
-            ctx.shadowBlur = 20;
+            ctx.shadowBlur = 25;
             var grad = ctx.createLinearGradient(0, this.y - beamH / 2, 0, this.y + beamH / 2);
             grad.addColorStop(0, 'rgba(255, 100, 100, 0.2)');
             grad.addColorStop(0.3, 'rgba(255, 50, 50, 0.9)');
@@ -339,6 +346,18 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
             grad.addColorStop(1, 'rgba(255, 100, 100, 0.2)');
             ctx.fillStyle = grad;
             ctx.fillRect(0, this.y - beamH / 2, cw, beamH);
+            // Edge spark emitters
+            var sparkT = this.laserTimer * 40;
+            ctx.fillStyle = 'rgba(255,200,100,0.7)';
+            for (var ei = 0; ei < 3; ei++) {
+                var sy = this.y + Math.sin(sparkT + ei * 2.1) * (beamH * 0.4);
+                ctx.beginPath();
+                ctx.arc(3 + ei * 2, sy, 2, 0, SB.TAU);
+                ctx.fill();
+                ctx.beginPath();
+                ctx.arc(cw - 3 - ei * 2, sy, 2, 0, SB.TAU);
+                ctx.fill();
+            }
         }
         ctx.restore();
     } else if (this.laserPhase === 'fade') {
