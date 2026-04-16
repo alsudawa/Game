@@ -3,7 +3,15 @@ window.SB = window.SB || {};
 SB.STATES = {
     START: 'start',
     PLAYING: 'playing',
+    REVIVE: 'revive',
     GAME_OVER: 'game_over'
+};
+
+SB.ZONES = {
+    CALM: { name: 'CALM', threshold: 0 },
+    RISING: { name: 'RISING', threshold: 10 },
+    INTENSE: { name: 'INTENSE', threshold: 25 },
+    EXTREME: { name: 'EXTREME', threshold: 50 }
 };
 
 SB.Game = function(canvas) {
@@ -44,6 +52,14 @@ SB.Game = function(canvas) {
     this.transitionAlpha = 0;
     this.runMaxCombo = 0;
     this.runSurviveTime = 0;
+    this.revived = false;
+    this.reviveCountdown = 0;
+    this.invincibleTimer = 0;
+    this.currentZone = SB.ZONES.CALM;
+    this.lastZone = null;
+    this.runCoins = 0;
+
+    SB.REVIVE_COST = 30;
 };
 
 SB.Game.prototype.init = function() {
@@ -88,6 +104,9 @@ SB.Game.prototype.update = function(dt) {
             break;
         case SB.STATES.PLAYING:
             this._updatePlaying(dt);
+            break;
+        case SB.STATES.REVIVE:
+            this._updateRevive(dt);
             break;
         case SB.STATES.GAME_OVER:
             this._updateGameOver(dt);
@@ -152,6 +171,17 @@ SB.Game.prototype._updatePlaying = function(dt) {
     this.achievements.updateRunTime(dt);
     this.runSurviveTime += dt;
 
+    // Invincibility countdown
+    if (this.invincibleTimer > 0) {
+        this.invincibleTimer -= dt;
+        this.ball.blinking = true;
+    } else {
+        this.ball.blinking = false;
+    }
+
+    // Zone tracking
+    this._updateZone();
+
     var cw = SB.canvasWidth;
     var ch = SB.canvasHeight;
 
@@ -180,6 +210,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
 
         if (hit) {
+            if (this.invincibleTimer > 0) continue; // Post-revive invincibility
             if (this.powerupEffects.useShield()) {
                 obs.active = false;
                 this.screenShake = 0.25;
@@ -190,7 +221,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 continue;
             }
             this.particles.emit(this.ball.x, this.ball.y, SB.FX.deathExplosion);
-            this._transitionTo(SB.STATES.GAME_OVER);
+            this._handleDeath();
             return;
         }
     }
@@ -223,6 +254,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.comboCount++;
             if (this.comboCount > this.runMaxCombo) this.runMaxCombo = this.comboCount;
             this.runStars++;
+            this.runCoins++;
+            SB.Storage.addCoins(1);
             var bonus = col.pointValue * (this.comboCount >= 2 ? 2 : 1) * this.dailyStarMult;
             this.score += bonus;
             this.achievements.onStarCollect();
@@ -276,7 +309,78 @@ SB.Game.prototype._updatePlaying = function(dt) {
 
     if (this.ball.y - this.ball.radius > ch) {
         this.particles.emit(this.ball.x, ch, SB.FX.deathExplosion);
+        this._handleDeath();
+    }
+};
+
+SB.Game.prototype._handleDeath = function() {
+    var coins = SB.Storage.getCoins();
+    if (!this.revived && coins >= SB.REVIVE_COST) {
+        this.state = SB.STATES.REVIVE;
+        this.reviveCountdown = 3.0;
+        SB.audio.stopBGM();
+    } else {
         this._transitionTo(SB.STATES.GAME_OVER);
+    }
+};
+
+SB.Game.prototype._updateRevive = function(dt) {
+    this.reviveCountdown -= dt;
+    this.particles.update(dt);
+
+    // Revive button tapped
+    if (SB._reviveBtnTapped) {
+        SB._reviveBtnTapped = null;
+        if (SB.Storage.spendCoins(SB.REVIVE_COST)) {
+            this.revived = true;
+            this.state = SB.STATES.PLAYING;
+            this.invincibleTimer = 2.0;
+            this.ball.blinking = true;
+            this.ball.y = SB.canvasHeight * 0.4;
+            this.ball.vy = SB.Physics.BOUNCE_IMPULSE * 0.5;
+            this.ball.vx = 0;
+            // Clear nearby obstacles
+            var obstacles = this.obstaclePool.getActive();
+            for (var i = 0; i < obstacles.length; i++) {
+                var obs = obstacles[i];
+                var dx = this.ball.x - (obs.x + obs.width / 2);
+                var dy = this.ball.y - (obs.y + obs.height / 2);
+                if (Math.sqrt(dx * dx + dy * dy) < 150) {
+                    obs.active = false;
+                }
+            }
+            SB.audio.startBGM();
+            SB.audio.playMilestone();
+            return;
+        }
+    }
+
+    // Skip revive (tap anywhere else, or countdown expired)
+    if (this.reviveCountdown <= 0) {
+        this._transitionTo(SB.STATES.GAME_OVER);
+        return;
+    }
+
+    if (this.input.consumeTap() && this.reviveCountdown < 2.5) {
+        // Give a small window before allowing skip
+        this._transitionTo(SB.STATES.GAME_OVER);
+    }
+};
+
+SB.Game.prototype._updateZone = function() {
+    var prevZone = this.currentZone;
+    if (this.score >= SB.ZONES.EXTREME.threshold) {
+        this.currentZone = SB.ZONES.EXTREME;
+    } else if (this.score >= SB.ZONES.INTENSE.threshold) {
+        this.currentZone = SB.ZONES.INTENSE;
+    } else if (this.score >= SB.ZONES.RISING.threshold) {
+        this.currentZone = SB.ZONES.RISING;
+    } else {
+        this.currentZone = SB.ZONES.CALM;
+    }
+    if (prevZone !== this.currentZone && prevZone !== null) {
+        this.ui.zoneMsg = this.currentZone.name;
+        this.ui.zoneMsgTimer = 2.0;
     }
 };
 
@@ -312,8 +416,14 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.showAchievementViewer = false;
         this.runMaxCombo = 0;
         this.runSurviveTime = 0;
+        this.runCoins = 0;
+        this.revived = false;
+        this.invincibleTimer = 0;
+        this.currentZone = SB.ZONES.CALM;
+        this.lastZone = null;
         this.transitionAlpha = 1;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
+        this.ball.blinking = false;
         this._applySkin();
         // Apply daily modifiers
         var mods = this.daily.getMods();
@@ -329,8 +439,12 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.achievements.onRunStart();
         SB._skinBtns = null;
         SB._achBtn = null;
+        SB._reviveBtn = null;
+        SB._reviveBtnTapped = null;
         SB.audio.startBGM();
     } else if (newState === SB.STATES.GAME_OVER) {
+        SB._reviveBtn = null;
+        SB._reviveBtnTapped = null;
         this.screenFlash = 0.15;
         this.screenShake = 0.3;
         this.screenShakeIntensity = 10;
@@ -351,7 +465,8 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.ui.resetGameOver(this.score, this.xpResult, this.progression, dailyJustCompleted, {
             time: this.runSurviveTime,
             stars: this.runStars,
-            maxCombo: this.runMaxCombo
+            maxCombo: this.runMaxCombo,
+            coins: this.runCoins
         });
         SB.audio.stopBGM();
         SB.audio.playGameOver();
@@ -385,10 +500,24 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
         case SB.STATES.PLAYING:
             this._renderGameplay(ctx, cw, ch);
-            this.ui.drawHUD(ctx, cw, ch, this.score);
+            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone);
             if (this.showTutorial) {
                 this.ui.drawTutorial(ctx, cw, ch);
             }
+            // Danger indicator: red vignette when ball in bottom 25%
+            if (this.ball.y > ch * 0.75) {
+                var dangerAlpha = ((this.ball.y - ch * 0.75) / (ch * 0.25)) * 0.3;
+                var vGrad = ctx.createLinearGradient(0, ch, 0, ch * 0.5);
+                vGrad.addColorStop(0, 'rgba(231, 76, 60, ' + dangerAlpha.toFixed(2) + ')');
+                vGrad.addColorStop(1, 'rgba(231, 76, 60, 0)');
+                ctx.fillStyle = vGrad;
+                ctx.fillRect(0, ch * 0.5, cw, ch * 0.5);
+            }
+            break;
+
+        case SB.STATES.REVIVE:
+            this._renderGameplay(ctx, cw, ch);
+            this.ui.drawRevivePrompt(ctx, cw, ch, this.reviveCountdown, SB.Storage.getCoins(), SB.REVIVE_COST);
             break;
 
         case SB.STATES.GAME_OVER:

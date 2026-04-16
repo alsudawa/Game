@@ -18,6 +18,7 @@ SB.Input = function(canvas) {
         self._checkShareButton(touch.clientX, touch.clientY);
         self._checkSkinButton(touch.clientX, touch.clientY);
         self._checkAchButton(touch.clientX, touch.clientY);
+        self._checkReviveButton(touch.clientX, touch.clientY);
         self.tapped = true;
         self._handleFirstInteraction();
     }, { passive: false });
@@ -28,6 +29,7 @@ SB.Input = function(canvas) {
         self._checkShareButton(e.clientX, e.clientY);
         self._checkSkinButton(e.clientX, e.clientY);
         self._checkAchButton(e.clientX, e.clientY);
+        self._checkReviveButton(e.clientX, e.clientY);
         self.tapped = true;
         self._handleFirstInteraction();
     });
@@ -76,6 +78,17 @@ SB.Input.prototype._checkAchButton = function(x, y) {
         var btn = SB._achBtn;
         if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
             SB._achBtnTapped = true;
+            this.tapped = false;
+            return;
+        }
+    }
+};
+
+SB.Input.prototype._checkReviveButton = function(x, y) {
+    if (SB._reviveBtn) {
+        var btn = SB._reviveBtn;
+        if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+            SB._reviveBtnTapped = true;
             this.tapped = false;
             return;
         }

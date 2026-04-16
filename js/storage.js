@@ -45,6 +45,31 @@ SB.Storage = {
         return board;
     },
 
+    getCoins: function() {
+        try {
+            var val = localStorage.getItem('skyBounce_coins');
+            return val ? parseInt(val, 10) : 0;
+        } catch (e) { return 0; }
+    },
+
+    addCoins: function(amount) {
+        try {
+            var current = this.getCoins();
+            localStorage.setItem('skyBounce_coins', (current + amount).toString());
+        } catch (e) {}
+    },
+
+    spendCoins: function(amount) {
+        var current = this.getCoins();
+        if (current >= amount) {
+            try {
+                localStorage.setItem('skyBounce_coins', (current - amount).toString());
+            } catch (e) {}
+            return true;
+        }
+        return false;
+    },
+
     getRank: function(score) {
         var board = this.getLeaderboard();
         var s = Math.floor(score);

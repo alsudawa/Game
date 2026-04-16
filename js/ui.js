@@ -15,6 +15,8 @@ SB.UI = function() {
     this.progressionRef = null;
     this.lockMsg = '';
     this.lockMsgTimer = 0;
+    this.zoneMsg = '';
+    this.zoneMsgTimer = 0;
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -44,6 +46,7 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
     }
 
     if (this.lockMsgTimer > 0) this.lockMsgTimer -= dt;
+    if (this.zoneMsgTimer > 0) this.zoneMsgTimer -= dt;
 
     // Achievement toast
     if (this.achievementToast) {
@@ -108,12 +111,17 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.fillText('SKY BOUNCE', cw / 2, ch * 0.08);
     ctx.restore();
 
-    // Level & XP bar
+    // Level & XP bar + Coins
     if (progression) {
         var lvlY = ch * 0.15;
         ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.fillText('Lv.' + progression.level, cw / 2, lvlY);
+        ctx.fillText('Lv.' + progression.level, cw / 2 - 40, lvlY);
+
+        // Coin display
+        var coins = SB.Storage.getCoins();
+        ctx.fillStyle = 'rgba(255,215,0,0.7)';
+        ctx.fillText(coins + ' coins', cw / 2 + 40, lvlY);
 
         var xpInfo = progression.getXPForCurrentLevel();
         var barW = Math.min(cw * 0.5, 180);
@@ -362,7 +370,7 @@ SB.UI.prototype.drawTutorial = function(ctx, cw, ch) {
     ctx.restore();
 };
 
-SB.UI.prototype.drawHUD = function(ctx, cw, ch, score) {
+SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
@@ -371,6 +379,30 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score) {
     ctx.fillText(Math.floor(score), cw / 2 + 2, 22);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.fillText(Math.floor(score), cw / 2, 20);
+
+    // Zone message popup
+    if (this.zoneMsgTimer > 0) {
+        var zA = Math.min(this.zoneMsgTimer, 1);
+        var zScale = 1 + (2 - this.zoneMsgTimer) * 0.05;
+        ctx.save();
+        ctx.globalAlpha = zA;
+        ctx.font = 'bold ' + Math.floor(Math.min(cw * 0.06, 24) * zScale) + 'px ' + this.font;
+        var zoneColors = { CALM: '#5DADE2', RISING: '#F39C12', INTENSE: '#E74C3C', EXTREME: '#9B59B6' };
+        ctx.fillStyle = zoneColors[this.zoneMsg] || '#FFFFFF';
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 12;
+        ctx.fillText(this.zoneMsg + ' ZONE', cw / 2, ch * 0.15);
+        ctx.restore();
+    }
+
+    // Coin counter in HUD (top-right)
+    ctx.save();
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'top';
+    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,215,0,0.6)';
+    ctx.fillText(SB.Storage.getCoins() + ' coins', cw - 12, 12);
+    ctx.restore();
 
     // Combo popups
     for (var i = 0; i < this.comboPopups.length; i++) {
@@ -563,6 +595,78 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.font = 'bold ' + Math.min(cw * 0.05, 20) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 255, 255, ' + blinkAlpha + ')';
         ctx.fillText('TAP TO RESTART', cw / 2, ch * 0.72);
+    }
+};
+
+SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost) {
+    // Darken background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(0, 0, cw, ch);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Countdown circle
+    var countY = ch * 0.3;
+    var countR = Math.min(cw * 0.12, 50);
+    var countNum = Math.ceil(countdown);
+
+    // Background ring
+    ctx.beginPath();
+    ctx.arc(cw / 2, countY, countR, 0, SB.TAU);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    // Countdown arc
+    var progress = countdown / 3.0;
+    ctx.beginPath();
+    ctx.arc(cw / 2, countY, countR, -Math.PI / 2, -Math.PI / 2 + SB.TAU * progress);
+    ctx.strokeStyle = '#E74C3C';
+    ctx.lineWidth = 6;
+    ctx.stroke();
+
+    // Number
+    ctx.font = 'bold ' + Math.min(cw * 0.12, 48) + 'px ' + this.font;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(countNum, cw / 2, countY);
+
+    // Revive button
+    var btnW = Math.min(cw * 0.6, 220);
+    var btnH = 48;
+    var btnX = cw / 2 - btnW / 2;
+    var btnY = ch * 0.5;
+
+    var canAfford = coins >= cost;
+    ctx.fillStyle = canAfford ? 'rgba(46, 204, 113, 0.9)' : 'rgba(100, 100, 100, 0.6)';
+    this._roundRect(ctx, btnX, btnY, btnW, btnH, 12);
+    ctx.fill();
+
+    if (canAfford) {
+        ctx.strokeStyle = 'rgba(46, 204, 113, 0.4)';
+        ctx.lineWidth = 2;
+        this._roundRect(ctx, btnX, btnY, btnW, btnH, 12);
+        ctx.stroke();
+    }
+
+    ctx.font = 'bold ' + Math.min(cw * 0.045, 18) + 'px ' + this.font;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText('REVIVE  (' + cost + ' coins)', cw / 2, btnY + btnH / 2);
+
+    // Current coins
+    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,215,0,0.7)';
+    ctx.fillText('You have ' + coins + ' coins', cw / 2, btnY + btnH + 20);
+
+    // Store button bounds for tap detection
+    SB._reviveBtn = { x: btnX, y: btnY, w: btnW, h: btnH };
+
+    // Skip text
+    if (countdown < 2.5) {
+        var blinkAlpha = (Math.sin(this.blinkPhase * 2) + 1) / 2 * 0.4 + 0.2;
+        ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,' + blinkAlpha + ')';
+        ctx.fillText('Tap elsewhere to skip', cw / 2, ch * 0.72);
     }
 };
 

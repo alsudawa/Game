@@ -13,6 +13,7 @@ SB.Ball = function() {
     this.coreColor = '#FFFFFF';
     this.trailColor = 'rgba(255,215,0,';
     this.gravityMult = 1;
+    this.blinking = false;
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -23,6 +24,7 @@ SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
     this.trail = [];
     this.radius = this.baseRadius;
     this.gravityMult = 1;
+    this.blinking = false;
 };
 
 SB.Ball.prototype.bounce = function(tapX) {
@@ -65,6 +67,11 @@ SB.Ball.prototype.update = function(dt) {
 };
 
 SB.Ball.prototype.draw = function(ctx) {
+    // Invincibility blink effect - skip rendering every other 100ms
+    if (this.blinking && Math.floor(Date.now() / 100) % 2 === 0) {
+        return;
+    }
+
     for (var i = 0; i < this.trail.length; i++) {
         var t = this.trail[i];
         var alpha = (i / this.trail.length) * 0.3;
