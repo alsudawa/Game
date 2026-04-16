@@ -207,10 +207,30 @@ SB.Game.prototype._updatePlaying = function(dt) {
         var obsBounds = obs.getBounds();
         if (!obsBounds) continue;
         var hit = false;
-        if (obs.type === SB.OBSTACLE_TYPES.BLADE || obs.type === SB.OBSTACLE_TYPES.BOOMERANG) {
+        var isCircle = obs.type === SB.OBSTACLE_TYPES.BLADE || obs.type === SB.OBSTACLE_TYPES.BOOMERANG;
+        if (isCircle) {
             hit = SB.circleCircleCollision(ballBounds, obsBounds);
         } else {
             hit = SB.circleRectCollision(ballBounds, obsBounds);
+        }
+
+        // Near-miss detection (within 8px margin, no invincibility)
+        if (!hit && this.invincibleTimer <= 0 && !obs._nearMissed) {
+            var nearDist = 8;
+            var nearHit = false;
+            if (isCircle) {
+                var ndx = ballBounds.x - obsBounds.x;
+                var ndy = ballBounds.y - obsBounds.y;
+                nearHit = Math.sqrt(ndx * ndx + ndy * ndy) < ballBounds.radius + obsBounds.radius + nearDist;
+            } else {
+                var expanded = { x: obsBounds.x - nearDist, y: obsBounds.y - nearDist, width: obsBounds.width + nearDist * 2, height: obsBounds.height + nearDist * 2 };
+                nearHit = SB.circleRectCollision(ballBounds, expanded);
+            }
+            if (nearHit) {
+                obs._nearMissed = true;
+                this.ui.nearMissTimer = 0.6;
+                this.score += 2;
+            }
         }
 
         if (hit) {

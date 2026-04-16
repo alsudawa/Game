@@ -6,6 +6,9 @@ SB.Background = function() {
     this.particles = [];
     this.shootingStars = [];
     this.colorPhase = 0;
+    this._cachedGrad = null;
+    this._cachedD = -1;
+    this._cachedH = 0;
 };
 
 SB.Background.prototype.init = function(cw, ch) {
@@ -90,29 +93,37 @@ SB.Background.prototype.update = function(dt, difficulty) {
         });
         this.shootingStars[this.shootingStars.length - 1].maxLife = this.shootingStars[this.shootingStars.length - 1].life;
     }
-    for (var s = this.shootingStars.length - 1; s >= 0; s--) {
+    var wi = 0;
+    for (var s = 0; s < this.shootingStars.length; s++) {
         var ss = this.shootingStars[s];
         ss.x += ss.vx * dt;
         ss.y += ss.vy * dt;
         ss.life -= dt;
-        if (ss.life <= 0) this.shootingStars.splice(s, 1);
+        if (ss.life > 0) this.shootingStars[wi++] = ss;
     }
+    this.shootingStars.length = wi;
 };
 
 SB.Background.prototype.draw = function(ctx, cw, ch) {
     var d = this.colorPhase;
 
-    var topR = Math.floor(SB.lerp(15, 40, d));
-    var topG = Math.floor(SB.lerp(12, 10, d));
-    var topB = Math.floor(SB.lerp(41, 60, d));
-    var botR = Math.floor(SB.lerp(30, 233, d));
-    var botG = Math.floor(SB.lerp(50, 100, d));
-    var botB = Math.floor(SB.lerp(80, 67, d));
+    // Cache background gradient (only rebuild when difficulty or height changes)
+    var quantD = Math.floor(d * 50) / 50; // quantize to avoid thrashing
+    if (!this._cachedGrad || quantD !== this._cachedD || ch !== this._cachedH) {
+        var topR = Math.floor(SB.lerp(15, 40, d));
+        var topG = Math.floor(SB.lerp(12, 10, d));
+        var topB = Math.floor(SB.lerp(41, 60, d));
+        var botR = Math.floor(SB.lerp(30, 233, d));
+        var botG = Math.floor(SB.lerp(50, 100, d));
+        var botB = Math.floor(SB.lerp(80, 67, d));
 
-    var gradient = ctx.createLinearGradient(0, 0, 0, ch);
-    gradient.addColorStop(0, 'rgb(' + topR + ',' + topG + ',' + topB + ')');
-    gradient.addColorStop(1, 'rgb(' + botR + ',' + botG + ',' + botB + ')');
-    ctx.fillStyle = gradient;
+        this._cachedGrad = ctx.createLinearGradient(0, 0, 0, ch);
+        this._cachedGrad.addColorStop(0, 'rgb(' + topR + ',' + topG + ',' + topB + ')');
+        this._cachedGrad.addColorStop(1, 'rgb(' + botR + ',' + botG + ',' + botB + ')');
+        this._cachedD = quantD;
+        this._cachedH = ch;
+    }
+    ctx.fillStyle = this._cachedGrad;
     ctx.fillRect(0, 0, cw, ch);
 
     for (var i = 0; i < this.stars.length; i++) {
@@ -127,13 +138,13 @@ SB.Background.prototype.draw = function(ctx, cw, ch) {
     for (var j = 0; j < this.clouds.length; j++) {
         var cloud = this.clouds[j];
         ctx.save();
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + cloud.alpha + ')';
         ctx.translate(cloud.x, cloud.y);
         ctx.scale(1, cloud.height / cloud.width);
         ctx.beginPath();
         ctx.arc(0, 0, cloud.width / 2, 0, SB.TAU);
-        ctx.restore();
-        ctx.fillStyle = 'rgba(255, 255, 255, ' + cloud.alpha + ')';
         ctx.fill();
+        ctx.restore();
     }
 
     for (var k = 0; k < this.particles.length; k++) {

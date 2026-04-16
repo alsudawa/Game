@@ -17,6 +17,7 @@ SB.UI = function() {
     this.lockMsgTimer = 0;
     this.zoneMsg = '';
     this.zoneMsgTimer = 0;
+    this.nearMissTimer = 0;
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -51,6 +52,7 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
 
     if (this.lockMsgTimer > 0) this.lockMsgTimer -= dt;
     if (this.zoneMsgTimer > 0) this.zoneMsgTimer -= dt;
+    if (this.nearMissTimer > 0) this.nearMissTimer -= dt;
 
     // Achievement toast
     if (this.achievementToast) {
@@ -501,6 +503,22 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(p.text, p.x, p.y);
+        ctx.restore();
+    }
+
+    // Near-miss feedback
+    if (this.nearMissTimer > 0) {
+        var nmAlpha = this.nearMissTimer / 0.6;
+        var nmScale = 1 + (0.6 - this.nearMissTimer) * 0.5;
+        ctx.save();
+        ctx.globalAlpha = nmAlpha;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold ' + Math.floor(Math.min(cw * 0.04, 16) * nmScale) + 'px ' + this.font;
+        ctx.fillStyle = '#F39C12';
+        ctx.shadowColor = '#F39C12';
+        ctx.shadowBlur = 8;
+        ctx.fillText('CLOSE! +2', cw / 2, ch * 0.22);
         ctx.restore();
     }
 
