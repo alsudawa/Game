@@ -168,6 +168,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         if (this.input.consumeTap()) {
             this.ball.bounce(this.input.tapX);
             this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
+            this.achievements.onBounce();
             SB.audio.playBounce();
             if (this.tutorialTimer > 0.4) {
                 this.tutorialStep++;
@@ -178,6 +179,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
     } else if (this.input.consumeTap()) {
         this.ball.bounce(this.input.tapX);
         this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
+        this.achievements.onBounce();
         SB.audio.playBounce();
     }
 
@@ -242,6 +244,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 obs._nearMissed = true;
                 this.ui.nearMissTimer = 0.6;
                 this.score += 2;
+                this.achievements.onNearMiss();
                 if (navigator.vibrate) navigator.vibrate(15);
             }
         }
@@ -374,6 +377,13 @@ SB.Game.prototype._updatePaused = function(dt) {
         this._transitionTo(SB.STATES.GAME_OVER);
         return;
     }
+    // Fallback: any tap that wasn't on buttons resumes
+    if (this.input.consumeTap()) {
+        SB._resumeBtn = null;
+        SB._quitBtn = null;
+        this.state = SB.STATES.PLAYING;
+        SB.audio.startBGM();
+    }
 };
 
 SB.Game.prototype._handleDeath = function() {
@@ -449,6 +459,7 @@ SB.Game.prototype._updateZone = function() {
     if (prevZone !== this.currentZone && prevZone !== null) {
         this.ui.zoneMsg = this.currentZone.name;
         this.ui.zoneMsgTimer = 2.0;
+        this.screenFlash = 0.12;
         // Zone transition sound
         if (this.currentZone === SB.ZONES.EXTREME) {
             SB.audio.playZoneWarning(2);
@@ -572,6 +583,16 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.highScore = SB.Storage.getHighScore();
         this.showTutorial = false;
         this.showAchievementViewer = false;
+        // Clear all stale button references
+        SB._shareBtn = null;
+        SB._playAgainBtn = null;
+        SB._playAgainTapped = null;
+        SB._reviveBtn = null;
+        SB._reviveBtnTapped = null;
+        SB._pauseBtn = null;
+        SB._pauseBtnTapped = null;
+        SB._resumeBtn = null;
+        SB._quitBtn = null;
     }
 };
 

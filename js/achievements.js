@@ -16,7 +16,9 @@ SB.ACHIEVEMENTS = [
     { id: 'long_run',      name: 'Endurance',         desc: 'Survive 60 seconds',         icon: '⏰', check: function(s) { return s.runTime >= 60; } },
     { id: 'star_collector', name: 'Star Collector',   desc: 'Collect 200 stars total',    icon: '✨', check: function(s) { return s.totalStars >= 200; } },
     { id: 'combo_master',  name: 'Combo Master',      desc: 'Get a 5x combo',             icon: '💥', check: function(s) { return s.bestCombo >= 5; } },
-    { id: 'veteran',       name: 'Veteran',           desc: 'Play 50 games',              icon: '🏆', check: function(s) { return s.totalGames >= 50; } }
+    { id: 'veteran',       name: 'Veteran',           desc: 'Play 50 games',              icon: '🏆', check: function(s) { return s.totalGames >= 50; } },
+    { id: 'bouncy',        name: 'Bouncy',            desc: 'Bounce 500 times total',     icon: '🏀', check: function(s) { return s.totalBounces >= 500; } },
+    { id: 'near_miss_pro', name: 'Daredevil',         desc: 'Get 10 near-misses total',   icon: '😎', check: function(s) { return s.totalNearMisses >= 10; } }
 ];
 
 SB.AchievementManager = function() {
@@ -30,7 +32,9 @@ SB.AchievementManager = function() {
         runTime: 0,
         shieldUsed: 0,
         totalPowerups: 0,
-        totalGames: 0
+        totalGames: 0,
+        totalBounces: 0,
+        totalNearMisses: 0
     };
     this.pendingNotifications = [];
     this._load();
@@ -101,6 +105,15 @@ SB.AchievementManager.prototype.onPowerupCollect = function() {
     this._save();
 };
 
+SB.AchievementManager.prototype.onBounce = function() {
+    this.stats.totalBounces++;
+};
+
+SB.AchievementManager.prototype.onNearMiss = function() {
+    this.stats.totalNearMisses++;
+    this._save();
+};
+
 SB.AchievementManager.prototype.updateRunTime = function(dt) {
     this.stats.runTime += dt;
 };
@@ -143,6 +156,8 @@ SB.AchievementManager.prototype.getProgress = function(ach) {
         case 'power_player': return { current: Math.min(s.totalPowerups, 10), target: 10 };
         case 'dedicated': return { current: Math.min(s.totalGames, 20), target: 20 };
         case 'veteran': return { current: Math.min(s.totalGames, 50), target: 50 };
+        case 'bouncy': return { current: Math.min(s.totalBounces, 500), target: 500 };
+        case 'near_miss_pro': return { current: Math.min(s.totalNearMisses, 10), target: 10 };
         default: return null;
     }
 };
