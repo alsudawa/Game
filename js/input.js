@@ -11,9 +11,11 @@ SB.Input = function(canvas) {
 
     canvas.addEventListener('touchstart', function(e) {
         e.preventDefault();
+        if (e.touches.length > 1) return;
         var touch = e.touches[0];
         self.tapX = touch.clientX;
         self.tapY = touch.clientY;
+        self._checkShareButton(touch.clientX, touch.clientY);
         self.tapped = true;
         self._handleFirstInteraction();
     }, { passive: false });
@@ -21,6 +23,7 @@ SB.Input = function(canvas) {
     canvas.addEventListener('mousedown', function(e) {
         self.tapX = e.clientX;
         self.tapY = e.clientY;
+        self._checkShareButton(e.clientX, e.clientY);
         self.tapped = true;
         self._handleFirstInteraction();
     });
@@ -31,6 +34,16 @@ SB.Input.prototype._handleFirstInteraction = function() {
         this._firstInteraction = true;
         if (SB.audio) {
             SB.audio.init();
+        }
+    }
+};
+
+SB.Input.prototype._checkShareButton = function(x, y) {
+    if (SB._shareBtn) {
+        var btn = SB._shareBtn;
+        if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+            SB.shareScore(btn.score);
+            this.tapped = false; // Don't treat share tap as game tap
         }
     }
 };

@@ -1,11 +1,14 @@
 window.SB = window.SB || {};
 
-SB.Spawner = function(obstaclePool, collectiblePool) {
+SB.Spawner = function(obstaclePool, collectiblePool, powerupPool) {
     this.obstaclePool = obstaclePool;
     this.collectiblePool = collectiblePool;
+    this.powerupPool = powerupPool;
     this.obstacleTimer = 0;
     this.collectibleTimer = 0;
+    this.powerupTimer = 0;
     this.difficulty = 0;
+    this.extraDifficulty = 0;
     this.graceTimer = 0;
     this.gracePeriod = 2.0;
 };
@@ -13,18 +16,24 @@ SB.Spawner = function(obstaclePool, collectiblePool) {
 SB.Spawner.prototype.reset = function() {
     this.obstacleTimer = 0;
     this.collectibleTimer = 0;
+    this.powerupTimer = 0;
     this.difficulty = 0;
+    this.extraDifficulty = 0;
     this.graceTimer = 0;
     this.obstaclePool.releaseAll();
     this.collectiblePool.releaseAll();
+    if (this.powerupPool) this.powerupPool.releaseAll();
 };
 
 SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
     this.graceTimer += dt;
     this.difficulty = Math.min(score / 50, 1.0);
+    // Beyond score 50, extra difficulty keeps scaling (slower rate)
+    this.extraDifficulty = score > 50 ? Math.min((score - 50) / 150, 1.0) : 0;
 
-    var spawnInterval = SB.lerp(2.0, 0.8, this.difficulty);
-    var speedMultiplier = SB.lerp(1.0, 2.5, this.difficulty);
+    var spawnInterval = SB.lerp(2.0, 0.8, this.difficulty) - this.extraDifficulty * 0.25;
+    spawnInterval = Math.max(spawnInterval, 0.4);
+    var speedMultiplier = SB.lerp(1.0, 2.5, this.difficulty) + this.extraDifficulty * 1.0;
 
     if (this.graceTimer > this.gracePeriod) {
         this.obstacleTimer += dt;
@@ -38,6 +47,16 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
     if (this.collectibleTimer >= 3.0) {
         this.collectibleTimer = 0;
         this._spawnCollectible(canvasWidth, canvasHeight);
+    }
+
+    // Powerup spawning (every 12-18 seconds, only after difficulty > 0.2)
+    if (this.powerupPool && this.difficulty > 0.2) {
+        this.powerupTimer += dt;
+        var puInterval = SB.lerp(18, 10, this.difficulty);
+        if (this.powerupTimer >= puInterval) {
+            this.powerupTimer = 0;
+            this._spawnPowerup(canvasWidth, canvasHeight);
+        }
     }
 };
 
@@ -172,4 +191,13 @@ SB.Spawner.prototype._spawnCollectible = function(cw, ch) {
     var y = SB.randRange(ch * 0.1, ch * 0.7);
 
     this.collectiblePool.acquire({ x: x, y: y });
+};
+
+SB.Spawner.prototype._spawnPowerup = function(cw, ch) {
+    var types = [SB.POWERUP_TYPES.SHIELD, SB.POWERUP_TYPES.MAGNET, SB.POWERUP_TYPES.SLOW];
+    var type = types[SB.randInt(0, types.length - 1)];
+    var x = SB.randRange(cw * 0.15, cw * 0.85);
+    var y = SB.randRange(ch * 0.15, ch * 0.6);
+
+    this.powerupPool.acquire({ x: x, y: y, type: type });
 };

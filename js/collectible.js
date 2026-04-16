@@ -95,6 +95,7 @@ SB.Collectible.prototype.getBounds = function() {
 // Object Pool
 SB.CollectiblePool = function(size) {
     this.pool = [];
+    this._activeBuffer = [];
     for (var i = 0; i < size; i++) {
         this.pool.push(new SB.Collectible());
     }
@@ -107,7 +108,10 @@ SB.CollectiblePool.prototype.acquire = function(config) {
             return this.pool[i];
         }
     }
-    return null;
+    var col = new SB.Collectible();
+    col.init(config);
+    this.pool.push(col);
+    return col;
 };
 
 SB.CollectiblePool.prototype.releaseAll = function() {
@@ -117,11 +121,11 @@ SB.CollectiblePool.prototype.releaseAll = function() {
 };
 
 SB.CollectiblePool.prototype.getActive = function() {
-    var result = [];
+    this._activeBuffer.length = 0;
     for (var i = 0; i < this.pool.length; i++) {
         if (this.pool[i].active) {
-            result.push(this.pool[i]);
+            this._activeBuffer.push(this.pool[i]);
         }
     }
-    return result;
+    return this._activeBuffer;
 };

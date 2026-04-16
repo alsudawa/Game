@@ -104,8 +104,12 @@ SB.Background.prototype.draw = function(ctx, cw, ch) {
 
     for (var j = 0; j < this.clouds.length; j++) {
         var cloud = this.clouds[j];
+        ctx.save();
+        ctx.translate(cloud.x, cloud.y);
+        ctx.scale(1, cloud.height / cloud.width);
         ctx.beginPath();
-        ctx.ellipse(cloud.x, cloud.y, cloud.width / 2, cloud.height / 2, 0, 0, SB.TAU);
+        ctx.arc(0, 0, cloud.width / 2, 0, SB.TAU);
+        ctx.restore();
         ctx.fillStyle = 'rgba(255, 255, 255, ' + cloud.alpha + ')';
         ctx.fill();
     }

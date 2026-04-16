@@ -80,8 +80,12 @@ SB.Ball.prototype.draw = function(ctx) {
     ctx.fill();
     ctx.restore();
 
+    ctx.save();
+    ctx.translate(this.x, this.y + this.radius + 8);
+    ctx.scale(1, 3 / (this.radius * 0.7));
     ctx.beginPath();
-    ctx.ellipse(this.x, this.y + this.radius + 8, this.radius * 0.7, 3, 0, 0, SB.TAU);
+    ctx.arc(0, 0, this.radius * 0.7, 0, SB.TAU);
+    ctx.restore();
     ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
     ctx.fill();
 };

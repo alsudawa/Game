@@ -187,6 +187,7 @@ SB.Obstacle.prototype.getBounds = function() {
 // Object Pool
 SB.ObstaclePool = function(size) {
     this.pool = [];
+    this._activeBuffer = [];
     for (var i = 0; i < size; i++) {
         this.pool.push(new SB.Obstacle());
     }
@@ -199,7 +200,11 @@ SB.ObstaclePool.prototype.acquire = function(config) {
             return this.pool[i];
         }
     }
-    return null;
+    // Pool exhausted — expand dynamically
+    var obs = new SB.Obstacle();
+    obs.init(config);
+    this.pool.push(obs);
+    return obs;
 };
 
 SB.ObstaclePool.prototype.releaseAll = function() {
@@ -209,11 +214,11 @@ SB.ObstaclePool.prototype.releaseAll = function() {
 };
 
 SB.ObstaclePool.prototype.getActive = function() {
-    var result = [];
+    this._activeBuffer.length = 0;
     for (var i = 0; i < this.pool.length; i++) {
         if (this.pool[i].active) {
-            result.push(this.pool[i]);
+            this._activeBuffer.push(this.pool[i]);
         }
     }
-    return result;
+    return this._activeBuffer;
 };

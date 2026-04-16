@@ -12,7 +12,9 @@ SB.Game = function(canvas) {
     this.ball = new SB.Ball();
     this.obstaclePool = new SB.ObstaclePool(30);
     this.collectiblePool = new SB.CollectiblePool(15);
-    this.spawner = new SB.Spawner(this.obstaclePool, this.collectiblePool);
+    this.powerupPool = new SB.PowerupPool(5);
+    this.powerupEffects = new SB.PowerupEffects();
+    this.spawner = new SB.Spawner(this.obstaclePool, this.collectiblePool, this.powerupPool);
     this.background = new SB.Background();
     this.ui = new SB.UI();
     this.input = new SB.Input(canvas);
@@ -37,10 +39,14 @@ SB.Game.prototype.init = function() {
 
 SB.Game.prototype.onResize = function(cw, ch) {
     this.background.init(cw, ch);
+    if (this.ball) {
+        this.ball.x = SB.clamp(this.ball.x, this.ball.radius, cw - this.ball.radius);
+        this.ball.y = SB.clamp(this.ball.y, this.ball.radius, ch - this.ball.radius);
+    }
 };
 
 SB.Game.prototype.update = function(dt) {
-    this.ui.update(dt, this.state);
+    this.ui.update(dt, this.state, this.powerupEffects, this.comboCount, this.comboTimer);
     this.background.update(dt, this.state === SB.STATES.PLAYING ? this.spawner.difficulty : 0);
 
     if (this.screenShake > 0) this.screenShake -= dt;
@@ -70,24 +76,28 @@ SB.Game.prototype._updateStart = function(dt) {
 };
 
 SB.Game.prototype._updatePlaying = function(dt) {
+    var slowMult = this.powerupEffects.getSpeedMultiplier();
+
     if (this.input.consumeTap()) {
         this.ball.bounce();
         SB.audio.playBounce();
     }
 
     this.ball.update(dt);
+    this.powerupEffects.update(dt);
 
     var cw = SB.canvasWidth;
     var ch = SB.canvasHeight;
 
-    this.spawner.update(dt, this.score, cw, ch);
+    this.spawner.update(dt * slowMult, this.score, cw, ch);
 
+    // --- Obstacles ---
     var obstacles = this.obstaclePool.getActive();
     var ballBounds = this.ball.getBounds();
 
     for (var i = obstacles.length - 1; i >= 0; i--) {
         var obs = obstacles[i];
-        obs.update(dt);
+        obs.update(dt * slowMult);
 
         if (obs.isOffScreen(cw, ch)) {
             obs.active = false;
@@ -103,11 +113,18 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
 
         if (hit) {
+            if (this.powerupEffects.useShield()) {
+                obs.active = false;
+                this.screenShake = 0.15;
+                SB.audio.playCollect();
+                continue;
+            }
             this._transitionTo(SB.STATES.GAME_OVER);
             return;
         }
     }
 
+    // --- Collectibles ---
     var collectibles = this.collectiblePool.getActive();
     for (var j = collectibles.length - 1; j >= 0; j--) {
         var col = collectibles[j];
@@ -118,7 +135,25 @@ SB.Game.prototype._updatePlaying = function(dt) {
             continue;
         }
 
-        if (SB.circleCircleCollision(ballBounds, col.getBounds())) {
+        var colBounds = col.getBounds();
+        var magnetRange = this.powerupEffects.magnet ? 120 : 0;
+        var collected = false;
+
+        if (this.powerupEffects.magnet) {
+            var dx = this.ball.x - col.x;
+            var dy = this.ball.y - col.y;
+            var dist = Math.sqrt(dx * dx + dy * dy);
+            if (dist < magnetRange) {
+                col.x += dx * 5 * dt;
+                col.y += dy * 5 * dt;
+            }
+        }
+
+        if (SB.circleCircleCollision(ballBounds, colBounds)) {
+            collected = true;
+        }
+
+        if (collected) {
             col.active = false;
             this.comboTimer = 2.0;
             this.comboCount++;
@@ -128,6 +163,25 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
     }
 
+    // --- Powerups ---
+    var powerups = this.powerupPool.getActive();
+    for (var k = powerups.length - 1; k >= 0; k--) {
+        var pu = powerups[k];
+        pu.update(dt);
+
+        if (pu.x < -50 || pu.x > cw + 50 || pu.y < -50 || pu.y > ch + 50) {
+            pu.active = false;
+            continue;
+        }
+
+        if (SB.circleCircleCollision(ballBounds, pu.getBounds())) {
+            pu.active = false;
+            this.powerupEffects.activate(pu.type);
+            SB.audio.playMilestone();
+        }
+    }
+
+    // --- Scoring ---
     this.scoreTimer += dt;
     if (this.scoreTimer >= 1.0) {
         this.scoreTimer -= 1.0;
@@ -153,7 +207,6 @@ SB.Game.prototype._updateGameOver = function(dt) {
 };
 
 SB.Game.prototype._transitionTo = function(newState) {
-    var oldState = this.state;
     this.state = newState;
 
     if (newState === SB.STATES.PLAYING) {
@@ -164,6 +217,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.comboCount = 0;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
         this.spawner.reset();
+        this.powerupEffects.reset();
     } else if (newState === SB.STATES.GAME_OVER) {
         this.screenFlash = 0.15;
         this.isNewHigh = SB.Storage.isNewHighScore(Math.floor(this.score));
@@ -223,5 +277,38 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         collectibles[j].draw(ctx);
     }
 
+    var powerups = this.powerupPool.getActive();
+    for (var k = 0; k < powerups.length; k++) {
+        powerups[k].draw(ctx);
+    }
+
     this.ball.draw(ctx);
+
+    // Draw shield aura around ball
+    if (this.powerupEffects.shield) {
+        ctx.save();
+        var shimmer = Math.sin(Date.now() * 0.005) * 0.15 + 0.35;
+        ctx.beginPath();
+        ctx.arc(this.ball.x, this.ball.y, this.ball.radius + 8, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(52, 152, 219, ' + shimmer + ')';
+        ctx.lineWidth = 3;
+        ctx.shadowColor = 'rgba(52, 152, 219, 0.6)';
+        ctx.shadowBlur = 12;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    // Draw magnet field indicator
+    if (this.powerupEffects.magnet) {
+        ctx.save();
+        var magnetAlpha = Math.sin(Date.now() * 0.004) * 0.08 + 0.12;
+        ctx.beginPath();
+        ctx.arc(this.ball.x, this.ball.y, 120, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(155, 89, 182, ' + magnetAlpha + ')';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([6, 8]);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
+    }
 };
