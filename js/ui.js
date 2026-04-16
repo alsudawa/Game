@@ -13,6 +13,8 @@ SB.UI = function() {
     this.achievementToastTimer = 0;
     this.xpResult = null;
     this.progressionRef = null;
+    this.lockMsg = '';
+    this.lockMsgTimer = 0;
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -40,6 +42,8 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
             timer: 0
         });
     }
+
+    if (this.lockMsgTimer > 0) this.lockMsgTimer -= dt;
 
     // Achievement toast
     if (this.achievementToast) {
@@ -147,6 +151,14 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     // Skin selector
     if (skinManager && progression) {
         this._drawSkinSelector(ctx, cw, ch * 0.44, skinManager, progression.level);
+    }
+
+    // Locked skin message
+    if (this.lockMsgTimer > 0) {
+        var lAlpha = Math.min(this.lockMsgTimer, 1);
+        ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,100,100,' + lAlpha.toFixed(2) + ')';
+        ctx.fillText(this.lockMsg, cw / 2, ch * 0.49);
     }
 
     // Achievements button (tappable)
@@ -263,7 +275,8 @@ SB.UI.prototype._drawSkinSelector = function(ctx, cw, y, skinManager, playerLeve
             y: y,
             r: btnR + 6,
             skinId: skin.id,
-            unlocked: info.unlocked
+            unlocked: info.unlocked,
+            unlockLevel: skin.unlockLevel
         });
 
         ctx.save();

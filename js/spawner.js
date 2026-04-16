@@ -56,10 +56,10 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
         this._spawnCollectible(canvasWidth, canvasHeight);
     }
 
-    // Powerup spawning (only after effective difficulty > 0.2)
-    if (this.powerupPool && d > 0.2) {
+    // Powerup spawning (after effective difficulty > 0.1)
+    if (this.powerupPool && d > 0.1) {
         this.powerupTimer += dt;
-        var puInterval = SB.lerp(18, 10, d);
+        var puInterval = SB.lerp(15, 8, d);
         if (this.powerupTimer >= puInterval) {
             this.powerupTimer = 0;
             this._spawnPowerup(canvasWidth, canvasHeight);
@@ -175,7 +175,8 @@ SB.Spawner.prototype._spawnSqueeze = function(cw, ch, speedMult) {
             speed: 0,
             direction: 0,
             oscillateAmplitude: 0,
-            oscillateSpeed: 0
+            oscillateSpeed: 0,
+            maxLifetime: 5.0
         });
     }
 
@@ -189,7 +190,8 @@ SB.Spawner.prototype._spawnSqueeze = function(cw, ch, speedMult) {
             speed: 0,
             direction: 0,
             oscillateAmplitude: 0,
-            oscillateSpeed: 0
+            oscillateSpeed: 0,
+            maxLifetime: 5.0
         });
     }
 

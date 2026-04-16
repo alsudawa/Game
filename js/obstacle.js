@@ -30,6 +30,8 @@ SB.Obstacle = function() {
     this.returning = false;
     this.laserPhase = 'warning';
     this.laserTimer = 0;
+    this.lifetime = 0;
+    this.maxLifetime = 0;
 };
 
 SB.Obstacle.prototype.init = function(config) {
@@ -54,10 +56,20 @@ SB.Obstacle.prototype.init = function(config) {
     this.returning = false;
     this.laserPhase = 'warning';
     this.laserTimer = 0;
+    this.lifetime = 0;
+    this.maxLifetime = config.maxLifetime || 0;
 };
 
 SB.Obstacle.prototype.update = function(dt) {
     if (!this.active) return;
+
+    if (this.maxLifetime > 0) {
+        this.lifetime += dt;
+        if (this.lifetime >= this.maxLifetime) {
+            this.active = false;
+            return;
+        }
+    }
 
     if (this.type === SB.OBSTACLE_TYPES.PLATFORM) {
         this.x += this.speed * this.direction * dt * 60;

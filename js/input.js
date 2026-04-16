@@ -58,8 +58,12 @@ SB.Input.prototype._checkSkinButton = function(x, y) {
             var btn = SB._skinBtns[i];
             var dx = x - btn.x;
             var dy = y - btn.y;
-            if (dx * dx + dy * dy < btn.r * btn.r && btn.unlocked) {
-                SB._skinTapped = btn.skinId;
+            if (dx * dx + dy * dy < btn.r * btn.r) {
+                if (btn.unlocked) {
+                    SB._skinTapped = btn.skinId;
+                } else {
+                    SB._skinLocked = btn.unlockLevel;
+                }
                 this.tapped = false;
                 return;
             }

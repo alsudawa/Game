@@ -110,6 +110,12 @@ SB.Game.prototype._updateStart = function(dt) {
         return;
     }
     // Handle skin selection (set by input handler)
+    if (SB._skinLocked) {
+        this.ui.lockMsg = 'Need Lv.' + SB._skinLocked;
+        this.ui.lockMsgTimer = 1.5;
+        SB._skinLocked = null;
+        return;
+    }
     if (SB._skinTapped) {
         var skinId = SB._skinTapped;
         SB._skinTapped = null;
@@ -252,11 +258,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
     }
 
-    // --- Scoring ---
+    // --- Scoring (scales with difficulty) ---
     this.scoreTimer += dt;
     if (this.scoreTimer >= 1.0) {
         this.scoreTimer -= 1.0;
-        this.score += 1;
+        this.score += 1 + Math.floor(this.spawner.difficulty * 2);
     }
 
     var currentMilestone = Math.floor(this.score / 10);
@@ -278,10 +284,12 @@ SB.Game.prototype._updateGameOver = function(dt) {
     this.gameOverCooldown += dt;
     this.particles.update(dt);
 
-    // Process achievement notifications
-    var notif = this.achievements.popNotification();
-    if (notif) {
-        this.ui.showAchievementToast(notif);
+    // Process achievement notifications (spaced out)
+    if (!this.ui.achievementToast) {
+        var notif = this.achievements.popNotification();
+        if (notif) {
+            this.ui.showAchievementToast(notif);
+        }
     }
 
     if (this.input.consumeTap() && this.gameOverCooldown >= this.gameOverCooldownTime) {
