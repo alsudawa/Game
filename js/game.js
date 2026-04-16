@@ -392,8 +392,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.screenFlash = 0.1;
             this.particles.emit(cw / 2, ch * 0.3, SB.FX.starCollect);
             this.particles.emit(cw / 2, ch * 0.3, SB.FX.starCollect);
-            this.ui.zoneMsg = milestoneScore + '!';
-            this.ui.zoneMsgTimer = 1.5;
+            this.ui.milestoneMsg = milestoneScore + ' POINTS!';
+            this.ui.milestoneMsgTimer = 1.5;
             if (navigator.vibrate) navigator.vibrate(30);
         }
     }
@@ -780,6 +780,29 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             ctx.moveTo(lx, ly);
             ctx.lineTo(lx + (Math.random() - 0.5) * 2, ly - 25 - Math.random() * 20);
             ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    // Trajectory preview (faint dotted arc when ball is falling)
+    if (this.state === SB.STATES.PLAYING && this.ball.vy > 2 && this.deathSlowMo <= 0) {
+        ctx.save();
+        var trajX = this.ball.x;
+        var trajY = this.ball.y;
+        var trajVx = this.ball.vx;
+        var trajVy = this.ball.vy;
+        var trajStep = 1 / 60;
+        var trajGrav = SB.Physics.GRAVITY * this.ball.gravityMult;
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        for (var ti = 0; ti < 12; ti++) {
+            trajVy += trajGrav * trajStep * 60;
+            trajVx *= SB.Physics.AIR_RESISTANCE;
+            trajX += trajVx * trajStep;
+            trajY += trajVy * trajStep;
+            if (trajY > ch || trajX < 0 || trajX > cw) break;
+            ctx.beginPath();
+            ctx.arc(trajX, trajY, 1.5, 0, SB.TAU);
+            ctx.fill();
         }
         ctx.restore();
     }

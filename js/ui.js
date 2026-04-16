@@ -17,6 +17,8 @@ SB.UI = function() {
     this.lockMsgTimer = 0;
     this.zoneMsg = '';
     this.zoneMsgTimer = 0;
+    this.milestoneMsg = '';
+    this.milestoneMsgTimer = 0;
     this.nearMissTimer = 0;
     this.scorePopups = [];
 };
@@ -53,6 +55,7 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
 
     if (this.lockMsgTimer > 0) this.lockMsgTimer -= dt;
     if (this.zoneMsgTimer > 0) this.zoneMsgTimer -= dt;
+    if (this.milestoneMsgTimer > 0) this.milestoneMsgTimer -= dt;
     if (this.nearMissTimer > 0) this.nearMissTimer -= dt;
 
     // Score popups
@@ -510,6 +513,20 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
         ctx.shadowColor = ctx.fillStyle;
         ctx.shadowBlur = 12;
         ctx.fillText(this.zoneMsg + ' ZONE', cw / 2, ch * 0.12);
+        ctx.restore();
+    }
+
+    // Milestone popup (below zone message area)
+    if (this.milestoneMsgTimer > 0) {
+        var mA = Math.min(this.milestoneMsgTimer, 1);
+        var mScale = 1 + (1.5 - this.milestoneMsgTimer) * 0.08;
+        ctx.save();
+        ctx.globalAlpha = mA;
+        ctx.font = 'bold ' + Math.floor(Math.min(cw * 0.07, 28) * mScale) + 'px ' + this.font;
+        ctx.fillStyle = '#FFD700';
+        ctx.shadowColor = '#FFD700';
+        ctx.shadowBlur = 15;
+        ctx.fillText(this.milestoneMsg, cw / 2, ch * 0.16);
         ctx.restore();
     }
 
