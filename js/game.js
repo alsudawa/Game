@@ -331,9 +331,10 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.runStars++;
             this.runCoins += cv;
             SB.Storage.addCoins(cv);
-            var bonus = col.pointValue * (this.comboCount >= 2 ? 2 : 1) * this.dailyStarMult;
+            var comboMult = this.comboCount >= 5 ? 4 : (this.comboCount >= 3 ? 3 : (this.comboCount >= 2 ? 2 : 1));
+            var bonus = col.pointValue * comboMult * this.dailyStarMult;
             this.score += bonus;
-            var popColor = isCoin ? '#FFB300' : (this.comboCount >= 2 ? '#FF6B6B' : '#FFD700');
+            var popColor = isCoin ? '#FFB300' : (this.comboCount >= 5 ? '#FF4444' : (this.comboCount >= 3 ? '#FF6B6B' : (this.comboCount >= 2 ? '#FF8C42' : '#FFD700')));
             this.ui.addScorePopup(col.x, col.y - 15, '+' + bonus + (cv > 1 ? ' +' + cv + 'c' : ''), popColor);
             this.achievements.onStarCollect();
             this.achievements.onCombo(this.comboCount);
@@ -700,6 +701,8 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 ctx.fillStyle = 'rgba(' + zColor + ',' + zPulse.toFixed(3) + ')';
                 ctx.fillRect(0, 0, cw, ch);
             }
+            // Edge danger indicators for off-screen obstacles
+            this._drawEdgeWarnings(ctx, cw, ch);
             break;
 
         case SB.STATES.PAUSED:
@@ -804,4 +807,46 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.setLineDash([]);
         ctx.restore();
     }
+};
+
+SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
+    var obstacles = this.obstaclePool.getActive();
+    var margin = 40; // How close to edge before warning appears
+    ctx.save();
+    for (var i = 0; i < obstacles.length; i++) {
+        var obs = obstacles[i];
+        if (obs.type === SB.OBSTACLE_TYPES.LASER || obs.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) continue;
+        var ocx, ocy;
+        if (obs.radius) {
+            ocx = obs.x + obs.radius;
+            ocy = obs.y + obs.radius;
+        } else {
+            ocx = obs.x + (obs.width || 0) / 2;
+            ocy = obs.y + (obs.height || 0) / 2;
+        }
+        // Only warn for obstacles just off-screen
+        var fromLeft = (ocx < 0 && ocx > -margin);
+        var fromRight = (ocx > cw && ocx < cw + margin);
+        if (!fromLeft && !fromRight) continue;
+        if (ocy < 0 || ocy > ch) continue;
+
+        var arrowX = fromLeft ? 8 : cw - 8;
+        var distFrac = fromLeft ? (1 + ocx / margin) : (1 - (ocx - cw) / margin);
+        var arrowAlpha = distFrac * 0.6;
+
+        ctx.fillStyle = 'rgba(231,76,60,' + arrowAlpha.toFixed(2) + ')';
+        ctx.beginPath();
+        if (fromLeft) {
+            ctx.moveTo(arrowX + 6, ocy - 5);
+            ctx.lineTo(arrowX, ocy);
+            ctx.lineTo(arrowX + 6, ocy + 5);
+        } else {
+            ctx.moveTo(arrowX - 6, ocy - 5);
+            ctx.lineTo(arrowX, ocy);
+            ctx.lineTo(arrowX - 6, ocy + 5);
+        }
+        ctx.closePath();
+        ctx.fill();
+    }
+    ctx.restore();
 };
