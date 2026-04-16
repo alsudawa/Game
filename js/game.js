@@ -59,6 +59,8 @@ SB.Game = function(canvas) {
     this.invincibleTimer = 0;
     this.currentZone = SB.ZONES.CALM;
     this.runCoins = 0;
+    this.deathSlowMo = 0;
+    this.deathPending = null; // stores death context during slow-mo
 
     SB.REVIVE_COST = 20;
 };
@@ -152,6 +154,21 @@ SB.Game.prototype._updateStart = function(dt) {
 };
 
 SB.Game.prototype._updatePlaying = function(dt) {
+    // Death slow-mo: heavily dilate time, then resolve
+    if (this.deathSlowMo > 0) {
+        this.deathSlowMo -= dt;
+        if (this.deathSlowMo <= 0) {
+            this._resolveDeathPending();
+            return;
+        }
+        // 15% time speed during slow-mo, only update visuals
+        var smDt = dt * 0.15;
+        this.ball.update(smDt);
+        this.particles.update(smDt);
+        this.input.consumeTap(); // discard taps during slow-mo
+        return;
+    }
+
     // Check pause
     if (SB._pauseBtnTapped) {
         SB._pauseBtnTapped = null;
@@ -417,14 +434,21 @@ SB.Game.prototype._updatePaused = function(dt) {
 SB.Game.prototype._handleDeath = function() {
     // Haptic feedback on death
     if (navigator.vibrate) navigator.vibrate(80);
+    // Trigger slow-mo death sequence
+    this.deathSlowMo = 0.3;
     var coins = SB.Storage.getCoins();
-    if (!this.revived && coins >= SB.REVIVE_COST) {
+    this.deathPending = (!this.revived && coins >= SB.REVIVE_COST) ? 'revive' : 'gameover';
+};
+
+SB.Game.prototype._resolveDeathPending = function() {
+    if (this.deathPending === 'revive') {
         this.state = SB.STATES.REVIVE;
         this.reviveCountdown = 3.0;
         SB.audio.stopBGM();
     } else {
         this._transitionTo(SB.STATES.GAME_OVER);
     }
+    this.deathPending = null;
 };
 
 SB.Game.prototype._updateRevive = function(dt) {
@@ -543,6 +567,8 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.runCoins = 0;
         this.revived = false;
         this.invincibleTimer = 0;
+        this.deathSlowMo = 0;
+        this.deathPending = null;
         this.currentZone = SB.ZONES.CALM;
         this.transitionAlpha = 1;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
@@ -723,6 +749,31 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
     var powerups = this.powerupPool.getActive();
     for (var k = 0; k < powerups.length; k++) {
         powerups[k].draw(ctx);
+    }
+
+    // Speed lines when ball falls fast
+    if (this.state === SB.STATES.PLAYING && this.ball.vy > SB.Physics.MAX_FALL_SPEED * 0.5) {
+        var speedFrac = (this.ball.vy - SB.Physics.MAX_FALL_SPEED * 0.5) / (SB.Physics.MAX_FALL_SPEED * 0.5);
+        var lineAlpha = Math.min(speedFrac * 0.15, 0.15);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,' + lineAlpha.toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        for (var sl = 0; sl < 6; sl++) {
+            var lx = this.ball.x + (sl - 2.5) * 20 + (Math.random() - 0.5) * 8;
+            var ly = this.ball.y - 30 - Math.random() * 40;
+            ctx.beginPath();
+            ctx.moveTo(lx, ly);
+            ctx.lineTo(lx + (Math.random() - 0.5) * 2, ly - 25 - Math.random() * 20);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
+    // Death slow-mo vignette
+    if (this.deathSlowMo > 0) {
+        var vigAlpha = (0.3 - this.deathSlowMo) / 0.3 * 0.35;
+        ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0, vigAlpha).toFixed(3) + ')';
+        ctx.fillRect(0, 0, cw, ch);
     }
 
     this.ball.draw(ctx);
