@@ -93,15 +93,17 @@ SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedM
         }
     } else {
         var roll = Math.random();
-        if (roll < 0.12) {
+        if (roll < 0.10) {
             this._spawnBlade(canvasWidth, canvasHeight, speedMult);
-        } else if (roll < 0.22) {
+        } else if (roll < 0.19) {
             this._spawnBoomerang(canvasWidth, canvasHeight, speedMult);
-        } else if (roll < 0.32) {
+        } else if (roll < 0.28) {
             this._spawnLaser(canvasWidth, canvasHeight);
-        } else if (roll < 0.50) {
+        } else if (roll < 0.36 && this.extraDifficulty > 0.1) {
+            this._spawnGravityWell(canvasWidth, canvasHeight);
+        } else if (roll < 0.52) {
             this._spawnSpike(canvasWidth, canvasHeight, speedMult);
-        } else if (roll < 0.63) {
+        } else if (roll < 0.64) {
             this._spawnSqueeze(canvasWidth, canvasHeight, speedMult);
         } else {
             this._spawnPlatform(canvasWidth, canvasHeight, speedMult);
@@ -260,6 +262,28 @@ SB.Spawner.prototype._spawnPowerup = function(cw, ch) {
     var y = SB.randRange(ch * 0.15, ch * 0.6);
 
     this.powerupPool.acquire({ x: x, y: y, type: type });
+};
+
+SB.Spawner.prototype._spawnGravityWell = function(cw, ch) {
+    var x = SB.randRange(cw * 0.15, cw * 0.85);
+    var y = SB.randRange(ch * 0.15, ch * 0.65);
+    var coreR = SB.randRange(12, 18);
+    var pullR = SB.randRange(70, 100);
+    var strength = SB.lerp(150, 280, this.extraDifficulty);
+
+    this.obstaclePool.acquire({
+        type: SB.OBSTACLE_TYPES.GRAVITY_WELL,
+        x: x - coreR,
+        y: y - coreR,
+        width: coreR * 2,
+        height: coreR * 2,
+        radius: coreR,
+        pullRadius: pullR,
+        pullStrength: strength,
+        speed: 0,
+        direction: 0,
+        maxLifetime: SB.randRange(4, 7)
+    });
 };
 
 SB.Spawner.prototype._spawnCoin = function(cw, ch, speedMult) {

@@ -5,7 +5,8 @@ SB.OBSTACLE_TYPES = {
     SPIKE: 'spike',
     BLADE: 'blade',
     BOOMERANG: 'boomerang',
-    LASER: 'laser'
+    LASER: 'laser',
+    GRAVITY_WELL: 'gravity_well'
 };
 
 SB.Obstacle = function() {
@@ -32,6 +33,9 @@ SB.Obstacle = function() {
     this.laserTimer = 0;
     this.lifetime = 0;
     this.maxLifetime = 0;
+    this.pullRadius = 0;
+    this.pullStrength = 0;
+    this.wellPhase = 0;
 };
 
 SB.Obstacle.prototype.init = function(config) {
@@ -58,6 +62,9 @@ SB.Obstacle.prototype.init = function(config) {
     this.laserTimer = 0;
     this.lifetime = 0;
     this.maxLifetime = config.maxLifetime || 0;
+    this.pullRadius = config.pullRadius || 80;
+    this.pullStrength = config.pullStrength || 200;
+    this.wellPhase = 0;
 };
 
 SB.Obstacle.prototype.update = function(dt) {
@@ -91,6 +98,9 @@ SB.Obstacle.prototype.update = function(dt) {
             this.returning = true;
             this.direction *= -1;
         }
+    } else if (this.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) {
+        this.wellPhase += dt * 2;
+        this.lifetime += dt;
     } else if (this.type === SB.OBSTACLE_TYPES.LASER) {
         this.laserTimer += dt;
         if (this.laserPhase === 'warning' && this.laserTimer >= 0.8) {
@@ -121,6 +131,8 @@ SB.Obstacle.prototype.draw = function(ctx) {
         this._drawBoomerang(ctx);
     } else if (this.type === SB.OBSTACLE_TYPES.LASER) {
         this._drawLaser(ctx);
+    } else if (this.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) {
+        this._drawGravityWell(ctx);
     }
 };
 
@@ -300,8 +312,45 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
     }
 };
 
+SB.Obstacle.prototype._drawGravityWell = function(ctx) {
+    var cx = this.x + this.radius;
+    var cy = this.y + this.radius;
+    var pulse = 0.6 + Math.sin(this.wellPhase) * 0.2;
+
+    // Pull field rings (expanding outward)
+    ctx.save();
+    for (var ring = 2; ring >= 0; ring--) {
+        var ringPhase = (this.wellPhase * 0.5 + ring * 0.8) % 2;
+        var ringR = this.radius + ringPhase * (this.pullRadius - this.radius);
+        var ringAlpha = (1 - ringPhase / 2) * 0.12;
+        ctx.beginPath();
+        ctx.arc(cx, cy, ringR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(155,89,182,' + ringAlpha.toFixed(3) + ')';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
+
+    // Core
+    ctx.beginPath();
+    ctx.arc(cx, cy, this.radius * pulse, 0, SB.TAU);
+    var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, this.radius * pulse);
+    grad.addColorStop(0, 'rgba(142,68,173,0.8)');
+    grad.addColorStop(0.6, 'rgba(155,89,182,0.4)');
+    grad.addColorStop(1, 'rgba(155,89,182,0)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Inner dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, 3, 0, SB.TAU);
+    ctx.fillStyle = 'rgba(200,150,255,0.9)';
+    ctx.fill();
+    ctx.restore();
+};
+
 SB.Obstacle.prototype.isOffScreen = function(canvasWidth, canvasHeight) {
     if (this.type === SB.OBSTACLE_TYPES.LASER) return false;
+    if (this.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) return false; // uses maxLifetime
     if (this.type === SB.OBSTACLE_TYPES.BLADE) {
         return this.x + this.radius * 2 < -50 || this.x > canvasWidth + 50 ||
                this.y + this.radius * 2 < -50 || this.y > canvasHeight + 50;
@@ -311,6 +360,9 @@ SB.Obstacle.prototype.isOffScreen = function(canvasWidth, canvasHeight) {
 };
 
 SB.Obstacle.prototype.getBounds = function() {
+    if (this.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) {
+        return null; // Doesn't kill directly, affects ball physics
+    }
     if (this.type === SB.OBSTACLE_TYPES.LASER) {
         if (this.laserPhase === 'active') {
             return { x: 0, y: this.y - 9, width: SB.canvasWidth, height: 18 };

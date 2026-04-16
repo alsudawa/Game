@@ -218,6 +218,22 @@ SB.Game.prototype._updatePlaying = function(dt) {
             continue;
         }
 
+        // Gravity well: apply pull force, no collision
+        if (obs.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) {
+            var wcx = obs.x + obs.radius;
+            var wcy = obs.y + obs.radius;
+            var wdx = wcx - this.ball.x;
+            var wdy = wcy - this.ball.y;
+            var wdist = Math.sqrt(wdx * wdx + wdy * wdy);
+            if (wdist < obs.pullRadius && wdist > 1) {
+                var pullFactor = (1 - wdist / obs.pullRadius);
+                var force = obs.pullStrength * pullFactor * pullFactor * dt;
+                this.ball.vx += (wdx / wdist) * force;
+                this.ball.vy += (wdy / wdist) * force;
+            }
+            continue;
+        }
+
         var obsBounds = obs.getBounds();
         if (!obsBounds) continue;
         var hit = false;
