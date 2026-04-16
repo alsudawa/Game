@@ -19,6 +19,7 @@ SB.Ball = function() {
     this.gravityMult = 1;
     this.blinking = false;
     this.wallHitSide = 0; // -1 left, 1 right, 0 none (consumed per frame)
+    this.bounceGlow = 0; // brief glow pulse on bounce (decays per frame)
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -35,6 +36,7 @@ SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
 
 SB.Ball.prototype.bounce = function(tapX) {
     this.vy = SB.Physics.BOUNCE_IMPULSE;
+    this.bounceGlow = 1.0;
 
     // Directional bounce based on tap position
     if (typeof tapX === 'number') {
@@ -53,6 +55,8 @@ SB.Ball.prototype.update = function(dt) {
 
     this.x += this.vx * dt;
     this.y += this.vy * dt;
+
+    if (this.bounceGlow > 0) this.bounceGlow = Math.max(0, this.bounceGlow - dt * 5);
 
     this.wallHitSide = 0;
     if (this.x - this.radius < 0) {
@@ -108,7 +112,7 @@ SB.Ball.prototype.draw = function(ctx) {
 
     ctx.save();
     ctx.shadowColor = this.glowColor;
-    ctx.shadowBlur = 20 + speedFrac * 15; // brighter glow at high speed
+    ctx.shadowBlur = 20 + speedFrac * 15 + this.bounceGlow * 20;
     ctx.translate(this.x, this.y);
     ctx.scale(stretchX, stretchY);
     ctx.beginPath();

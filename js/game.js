@@ -254,6 +254,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
     if (pe.slow && pe.slowTimer <= 2.0 && pe.slowTimer + dt > 2.0) {
         SB.audio.playPowerupExpiring();
     }
+    // Flash when score multiplier expires
+    if (pe.scoreMult && pe.scoreMultTimer <= dt) {
+        this.screenFlash = 0.06;
+        this.ui.addScorePopup(SB.canvasWidth / 2, 60, 'x2 ENDED', 'rgba(255,213,79,0.6)');
+    }
 
     this.powerupEffects.update(dt);
     this.particles.update(dt);
@@ -617,6 +622,15 @@ SB.Game.prototype._updateZone = function() {
         this.ui.zoneMsg = this.currentZone.name;
         this.ui.zoneMsgTimer = 2.0;
         this.screenFlash = 0.12;
+        // Zone-based trail color tinting
+        var zoneTrails = {
+            CALM: null,
+            RISING: 'rgba(243,156,18,',
+            INTENSE: 'rgba(231,76,60,',
+            EXTREME: 'rgba(155,89,182,'
+        };
+        var zt = zoneTrails[this.currentZone.name];
+        this.ball.trailColor = zt || this.skinManager.getCurrentSkin().trail;
         // Zone transition sound
         if (this.currentZone === SB.ZONES.EXTREME) {
             this.achievements.onReachExtreme();

@@ -4,6 +4,17 @@ SB.UI = function() {
     this.idleBallY = 0;
     this.idleBallPhase = 0;
     this.blinkPhase = 0;
+    // Ambient sparkles for start screen
+    this._sparkles = [];
+    for (var si = 0; si < 12; si++) {
+        this._sparkles.push({
+            x: Math.random(),
+            y: Math.random(),
+            speed: 0.02 + Math.random() * 0.04,
+            size: 1 + Math.random() * 2,
+            phase: Math.random() * Math.PI * 2
+        });
+    }
     this.gameOverAlpha = 0;
     this.scoreCountUp = 0;
     this.font = "-apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif";
@@ -145,6 +156,21 @@ SB.UI.prototype.drawAchievementToast = function(ctx, cw, ch) {
 };
 
 SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, achievements, skinManager, daily) {
+    // Ambient sparkles drifting upward
+    ctx.save();
+    for (var si = 0; si < this._sparkles.length; si++) {
+        var sp = this._sparkles[si];
+        sp.y -= sp.speed * 0.016;
+        sp.phase += 0.03;
+        if (sp.y < -0.05) { sp.y = 1.05; sp.x = Math.random(); }
+        var spAlpha = (Math.sin(sp.phase) + 1) / 2 * 0.4 + 0.1;
+        ctx.beginPath();
+        ctx.arc(sp.x * cw, sp.y * ch, sp.size, 0, SB.TAU);
+        ctx.fillStyle = 'rgba(255,215,0,' + spAlpha.toFixed(2) + ')';
+        ctx.fill();
+    }
+    ctx.restore();
+
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
