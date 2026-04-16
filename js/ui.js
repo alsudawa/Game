@@ -57,7 +57,7 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore) {
     // Subtitle
     ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillText('Tap to bounce. Avoid obstacles. Collect stars.', cw / 2, ch * 0.30);
+    ctx.fillText('Tap left/right to steer. Avoid obstacles. Collect stars.', cw / 2, ch * 0.30);
 
     // Idle ball
     var ballY = ch * 0.45 + this.idleBallY;

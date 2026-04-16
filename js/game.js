@@ -79,7 +79,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
     var slowMult = this.powerupEffects.getSpeedMultiplier();
 
     if (this.input.consumeTap()) {
-        this.ball.bounce();
+        this.ball.bounce(this.input.tapX);
         SB.audio.playBounce();
     }
 

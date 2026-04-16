@@ -20,16 +20,21 @@ SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
     this.trail = [];
 };
 
-SB.Ball.prototype.bounce = function() {
+SB.Ball.prototype.bounce = function(tapX) {
     this.vy = SB.Physics.BOUNCE_IMPULSE;
+
+    // Directional bounce based on tap position
+    if (typeof tapX === 'number') {
+        var screenCenter = SB.canvasWidth / 2;
+        var offset = (tapX - screenCenter) / screenCenter; // -1 to 1
+        this.vx += offset * SB.Physics.HORIZONTAL_KICK;
+    }
 };
 
 SB.Ball.prototype.update = function(dt) {
     this.vy += SB.Physics.GRAVITY * dt * 60;
     this.vy = SB.clamp(this.vy, -SB.Physics.MAX_FALL_SPEED, SB.Physics.MAX_FALL_SPEED);
 
-    var centerX = SB.canvasWidth / 2;
-    this.vx += (centerX - this.x) * SB.Physics.CENTER_PULL * dt;
     this.vx *= SB.Physics.AIR_RESISTANCE;
 
     this.x += this.vx * dt;
