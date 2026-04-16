@@ -73,9 +73,11 @@ SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedM
         }
     } else {
         var roll = Math.random();
-        if (roll < 0.2) {
+        if (roll < 0.15) {
             this._spawnBlade(canvasWidth, canvasHeight, speedMult);
-        } else if (roll < 0.45) {
+        } else if (roll < 0.30) {
+            this._spawnBoomerang(canvasWidth, canvasHeight, speedMult);
+        } else if (roll < 0.50) {
             this._spawnSpike(canvasWidth, canvasHeight, speedMult);
         } else if (roll < 0.65) {
             this._spawnSqueeze(canvasWidth, canvasHeight, speedMult);
@@ -191,6 +193,26 @@ SB.Spawner.prototype._spawnCollectible = function(cw, ch) {
     var y = SB.randRange(ch * 0.1, ch * 0.7);
 
     this.collectiblePool.acquire({ x: x, y: y });
+};
+
+SB.Spawner.prototype._spawnBoomerang = function(cw, ch, speedMult) {
+    var fromLeft = Math.random() < 0.5;
+    var radius = SB.randRange(14, 20);
+    var speed = SB.randRange(2.0, 3.5) * speedMult;
+    var y = SB.randRange(ch * 0.15, ch * 0.75);
+    var travelDist = SB.randRange(cw * 0.4, cw * 0.7);
+
+    this.obstaclePool.acquire({
+        type: SB.OBSTACLE_TYPES.BOOMERANG,
+        x: fromLeft ? -radius * 2 : cw,
+        y: y,
+        width: radius * 2,
+        height: radius * 2,
+        speed: speed,
+        direction: fromLeft ? 1 : -1,
+        radius: radius,
+        travelDist: travelDist
+    });
 };
 
 SB.Spawner.prototype._spawnPowerup = function(cw, ch) {

@@ -18,6 +18,9 @@ SB.Game = function(canvas) {
     this.background = new SB.Background();
     this.ui = new SB.UI();
     this.input = new SB.Input(canvas);
+    this.achievements = new SB.AchievementManager();
+    this.progression = new SB.Progression();
+    this.skinManager = new SB.SkinManager();
     this.score = 0;
     this.scoreTimer = 0;
     this.highScore = 0;
@@ -29,12 +32,26 @@ SB.Game = function(canvas) {
     this.screenFlash = 0;
     this.comboTimer = 0;
     this.comboCount = 0;
+    this.runStars = 0;
+    this.showTutorial = false;
+    this.tutorialTimer = 0;
+    this.xpResult = null;
 };
 
 SB.Game.prototype.init = function() {
     this.highScore = SB.Storage.getHighScore();
     this.background.init(SB.canvasWidth, SB.canvasHeight);
     this.ball.reset(SB.canvasWidth, SB.canvasHeight);
+    this._applySkin();
+    // Show tutorial on first play
+    this.showTutorial = (this.achievements.stats.totalGames === 0);
+};
+
+SB.Game.prototype._applySkin = function() {
+    var skin = this.skinManager.getCurrentSkin();
+    this.ball.coreColor = skin.core;
+    this.ball.glowColor = skin.glow;
+    this.ball.trailColor = skin.trail;
 };
 
 SB.Game.prototype.onResize = function(cw, ch) {
@@ -78,13 +95,22 @@ SB.Game.prototype._updateStart = function(dt) {
 SB.Game.prototype._updatePlaying = function(dt) {
     var slowMult = this.powerupEffects.getSpeedMultiplier();
 
-    if (this.input.consumeTap()) {
+    // Tutorial auto-dismiss
+    if (this.showTutorial) {
+        this.tutorialTimer += dt;
+        if (this.input.consumeTap()) {
+            this.ball.bounce(this.input.tapX);
+            SB.audio.playBounce();
+            if (this.tutorialTimer > 0.5) this.showTutorial = false;
+        }
+    } else if (this.input.consumeTap()) {
         this.ball.bounce(this.input.tapX);
         SB.audio.playBounce();
     }
 
     this.ball.update(dt);
     this.powerupEffects.update(dt);
+    this.achievements.updateRunTime(dt);
 
     var cw = SB.canvasWidth;
     var ch = SB.canvasHeight;
@@ -106,7 +132,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
 
         var obsBounds = obs.getBounds();
         var hit = false;
-        if (obs.type === SB.OBSTACLE_TYPES.BLADE) {
+        if (obs.type === SB.OBSTACLE_TYPES.BLADE || obs.type === SB.OBSTACLE_TYPES.BOOMERANG) {
             hit = SB.circleCircleCollision(ballBounds, obsBounds);
         } else {
             hit = SB.circleRectCollision(ballBounds, obsBounds);
@@ -116,6 +142,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (this.powerupEffects.useShield()) {
                 obs.active = false;
                 this.screenShake = 0.15;
+                this.achievements.onShieldUse();
                 SB.audio.playCollect();
                 continue;
             }
@@ -135,30 +162,25 @@ SB.Game.prototype._updatePlaying = function(dt) {
             continue;
         }
 
-        var colBounds = col.getBounds();
-        var magnetRange = this.powerupEffects.magnet ? 120 : 0;
-        var collected = false;
-
         if (this.powerupEffects.magnet) {
             var dx = this.ball.x - col.x;
             var dy = this.ball.y - col.y;
             var dist = Math.sqrt(dx * dx + dy * dy);
-            if (dist < magnetRange) {
+            if (dist < 120) {
                 col.x += dx * 5 * dt;
                 col.y += dy * 5 * dt;
             }
         }
 
-        if (SB.circleCircleCollision(ballBounds, colBounds)) {
-            collected = true;
-        }
-
-        if (collected) {
+        if (SB.circleCircleCollision(ballBounds, col.getBounds())) {
             col.active = false;
             this.comboTimer = 2.0;
             this.comboCount++;
+            this.runStars++;
             var bonus = col.pointValue * (this.comboCount >= 2 ? 2 : 1);
             this.score += bonus;
+            this.achievements.onStarCollect();
+            this.achievements.onCombo(this.comboCount);
             SB.audio.playCollect();
         }
     }
@@ -177,6 +199,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         if (SB.circleCircleCollision(ballBounds, pu.getBounds())) {
             pu.active = false;
             this.powerupEffects.activate(pu.type);
+            this.achievements.onPowerupCollect();
             SB.audio.playMilestone();
         }
     }
@@ -194,6 +217,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
         SB.audio.playMilestone();
     }
 
+    // Check achievements mid-game
+    this.achievements.checkAll();
+
     if (this.ball.y - this.ball.radius > ch) {
         this._transitionTo(SB.STATES.GAME_OVER);
     }
@@ -201,6 +227,13 @@ SB.Game.prototype._updatePlaying = function(dt) {
 
 SB.Game.prototype._updateGameOver = function(dt) {
     this.gameOverCooldown += dt;
+
+    // Process achievement notifications
+    var notif = this.achievements.popNotification();
+    if (notif) {
+        this.ui.showAchievementToast(notif);
+    }
+
     if (this.input.consumeTap() && this.gameOverCooldown >= this.gameOverCooldownTime) {
         this._transitionTo(SB.STATES.START);
     }
@@ -215,19 +248,27 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.lastMilestone = 0;
         this.comboTimer = 0;
         this.comboCount = 0;
+        this.runStars = 0;
+        this.tutorialTimer = 0;
+        this.xpResult = null;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
+        this._applySkin();
         this.spawner.reset();
         this.powerupEffects.reset();
+        this.achievements.onRunStart();
     } else if (newState === SB.STATES.GAME_OVER) {
         this.screenFlash = 0.15;
         this.isNewHigh = SB.Storage.isNewHighScore(Math.floor(this.score));
         SB.Storage.setHighScore(Math.floor(this.score));
         this.highScore = SB.Storage.getHighScore();
         this.gameOverCooldown = 0;
-        this.ui.resetGameOver(this.score);
+        this.achievements.onRunEnd(this.score);
+        this.xpResult = this.progression.addRunXP(this.score, this.runStars);
+        this.ui.resetGameOver(this.score, this.xpResult, this.progression);
         SB.audio.playGameOver();
     } else if (newState === SB.STATES.START) {
         this.highScore = SB.Storage.getHighScore();
+        this.showTutorial = false;
     }
 };
 
@@ -244,12 +285,15 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
     switch (this.state) {
         case SB.STATES.START:
-            this.ui.drawStartScreen(ctx, cw, ch, this.highScore);
+            this.ui.drawStartScreen(ctx, cw, ch, this.highScore, this.progression, this.achievements);
             break;
 
         case SB.STATES.PLAYING:
             this._renderGameplay(ctx, cw, ch);
             this.ui.drawHUD(ctx, cw, ch, this.score);
+            if (this.showTutorial) {
+                this.ui.drawTutorial(ctx, cw, ch);
+            }
             break;
 
         case SB.STATES.GAME_OVER:
@@ -257,6 +301,9 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
             this.ui.drawGameOver(ctx, cw, ch, this.score, this.highScore, this.isNewHigh);
             break;
     }
+
+    // Achievement toast (renders on top of everything)
+    this.ui.drawAchievementToast(ctx, cw, ch);
 
     if (this.screenFlash > 0) {
         ctx.fillStyle = 'rgba(255, 255, 255, ' + (this.screenFlash / 0.15) * 0.4 + ')';
@@ -284,7 +331,6 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
 
     this.ball.draw(ctx);
 
-    // Draw shield aura around ball
     if (this.powerupEffects.shield) {
         ctx.save();
         var shimmer = Math.sin(Date.now() * 0.005) * 0.15 + 0.35;
@@ -298,7 +344,6 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.restore();
     }
 
-    // Draw magnet field indicator
     if (this.powerupEffects.magnet) {
         ctx.save();
         var magnetAlpha = Math.sin(Date.now() * 0.004) * 0.08 + 0.12;

@@ -3,7 +3,8 @@ window.SB = window.SB || {};
 SB.OBSTACLE_TYPES = {
     PLATFORM: 'platform',
     SPIKE: 'spike',
-    BLADE: 'blade'
+    BLADE: 'blade',
+    BOOMERANG: 'boomerang'
 };
 
 SB.Obstacle = function() {
@@ -22,6 +23,10 @@ SB.Obstacle = function() {
     this.rotation = 0;
     this.rotationSpeed = 0;
     this.radius = 0;
+    this.originX = 0;
+    this.travelDist = 0;
+    this.traveled = 0;
+    this.returning = false;
 };
 
 SB.Obstacle.prototype.init = function(config) {
@@ -40,6 +45,10 @@ SB.Obstacle.prototype.init = function(config) {
     this.rotation = 0;
     this.rotationSpeed = config.rotationSpeed || 3;
     this.radius = config.radius || 18;
+    this.originX = this.x;
+    this.travelDist = config.travelDist || 300;
+    this.traveled = 0;
+    this.returning = false;
 };
 
 SB.Obstacle.prototype.update = function(dt) {
@@ -56,6 +65,15 @@ SB.Obstacle.prototype.update = function(dt) {
     } else if (this.type === SB.OBSTACLE_TYPES.BLADE) {
         this.x += this.speed * this.direction * dt * 60;
         this.rotation += this.rotationSpeed * dt;
+    } else if (this.type === SB.OBSTACLE_TYPES.BOOMERANG) {
+        var moveAmt = this.speed * this.direction * dt * 60;
+        this.x += moveAmt;
+        this.traveled += Math.abs(moveAmt);
+        this.rotation += 5 * dt;
+        if (!this.returning && this.traveled >= this.travelDist) {
+            this.returning = true;
+            this.direction *= -1;
+        }
     }
 };
 
@@ -68,6 +86,8 @@ SB.Obstacle.prototype.draw = function(ctx) {
         this._drawSpike(ctx);
     } else if (this.type === SB.OBSTACLE_TYPES.BLADE) {
         this._drawBlade(ctx);
+    } else if (this.type === SB.OBSTACLE_TYPES.BOOMERANG) {
+        this._drawBoomerang(ctx);
     }
 };
 
@@ -160,6 +180,37 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
     ctx.restore();
 };
 
+SB.Obstacle.prototype._drawBoomerang = function(ctx) {
+    var cx = this.x + this.radius;
+    var cy = this.y + this.radius;
+
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(this.rotation);
+    ctx.shadowColor = 'rgba(255, 152, 0, 0.5)';
+    ctx.shadowBlur = 10;
+
+    // Boomerang shape: curved V
+    ctx.beginPath();
+    ctx.moveTo(-this.radius, -2);
+    ctx.quadraticCurveTo(0, -this.radius * 0.8, this.radius, -2);
+    ctx.quadraticCurveTo(this.radius * 0.6, 2, 0, 4);
+    ctx.quadraticCurveTo(-this.radius * 0.6, 2, -this.radius, -2);
+    ctx.closePath();
+
+    var grad = ctx.createLinearGradient(-this.radius, 0, this.radius, 0);
+    grad.addColorStop(0, '#FF9800');
+    grad.addColorStop(0.5, '#FFC107');
+    grad.addColorStop(1, '#FF9800');
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#E65100';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    ctx.restore();
+};
+
 SB.Obstacle.prototype.isOffScreen = function(canvasWidth, canvasHeight) {
     if (this.type === SB.OBSTACLE_TYPES.BLADE) {
         return this.x + this.radius * 2 < -50 || this.x > canvasWidth + 50 ||
@@ -170,6 +221,9 @@ SB.Obstacle.prototype.isOffScreen = function(canvasWidth, canvasHeight) {
 };
 
 SB.Obstacle.prototype.getBounds = function() {
+    if (this.type === SB.OBSTACLE_TYPES.BOOMERANG) {
+        return { x: this.x + this.radius, y: this.y + this.radius, radius: this.radius * 0.8 };
+    }
     if (this.type === SB.OBSTACLE_TYPES.BLADE) {
         return { x: this.x + this.radius, y: this.y + this.radius, radius: this.radius };
     }

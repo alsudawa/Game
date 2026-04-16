@@ -10,6 +10,7 @@ SB.Ball = function() {
     this.maxTrail = 8;
     this.glowColor = '#FFD700';
     this.coreColor = '#FFFFFF';
+    this.trailColor = 'rgba(255,215,0,';
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -66,7 +67,7 @@ SB.Ball.prototype.draw = function(ctx) {
         var size = this.radius * (0.4 + 0.6 * (i / this.trail.length));
         ctx.beginPath();
         ctx.arc(t.x, t.y, size, 0, SB.TAU);
-        ctx.fillStyle = 'rgba(255, 215, 0, ' + alpha + ')';
+        ctx.fillStyle = this.trailColor + alpha + ')';
         ctx.fill();
     }
 

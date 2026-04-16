@@ -9,6 +9,10 @@ SB.UI = function() {
     this.font = "-apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif";
     this.comboPopups = [];
     this.powerupEffectsRef = null;
+    this.achievementToast = null;
+    this.achievementToastTimer = 0;
+    this.xpResult = null;
+    this.progressionRef = null;
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -20,17 +24,14 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
         this.idleBallY = Math.sin(this.idleBallPhase) * 20;
     }
 
-    // Update combo popups
+    // Combo popups
     for (var i = this.comboPopups.length - 1; i >= 0; i--) {
         var p = this.comboPopups[i];
         p.timer += dt;
         p.y -= 40 * dt;
-        if (p.timer > 1.0) {
-            this.comboPopups.splice(i, 1);
-        }
+        if (p.timer > 1.0) this.comboPopups.splice(i, 1);
     }
 
-    // Add combo popup when combo triggers
     if (comboCount >= 2 && comboTimer > 1.9) {
         this.comboPopups.push({
             text: comboCount + 'x COMBO!',
@@ -39,9 +40,58 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
             timer: 0
         });
     }
+
+    // Achievement toast
+    if (this.achievementToast) {
+        this.achievementToastTimer += dt;
+        if (this.achievementToastTimer > 3.0) {
+            this.achievementToast = null;
+        }
+    }
 };
 
-SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore) {
+SB.UI.prototype.showAchievementToast = function(ach) {
+    this.achievementToast = ach;
+    this.achievementToastTimer = 0;
+};
+
+SB.UI.prototype.drawAchievementToast = function(ctx, cw, ch) {
+    if (!this.achievementToast) return;
+    var t = this.achievementToastTimer;
+    var alpha = t < 0.3 ? t / 0.3 : (t > 2.5 ? 1 - (t - 2.5) / 0.5 : 1);
+    if (alpha <= 0) return;
+
+    var w = Math.min(cw * 0.8, 280);
+    var h = 50;
+    var x = cw / 2 - w / 2;
+    var y = ch * 0.12;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    ctx.fillStyle = 'rgba(0,0,0,0.75)';
+    this._roundRect(ctx, x, y, w, h, 12);
+    ctx.fill();
+
+    ctx.strokeStyle = 'rgba(255,215,0,0.6)';
+    ctx.lineWidth = 1.5;
+    this._roundRect(ctx, x, y, w, h, 12);
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.font = Math.min(cw * 0.05, 20) + 'px ' + this.font;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText(this.achievementToast.icon + ' ' + this.achievementToast.name, x + 14, y + h / 2 - 8);
+
+    ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,215,0,0.9)';
+    ctx.fillText(this.achievementToast.desc, x + 14, y + h / 2 + 12);
+
+    ctx.restore();
+};
+
+SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, achievements) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -51,16 +101,40 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore) {
     ctx.shadowBlur = 20;
     ctx.font = 'bold ' + Math.min(cw * 0.12, 52) + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText('SKY BOUNCE', cw / 2, ch * 0.22);
+    ctx.fillText('SKY BOUNCE', cw / 2, ch * 0.15);
     ctx.restore();
 
-    // Subtitle
-    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.fillText('Tap left/right to steer. Avoid obstacles. Collect stars.', cw / 2, ch * 0.30);
+    // Level & XP bar
+    if (progression) {
+        var lvlY = ch * 0.22;
+        ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillText('Lv.' + progression.level, cw / 2, lvlY);
+
+        var xpInfo = progression.getXPForCurrentLevel();
+        var barW = Math.min(cw * 0.5, 180);
+        var barH = 6;
+        var barX = cw / 2 - barW / 2;
+        var barY = lvlY + 12;
+        var progress = xpInfo.current / xpInfo.required;
+
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(barX, barY, barW, barH);
+        ctx.fillStyle = 'rgba(255,215,0,0.7)';
+        ctx.fillRect(barX, barY, barW * progress, barH);
+
+        ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.fillText(xpInfo.current + ' / ' + xpInfo.required + ' XP', cw / 2, barY + barH + 10);
+    }
+
+    // Subtitle with better powerup description (일반인 피드백 반영)
+    ctx.font = Math.min(cw * 0.032, 13) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.fillText('Tap left/right to steer the ball', cw / 2, ch * 0.34);
 
     // Idle ball
-    var ballY = ch * 0.45 + this.idleBallY;
+    var ballY = ch * 0.44 + this.idleBallY;
     ctx.save();
     ctx.shadowColor = '#FFD700';
     ctx.shadowBlur = 20;
@@ -73,41 +147,81 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore) {
     ctx.fill();
     ctx.restore();
 
-    // Powerup legend
-    var legendY = ch * 0.56;
-    var iconSize = Math.min(cw * 0.025, 10);
-    ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    // Powerup legend with descriptions (일반인 피드백: 설명 부족)
+    var legendY = ch * 0.55;
+    var iconSize = Math.min(cw * 0.02, 8);
+    ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
     var legends = [
-        { color: '#5DADE2', label: 'Shield' },
-        { color: '#AF7AC5', label: 'Magnet' },
-        { color: '#58D68D', label: 'Slow-Mo' }
+        { color: '#5DADE2', label: 'Shield: Block 1 hit' },
+        { color: '#AF7AC5', label: 'Magnet: Pull stars' },
+        { color: '#58D68D', label: 'Slow: Slow enemies' }
     ];
-    var totalW = legends.length * 75;
-    var startX = cw / 2 - totalW / 2;
     for (var i = 0; i < legends.length; i++) {
-        var lx = startX + i * 75 + 10;
+        var ly = legendY + i * 18;
         ctx.beginPath();
-        ctx.arc(lx, legendY, iconSize, 0, SB.TAU);
+        ctx.arc(cw / 2 - 70, ly, iconSize, 0, SB.TAU);
         ctx.fillStyle = legends[i].color;
         ctx.fill();
         ctx.fillStyle = 'rgba(255,255,255,0.4)';
         ctx.textAlign = 'left';
-        ctx.fillText(legends[i].label, lx + iconSize + 4, legendY + 1);
+        ctx.fillText(legends[i].label, cw / 2 - 55, ly + 1);
     }
     ctx.textAlign = 'center';
+
+    // Achievements count
+    if (achievements) {
+        var achCount = achievements.getUnlockedCount();
+        ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,215,0,0.5)';
+        ctx.fillText(achCount + '/' + SB.ACHIEVEMENTS.length + ' Achievements', cw / 2, ch * 0.64);
+    }
 
     // Tap to start
     var blinkAlpha = (Math.sin(this.blinkPhase) + 1) / 2 * 0.7 + 0.3;
     ctx.font = 'bold ' + Math.min(cw * 0.06, 24) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + blinkAlpha + ')';
-    ctx.fillText('TAP TO START', cw / 2, ch * 0.68);
+    ctx.fillText('TAP TO START', cw / 2, ch * 0.74);
 
     if (highScore > 0) {
         ctx.font = Math.min(cw * 0.045, 18) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
-        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.78);
+        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.83);
     }
+};
+
+SB.UI.prototype.drawTutorial = function(ctx, cw, ch) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(0, 0, cw, ch);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Left arrow
+    ctx.font = 'bold ' + Math.min(cw * 0.08, 32) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('\u2190', cw * 0.2, ch * 0.5);
+    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+    ctx.fillText('Tap left', cw * 0.2, ch * 0.5 + 30);
+
+    // Right arrow
+    ctx.font = 'bold ' + Math.min(cw * 0.08, 32) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fillText('\u2192', cw * 0.8, ch * 0.5);
+    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+    ctx.fillText('Tap right', cw * 0.8, ch * 0.5 + 30);
+
+    // Center instruction
+    ctx.font = 'bold ' + Math.min(cw * 0.05, 20) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+    ctx.fillText('Tap anywhere to bounce!', cw / 2, ch * 0.3);
+
+    var blinkAlpha = (Math.sin(this.blinkPhase * 2) + 1) / 2 * 0.5 + 0.5;
+    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,215,0,' + blinkAlpha + ')';
+    ctx.fillText('Tap to continue', cw / 2, ch * 0.7);
+
+    ctx.restore();
 };
 
 SB.UI.prototype.drawHUD = function(ctx, cw, ch, score) {
@@ -137,25 +251,18 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score) {
         ctx.restore();
     }
 
-    // Active powerup indicators
     this._drawPowerupBar(ctx, cw, ch);
 };
 
 SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
     if (!this.powerupEffectsRef) return;
     var effects = this.powerupEffectsRef;
-    var barY = ch - 40;
+    var barY = ch - 45;
     var items = [];
 
-    if (effects.shield) {
-        items.push({ color: '#5DADE2', label: 'SHIELD', timer: effects.shieldTimer, max: effects.shieldDuration });
-    }
-    if (effects.magnet) {
-        items.push({ color: '#AF7AC5', label: 'MAGNET', timer: effects.magnetTimer, max: effects.magnetDuration });
-    }
-    if (effects.slow) {
-        items.push({ color: '#58D68D', label: 'SLOW', timer: effects.slowTimer, max: effects.slowDuration });
-    }
+    if (effects.shield) items.push({ color: '#5DADE2', label: 'SHIELD', timer: effects.shieldTimer, max: effects.shieldDuration });
+    if (effects.magnet) items.push({ color: '#AF7AC5', label: 'MAGNET', timer: effects.magnetTimer, max: effects.magnetDuration });
+    if (effects.slow) items.push({ color: '#58D68D', label: 'SLOW', timer: effects.slowTimer, max: effects.slowDuration });
 
     if (items.length === 0) return;
 
@@ -167,15 +274,10 @@ SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
         var x = startX + i * 80;
         var progress = item.timer / item.max;
 
-        // Background bar
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.fillRect(x, barY, 70, 8);
-
-        // Progress bar
         ctx.fillStyle = item.color;
         ctx.fillRect(x, barY, 70 * progress, 8);
-
-        // Label
         ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
         ctx.fillStyle = item.color;
         ctx.textAlign = 'center';
@@ -184,11 +286,13 @@ SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
     }
 };
 
-SB.UI.prototype.resetGameOver = function(finalScore) {
+SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression) {
     this.gameOverAlpha = 0;
     this.scoreCountUp = 0;
     this._finalScore = finalScore;
     this.comboPopups = [];
+    this.xpResult = xpResult;
+    this.progressionRef = progression;
 };
 
 SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh) {
@@ -200,28 +304,28 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         if (this.scoreCountUp > displayScore) this.scoreCountUp = displayScore;
     }
 
-    ctx.fillStyle = 'rgba(0, 0, 0, ' + (this.gameOverAlpha * 0.65) + ')';
+    ctx.fillStyle = 'rgba(0, 0, 0, ' + (this.gameOverAlpha * 0.7) + ')';
     ctx.fillRect(0, 0, cw, ch);
 
     var alpha = this.gameOverAlpha;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    // GAME OVER title
+    // GAME OVER
     ctx.save();
     ctx.shadowColor = 'rgba(231, 76, 60, 0.5)';
     ctx.shadowBlur = 15;
     ctx.font = 'bold ' + Math.min(cw * 0.1, 42) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
-    ctx.fillText('GAME OVER', cw / 2, ch * 0.25);
+    ctx.fillText('GAME OVER', cw / 2, ch * 0.18);
     ctx.restore();
 
     // Score
     ctx.font = 'bold ' + Math.min(cw * 0.15, 60) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
-    ctx.fillText(Math.floor(this.scoreCountUp), cw / 2, ch * 0.37);
+    ctx.fillText(Math.floor(this.scoreCountUp), cw / 2, ch * 0.29);
 
-    // New best / best
+    // New best or best
     if (isNewHigh && this.scoreCountUp >= displayScore) {
         var pulse = 1 + Math.sin(this.blinkPhase * 2) * 0.1;
         ctx.save();
@@ -229,20 +333,51 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.shadowBlur = 10;
         ctx.font = 'bold ' + Math.min(cw * 0.055, 22) * pulse + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, ' + alpha + ')';
-        ctx.fillText('NEW BEST!', cw / 2, ch * 0.46);
+        ctx.fillText('NEW BEST!', cw / 2, ch * 0.37);
         ctx.restore();
     } else {
         ctx.font = Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, ' + (alpha * 0.7) + ')';
-        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.46);
+        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.37);
+    }
+
+    // XP earned + level
+    if (this.xpResult && this.progressionRef) {
+        var xpY = ch * 0.44;
+        ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.6) + ')';
+        ctx.fillText('+' + this.xpResult.xpEarned + ' XP   |   Lv.' + this.progressionRef.level, cw / 2, xpY);
+
+        if (this.xpResult.leveledUp) {
+            ctx.save();
+            ctx.shadowColor = '#76FF03';
+            ctx.shadowBlur = 8;
+            ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
+            ctx.fillStyle = 'rgba(118, 255, 3, ' + alpha + ')';
+            ctx.fillText('LEVEL UP!', cw / 2, xpY + 22);
+            ctx.restore();
+        }
+
+        // XP bar
+        var xpInfo = this.progressionRef.getXPForCurrentLevel();
+        var barW = Math.min(cw * 0.5, 180);
+        var barH = 5;
+        var barX = cw / 2 - barW / 2;
+        var barYPos = xpY + (this.xpResult.leveledUp ? 38 : 16);
+        var progress = xpInfo.current / xpInfo.required;
+
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(barX, barYPos, barW, barH);
+        ctx.fillStyle = 'rgba(255,215,0,0.7)';
+        ctx.fillRect(barX, barYPos, barW * progress, barH);
     }
 
     if (this.gameOverAlpha >= 0.8) {
         // Share button
         var btnW = Math.min(cw * 0.45, 180);
-        var btnH = 42;
+        var btnH = 40;
         var btnX = cw / 2 - btnW / 2;
-        var btnY = ch * 0.55;
+        var btnY = ch * 0.58;
 
         ctx.fillStyle = 'rgba(52, 152, 219, ' + alpha * 0.9 + ')';
         this._roundRect(ctx, btnX, btnY, btnW, btnH, 10);
@@ -252,14 +387,13 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
         ctx.fillText('SHARE SCORE', cw / 2, btnY + btnH / 2);
 
-        // Store button bounds for click detection
         SB._shareBtn = { x: btnX, y: btnY, w: btnW, h: btnH, score: displayScore };
 
         // Tap to restart
         var blinkAlpha = (Math.sin(this.blinkPhase) + 1) / 2 * 0.6 + 0.3;
         ctx.font = 'bold ' + Math.min(cw * 0.05, 20) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 255, 255, ' + blinkAlpha + ')';
-        ctx.fillText('TAP TO RESTART', cw / 2, ch * 0.70);
+        ctx.fillText('TAP TO RESTART', cw / 2, ch * 0.72);
     }
 };
 
@@ -277,20 +411,13 @@ SB.UI.prototype._roundRect = function(ctx, x, y, w, h, r) {
     ctx.closePath();
 };
 
-// Share handler (called from input)
 SB.shareScore = function(score) {
     var text = 'I scored ' + score + ' in Sky Bounce! Can you beat me?';
     var url = window.location.href;
 
     if (navigator.share) {
         navigator.share({ title: 'Sky Bounce', text: text, url: url }).catch(function() {});
-    } else {
-        // Fallback: copy to clipboard
-        var full = text + ' ' + url;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(full).then(function() {
-                // Could show a "Copied!" toast
-            }).catch(function() {});
-        }
+    } else if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text + ' ' + url).catch(function() {});
     }
 };
