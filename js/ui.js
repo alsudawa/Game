@@ -622,8 +622,15 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     ctx.fillRect(0, 0, cw, ch);
 
     var alpha = this.gameOverAlpha;
+    // Secondary alpha for detail sections (staggered fade-in)
+    var detailAlpha = Math.max(0, (this.gameOverAlpha - 0.4) / 0.6);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
+
+    // Flowing layout: use a Y cursor that adapts to content
+    var gap = Math.min(ch * 0.025, 14);
+    var compact = ch < 500;
+    var y = ch * 0.10;
 
     // GAME OVER
     ctx.save();
@@ -631,13 +638,16 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     ctx.shadowBlur = 15;
     ctx.font = 'bold ' + Math.min(cw * 0.1, 42) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
-    ctx.fillText('GAME OVER', cw / 2, ch * 0.18);
+    ctx.fillText('GAME OVER', cw / 2, y);
     ctx.restore();
+    y += Math.min(cw * 0.1, 42) * 0.6 + gap;
 
     // Score
-    ctx.font = 'bold ' + Math.min(cw * 0.15, 60) + 'px ' + this.font;
+    var scoreFontSize = Math.min(cw * 0.15, 60);
+    ctx.font = 'bold ' + scoreFontSize + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
-    ctx.fillText(Math.floor(this.scoreCountUp), cw / 2, ch * 0.29);
+    ctx.fillText(Math.floor(this.scoreCountUp), cw / 2, y);
+    y += scoreFontSize * 0.5 + gap;
 
     // New best or best
     if (isNewHigh && this.scoreCountUp >= displayScore) {
@@ -647,13 +657,14 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.shadowBlur = 10;
         ctx.font = 'bold ' + Math.min(cw * 0.055, 22) * pulse + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, ' + alpha + ')';
-        ctx.fillText('NEW BEST!', cw / 2, ch * 0.37);
+        ctx.fillText('NEW BEST!', cw / 2, y);
         ctx.restore();
     } else {
         ctx.font = Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, ' + (alpha * 0.7) + ')';
-        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.37);
+        ctx.fillText('BEST: ' + highScore, cw / 2, y);
     }
+    y += gap + 4;
 
     // Run stats
     if (this.runStats) {
@@ -661,72 +672,85 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.45) + ')';
         var statsText = Math.floor(this.runStats.time) + 's  |  ' + this.runStats.stars + ' stars  |  +' + (this.runStats.coins || 0) + ' coins';
         if (this.runStats.maxCombo >= 2) statsText += '  |  ' + this.runStats.maxCombo + 'x combo';
-        ctx.fillText(statsText, cw / 2, ch * 0.40);
+        ctx.fillText(statsText, cw / 2, y);
+        y += gap;
     }
 
-    // Rank
+    // Rank (inline, small)
     if (this.rank && this.rank <= 10) {
-        ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.5) + ')';
-        ctx.fillText('#' + this.rank + ' on leaderboard', cw / 2, ch * 0.41);
+        ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.4) + ')';
+        ctx.fillText('#' + this.rank + ' on leaderboard', cw / 2, y);
+        y += gap;
     }
 
-    // Streak display
-    if (this.streak && this.streak.current >= 2) {
+    // Streak display (staggered fade-in)
+    if (this.streak && this.streak.current >= 2 && detailAlpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = detailAlpha;
         ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,150,50,' + (alpha * 0.8) + ')';
+        ctx.fillStyle = 'rgba(255,150,50,0.8)';
         var streakText = 'Day ' + this.streak.current + ' streak!';
         if (this.streak.current >= this.streak.best && this.streak.current >= 3) {
             streakText += ' (Best!)';
         }
-        ctx.fillText(streakText, cw / 2, ch * 0.435);
+        ctx.fillText(streakText, cw / 2, y);
+        ctx.restore();
+        y += gap;
     }
 
-    // Recent runs mini chart
-    if (this.recentRuns && this.recentRuns.length >= 2) {
-        var chartY = ch * 0.465;
+    // Recent runs mini chart (skip on very compact screens, staggered fade-in)
+    if (!compact && this.recentRuns && this.recentRuns.length >= 2 && detailAlpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = detailAlpha;
         var chartW = Math.min(cw * 0.35, 130);
-        var chartH = 22;
+        var chartH = 20;
         var chartX = cw / 2 - chartW / 2;
         var maxRun = 1;
         for (var ri = 0; ri < this.recentRuns.length; ri++) {
             if (this.recentRuns[ri] > maxRun) maxRun = this.recentRuns[ri];
         }
-        var barGap = 3;
-        var barW = (chartW - (this.recentRuns.length - 1) * barGap) / this.recentRuns.length;
+        var barGap2 = 3;
+        var barW2 = (chartW - (this.recentRuns.length - 1) * barGap2) / this.recentRuns.length;
 
         ctx.font = Math.min(cw * 0.02, 8) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.3) + ')';
-        ctx.fillText('Recent runs', cw / 2, chartY - 6);
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillText('Recent runs', cw / 2, y);
+        y += 8;
 
         for (var rj = 0; rj < this.recentRuns.length; rj++) {
-            var bx = chartX + rj * (barW + barGap);
+            var bx = chartX + rj * (barW2 + barGap2);
             var bh = Math.max(2, (this.recentRuns[rj] / maxRun) * chartH);
-            var by = chartY + chartH - bh;
+            var by = y + chartH - bh;
             var isLast = (rj === this.recentRuns.length - 1);
-            ctx.fillStyle = isLast ? 'rgba(255,215,0,' + (alpha * 0.7) + ')' : 'rgba(255,255,255,' + (alpha * 0.25) + ')';
-            this._roundRect(ctx, bx, by, barW, bh, 2);
+            ctx.fillStyle = isLast ? 'rgba(255,215,0,0.7)' : 'rgba(255,255,255,0.25)';
+            this._roundRect(ctx, bx, by, barW2, bh, 2);
             ctx.fill();
         }
+        ctx.restore();
+        y += chartH + gap;
     }
 
-    // XP earned + level
-    if (this.xpResult && this.progressionRef) {
-        var xpY = ch * 0.50;
+    // XP earned + level (staggered fade-in)
+    if (this.xpResult && this.progressionRef && detailAlpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = detailAlpha;
         var xpText = '+' + this.xpResult.xpEarned + ' XP';
         if (this.dailyJustCompleted) xpText += '  +25 Daily';
-        ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.6) + ')';
-        ctx.fillText(xpText + '   |   Lv.' + this.progressionRef.level, cw / 2, xpY);
+        ctx.font = Math.min(cw * 0.032, 13) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+        ctx.fillText(xpText + '   |   Lv.' + this.progressionRef.level, cw / 2, y);
+        y += gap;
 
         if (this.xpResult.leveledUp) {
             ctx.save();
             ctx.shadowColor = '#76FF03';
             ctx.shadowBlur = 8;
             ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
-            ctx.fillStyle = 'rgba(118, 255, 3, ' + alpha + ')';
-            ctx.fillText('LEVEL UP!', cw / 2, xpY + 22);
+            ctx.fillStyle = '#76FF03';
+            ctx.fillText('LEVEL UP!', cw / 2, y);
             ctx.restore();
+            y += gap + 4;
         }
 
         if (this.dailyJustCompleted) {
@@ -734,52 +758,51 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
             ctx.shadowColor = '#2ecc71';
             ctx.shadowBlur = 8;
             ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
-            ctx.fillStyle = 'rgba(46, 204, 113, ' + alpha + ')';
-            ctx.fillText('DAILY CHALLENGE COMPLETE!', cw / 2, xpY + (this.xpResult.leveledUp ? 42 : 22));
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillText('DAILY CHALLENGE COMPLETE!', cw / 2, y);
             ctx.restore();
+            y += gap + 4;
         }
 
         // XP bar
         var xpInfo = this.progressionRef.getXPForCurrentLevel();
-        var barW = Math.min(cw * 0.5, 180);
-        var barH = 5;
-        var barX = cw / 2 - barW / 2;
-        var barYPos = xpY + (this.xpResult.leveledUp ? 56 : (this.dailyJustCompleted ? 38 : 16));
+        var xpBarW = Math.min(cw * 0.5, 180);
+        var xpBarH = 5;
+        var xpBarX = cw / 2 - xpBarW / 2;
         var progress = xpInfo.current / xpInfo.required;
 
         ctx.fillStyle = 'rgba(255,255,255,0.15)';
-        ctx.fillRect(barX, barYPos, barW, barH);
+        ctx.fillRect(xpBarX, y, xpBarW, xpBarH);
         ctx.fillStyle = 'rgba(255,215,0,0.7)';
-        ctx.fillRect(barX, barYPos, barW * progress, barH);
+        ctx.fillRect(xpBarX, y, xpBarW * progress, xpBarH);
+        ctx.restore();
+        y += xpBarH + gap;
     }
 
     if (this.gameOverAlpha >= 0.8) {
-        // Share button
+        // Buttons: place from bottom up to guarantee they're always visible
         var btnW = Math.min(cw * 0.45, 180);
-        var btnH = 40;
+        var btnH = 38;
         var btnX = cw / 2 - btnW / 2;
-        var btnY = ch * 0.64;
+        var playBtnY = ch - btnH - Math.max(ch * 0.06, 20);
+        var shareBtnY = playBtnY - btnH - 10;
 
+        // Share button
         ctx.fillStyle = 'rgba(52, 152, 219, ' + alpha * 0.9 + ')';
-        this._roundRect(ctx, btnX, btnY, btnW, btnH, 10);
+        this._roundRect(ctx, btnX, shareBtnY, btnW, btnH, 10);
         ctx.fill();
-
         ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
-        ctx.fillText('SHARE SCORE', cw / 2, btnY + btnH / 2);
-
-        SB._shareBtn = { x: btnX, y: btnY, w: btnW, h: btnH, score: displayScore };
+        ctx.fillText('SHARE SCORE', cw / 2, shareBtnY + btnH / 2);
+        SB._shareBtn = { x: btnX, y: shareBtnY, w: btnW, h: btnH, score: displayScore };
 
         // Play Again button
-        var playBtnY = ch * 0.72;
         ctx.fillStyle = 'rgba(46, 204, 113, ' + alpha * 0.85 + ')';
         this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
         ctx.fill();
-
         ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
         ctx.fillText('PLAY AGAIN', cw / 2, playBtnY + btnH / 2);
-
         SB._playAgainBtn = { x: btnX, y: playBtnY, w: btnW, h: btnH };
     }
 };

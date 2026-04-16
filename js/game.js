@@ -293,12 +293,14 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.comboTimer = 2.0;
             this.comboCount++;
             if (this.comboCount > this.runMaxCombo) this.runMaxCombo = this.comboCount;
+            var cv = col.coinValue || 1;
             this.runStars++;
-            this.runCoins++;
-            SB.Storage.addCoins(1);
+            this.runCoins += cv;
+            SB.Storage.addCoins(cv);
             var bonus = col.pointValue * (this.comboCount >= 2 ? 2 : 1) * this.dailyStarMult;
             this.score += bonus;
-            this.ui.addScorePopup(col.x, col.y - 15, '+' + bonus, this.comboCount >= 2 ? '#FF6B6B' : '#FFD700');
+            var popColor = col.type === SB.COLLECTIBLE_TYPES.COIN ? '#FFB300' : (this.comboCount >= 2 ? '#FF6B6B' : '#FFD700');
+            this.ui.addScorePopup(col.x, col.y - 15, '+' + bonus + (cv > 1 ? ' +' + cv + 'c' : ''), popColor);
             this.achievements.onStarCollect();
             this.achievements.onCombo(this.comboCount);
             if (this.comboCount >= 2) {

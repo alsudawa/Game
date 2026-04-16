@@ -1,5 +1,7 @@
 window.SB = window.SB || {};
 
+SB.COLLECTIBLE_TYPES = { STAR: 'star', COIN: 'coin' };
+
 SB.Collectible = function() {
     this.x = 0;
     this.y = 0;
@@ -9,6 +11,13 @@ SB.Collectible = function() {
     this.pulsePhase = 0;
     this.sparkles = [];
     this.pointValue = 5;
+    this.type = SB.COLLECTIBLE_TYPES.STAR;
+    this.coinValue = 1;
+    this.baseY = 0;
+    this.vx = 0;
+    this.sineAmp = 0;
+    this.sineFreq = 0;
+    this.lifetime = 0;
 };
 
 SB.Collectible.prototype.init = function(config) {
@@ -17,15 +26,35 @@ SB.Collectible.prototype.init = function(config) {
     this.active = true;
     this.rotation = 0;
     this.pulsePhase = Math.random() * SB.TAU;
-    this.sparkles = [];
-    for (var i = 0; i < 3; i++) {
-        this.sparkles.push({
-            angle: SB.randRange(0, SB.TAU),
-            dist: SB.randRange(14, 22),
-            speed: SB.randRange(1, 2.5),
-            size: SB.randRange(1, 2.5),
-            phase: SB.randRange(0, SB.TAU)
-        });
+    this.type = config.type || SB.COLLECTIBLE_TYPES.STAR;
+    this.lifetime = 0;
+
+    if (this.type === SB.COLLECTIBLE_TYPES.COIN) {
+        this.pointValue = 3;
+        this.coinValue = 2;
+        this.radius = 9;
+        this.baseY = this.y;
+        this.vx = config.vx || 0;
+        this.sineAmp = config.sineAmp || 30;
+        this.sineFreq = config.sineFreq || 2.5;
+        this.sparkles = [];
+    } else {
+        this.pointValue = 5;
+        this.coinValue = 1;
+        this.radius = 10;
+        this.vx = 0;
+        this.sineAmp = 0;
+        this.sineFreq = 0;
+        this.sparkles = [];
+        for (var i = 0; i < 3; i++) {
+            this.sparkles.push({
+                angle: SB.randRange(0, SB.TAU),
+                dist: SB.randRange(14, 22),
+                speed: SB.randRange(1, 2.5),
+                size: SB.randRange(1, 2.5),
+                phase: SB.randRange(0, SB.TAU)
+            });
+        }
     }
 };
 
@@ -33,6 +62,13 @@ SB.Collectible.prototype.update = function(dt) {
     if (!this.active) return;
     this.rotation += 1.5 * dt;
     this.pulsePhase += 3 * dt;
+    this.lifetime += dt;
+
+    if (this.type === SB.COLLECTIBLE_TYPES.COIN) {
+        this.x += this.vx * dt;
+        this.y = this.baseY + Math.sin(this.lifetime * this.sineFreq) * this.sineAmp;
+    }
+
     for (var i = 0; i < this.sparkles.length; i++) {
         this.sparkles[i].phase += this.sparkles[i].speed * dt;
     }
@@ -40,6 +76,11 @@ SB.Collectible.prototype.update = function(dt) {
 
 SB.Collectible.prototype.draw = function(ctx) {
     if (!this.active) return;
+
+    if (this.type === SB.COLLECTIBLE_TYPES.COIN) {
+        this._drawCoin(ctx);
+        return;
+    }
 
     var pulse = 1 + Math.sin(this.pulsePhase) * 0.15;
     var r = this.radius * pulse;
@@ -86,6 +127,48 @@ SB.Collectible.prototype.draw = function(ctx) {
         ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
         ctx.fill();
     }
+};
+
+SB.Collectible.prototype._drawCoin = function(ctx) {
+    var pulse = 1 + Math.sin(this.pulsePhase) * 0.1;
+    var r = this.radius * pulse;
+    // 3D coin spin effect via horizontal scale
+    var spin = Math.cos(this.lifetime * 3);
+    var scaleX = 0.4 + Math.abs(spin) * 0.6;
+
+    ctx.save();
+    ctx.shadowColor = 'rgba(255, 180, 0, 0.5)';
+    ctx.shadowBlur = 10;
+    ctx.translate(this.x, this.y);
+    ctx.scale(scaleX, 1);
+
+    // Outer ring
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, SB.TAU);
+    var grad = ctx.createRadialGradient(-r * 0.2, -r * 0.2, r * 0.1, 0, 0, r);
+    grad.addColorStop(0, '#FFE066');
+    grad.addColorStop(0.7, '#FFB300');
+    grad.addColorStop(1, '#CC8800');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Inner circle border
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.7, 0, SB.TAU);
+    ctx.strokeStyle = 'rgba(204, 136, 0, 0.4)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Dollar sign (only visible when not edge-on)
+    if (scaleX > 0.5) {
+        ctx.font = 'bold ' + Math.floor(r * 1.1) + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(153, 102, 0, 0.7)';
+        ctx.fillText('$', 0, 0.5);
+    }
+
+    ctx.restore();
 };
 
 SB.Collectible.prototype.getBounds = function() {

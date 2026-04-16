@@ -6,6 +6,7 @@ SB.Spawner = function(obstaclePool, collectiblePool, powerupPool) {
     this.powerupPool = powerupPool;
     this.obstacleTimer = 0;
     this.collectibleTimer = 0;
+    this.coinTimer = 0;
     this.powerupTimer = 0;
     this.difficulty = 0;
     this.extraDifficulty = 0;
@@ -17,6 +18,7 @@ SB.Spawner = function(obstaclePool, collectiblePool, powerupPool) {
 SB.Spawner.prototype.reset = function(veteranBonus) {
     this.obstacleTimer = 0;
     this.collectibleTimer = 0;
+    this.coinTimer = 0;
     this.powerupTimer = 0;
     this.difficulty = 0;
     this.extraDifficulty = 0;
@@ -54,6 +56,16 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
     if (this.collectibleTimer >= 3.0) {
         this.collectibleTimer = 0;
         this._spawnCollectible(canvasWidth, canvasHeight);
+    }
+
+    // Coin spawning (moving coins, appear after score 10)
+    if (score >= 10) {
+        this.coinTimer += dt;
+        var coinInterval = SB.lerp(8, 4.5, d);
+        if (this.coinTimer >= coinInterval) {
+            this.coinTimer = 0;
+            this._spawnCoin(canvasWidth, canvasHeight, speedMultiplier);
+        }
     }
 
     // Powerup spawning (after effective difficulty > 0.1)
@@ -248,4 +260,19 @@ SB.Spawner.prototype._spawnPowerup = function(cw, ch) {
     var y = SB.randRange(ch * 0.15, ch * 0.6);
 
     this.powerupPool.acquire({ x: x, y: y, type: type });
+};
+
+SB.Spawner.prototype._spawnCoin = function(cw, ch, speedMult) {
+    var fromLeft = Math.random() < 0.5;
+    var y = SB.randRange(ch * 0.15, ch * 0.65);
+    var speed = SB.randRange(1.2, 2.2) * speedMult;
+
+    this.collectiblePool.acquire({
+        type: SB.COLLECTIBLE_TYPES.COIN,
+        x: fromLeft ? -15 : cw + 15,
+        y: y,
+        vx: (fromLeft ? 1 : -1) * speed * 40,
+        sineAmp: SB.randRange(20, 45),
+        sineFreq: SB.randRange(2, 3.5)
+    });
 };
