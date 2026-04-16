@@ -244,6 +244,25 @@ SB.Game.prototype._updatePlaying = function(dt) {
     this.ball.comboIntensity = this.comboCount >= 5 ? 1.0 : (this.comboCount >= 3 ? 0.5 : 0);
     this.ball.update(dt);
 
+    // Ground dust when ball is near bottom and falling
+    if (this.ball.y > SB.canvasHeight * 0.85 && this.ball.vy > 200 && Math.random() < 0.3) {
+        this.particles.emit(this.ball.x + SB.randRange(-8, 8), SB.canvasHeight, {
+            count: 2,
+            spread: 3,
+            speedMin: 10,
+            speedMax: 30,
+            lifeMin: 0.2,
+            lifeMax: 0.4,
+            sizeMin: 1,
+            sizeMax: 2,
+            color: '180,180,200',
+            angle: -Math.PI / 2,
+            angleSpread: Math.PI / 3,
+            gravity: -15,
+            friction: 0.9
+        });
+    }
+
     // Wall hit feedback
     if (this.ball.wallHitSide !== 0) {
         var wx = this.ball.wallHitSide < 0 ? 0 : SB.canvasWidth;
@@ -311,6 +330,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
     this.spawner.update(dt * slowMult, this.score, cw, ch);
 
     // --- Obstacles ---
+    this.ball.gravityPullStrength = 0;
     var obstacles = this.obstaclePool.getActive();
     var ballBounds = this.ball.getBounds();
 
@@ -352,6 +372,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 var force = obs.pullStrength * pullFactor * pullFactor * dt;
                 this.ball.vx += (wdx / wdist) * force;
                 this.ball.vy += (wdy / wdist) * force;
+                // Visual stretch toward well
+                if (pullFactor > this.ball.gravityPullStrength) {
+                    this.ball.gravityPullStrength = pullFactor;
+                    this.ball.gravityPullAngle = Math.atan2(wdy, wdx);
+                }
             }
             continue;
         }
@@ -687,6 +712,8 @@ SB.Game.prototype._updateRevive = function(dt) {
                     obs.active = false;
                 }
             }
+            this.particles.emit(this.ball.x, this.ball.y, SB.FX.reviveBurst);
+            this.screenFlash = 0.08;
             SB.audio.startBGM();
             SB.audio.playRevive();
             return;
@@ -915,7 +942,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
         case SB.STATES.PLAYING:
             this._renderGameplay(ctx, cw, ch);
-            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty);
+            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty, this.ball.y);
             // Grace period countdown: 3, 2, 1, GO!
             if (this.spawner.graceTimer < this.spawner.gracePeriod + 0.4 && !this.showTutorial) {
                 var graceLeft = this.spawner.gracePeriod - this.spawner.graceTimer;
@@ -982,7 +1009,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
         case SB.STATES.PAUSED:
             this._renderGameplay(ctx, cw, ch);
-            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty);
+            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty, this.ball.y);
             this.ui.drawPauseScreen(ctx, cw, ch);
             break;
 

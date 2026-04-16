@@ -277,6 +277,19 @@ SB.FX = {
         gravity: -40,
         friction: 0.95
     },
+    reviveBurst: {
+        count: 20,
+        spread: 6,
+        speedMin: 100,
+        speedMax: 280,
+        lifeMin: 0.4,
+        lifeMax: 0.9,
+        sizeMin: 2,
+        sizeMax: 5,
+        color: '46,204,113',
+        gravity: -30,
+        friction: 0.96
+    },
     milestoneFireworkDown: {
         count: 10,
         spread: 4,

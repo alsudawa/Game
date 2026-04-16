@@ -162,18 +162,35 @@ SB.Audio.prototype.playMilestone = function() {
 SB.Audio.prototype.playCombo = function(count) {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;
-    var baseFreq = 500 + Math.min(count, 8) * 120;
+    // Musical scale: ascending notes per combo count (C major pentatonic)
+    var scale = [523, 587, 659, 784, 880, 1047, 1175, 1319];
+    var noteIdx = Math.min(count - 2, scale.length - 1);
+    var freq = scale[noteIdx];
     var osc = this.ctx.createOscillator();
     var gain = this.ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.setValueAtTime(baseFreq, now);
-    osc.frequency.linearRampToValueAtTime(baseFreq * 1.4, now + 0.08);
-    gain.gain.setValueAtTime(0.18, now);
+    osc.frequency.setValueAtTime(freq, now);
+    osc.frequency.linearRampToValueAtTime(freq * 1.2, now + 0.06);
+    var vol = Math.min(0.18 + count * 0.01, 0.25);
+    gain.gain.setValueAtTime(vol, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
     osc.connect(gain);
     gain.connect(this.masterGain);
     osc.start(now);
     osc.stop(now + 0.12);
+    // Harmony note at high combos (5+)
+    if (count >= 5) {
+        var osc2 = this.ctx.createOscillator();
+        var gain2 = this.ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.value = freq * 1.5;
+        gain2.gain.setValueAtTime(0.08, now + 0.02);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+        osc2.connect(gain2);
+        gain2.connect(this.masterGain);
+        osc2.start(now + 0.02);
+        osc2.stop(now + 0.1);
+    }
 };
 
 SB.Audio.prototype.playLevelUp = function() {

@@ -23,6 +23,8 @@ SB.Ball = function() {
     this.wallSquash = 0; // brief horizontal squash on wall hit
     this.bounceSquash = 0; // brief vertical squash on bounce landing
     this.comboIntensity = 0; // 0-1 based on active combo count
+    this.gravityPullAngle = 0;
+    this.gravityPullStrength = 0;
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -133,6 +135,13 @@ SB.Ball.prototype.draw = function(ctx) {
     ctx.shadowColor = this.glowColor;
     ctx.shadowBlur = 20 + speedFrac * 15 + this.bounceGlow * 20;
     ctx.translate(this.x, this.y);
+    // Gravity well pull distortion
+    if (this.gravityPullStrength > 0) {
+        ctx.rotate(this.gravityPullAngle);
+        var gpStretch = 1 + this.gravityPullStrength * 0.15;
+        ctx.scale(gpStretch, 1 / gpStretch);
+        ctx.rotate(-this.gravityPullAngle);
+    }
     ctx.scale(stretchX, stretchY);
     ctx.beginPath();
     ctx.arc(0, 0, this.radius, 0, SB.TAU);
