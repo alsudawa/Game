@@ -5,6 +5,7 @@ SB.Background = function() {
     this.clouds = [];
     this.particles = [];
     this.shootingStars = [];
+    this.speedLines = [];
     this.colorPhase = 0;
     this._cachedGrad = null;
     this._cachedD = -1;
@@ -79,6 +80,29 @@ SB.Background.prototype.update = function(dt, difficulty) {
         if (p.x < -10) p.x = cw + 10;
         if (p.x > cw + 10) p.x = -10;
     }
+
+    // Speed lines at higher difficulty (background streaks conveying speed)
+    if (difficulty > 0.4) {
+        var slSpawnRate = (difficulty - 0.4) / 0.6 * 0.8; // 0 at d=0.4, 0.8 at d=1.0
+        if (Math.random() < slSpawnRate * dt * 60) {
+            this.speedLines.push({
+                x: SB.randRange(-20, cw + 20),
+                y: -5,
+                len: SB.randRange(15, 40 + difficulty * 30),
+                speed: SB.randRange(400, 800) * (0.6 + difficulty * 0.4),
+                alpha: SB.randRange(0.03, 0.08 + difficulty * 0.04)
+            });
+        }
+    }
+    var slw = 0;
+    for (var sl = 0; sl < this.speedLines.length; sl++) {
+        var line = this.speedLines[sl];
+        line.y += line.speed * dt;
+        if (line.y - line.len < ch + 10) {
+            this.speedLines[slw++] = line;
+        }
+    }
+    this.speedLines.length = slw;
 
     // Shooting stars at higher difficulty
     if (difficulty > 0.3 && Math.random() < 0.004 * dt * 60) {
@@ -201,6 +225,22 @@ SB.Background.prototype.draw = function(ctx, cw, ch) {
         ctx.moveTo(ss.x, ss.y);
         ctx.lineTo(ss.x - ss.vx * 0.04, ss.y - ss.vy * 0.04);
         ctx.stroke();
+        ctx.restore();
+    }
+
+    // Speed lines (vertical streaks at high difficulty)
+    if (this.speedLines.length > 0) {
+        ctx.save();
+        ctx.lineWidth = 1;
+        ctx.lineCap = 'round';
+        for (var sl = 0; sl < this.speedLines.length; sl++) {
+            var line = this.speedLines[sl];
+            ctx.strokeStyle = 'rgba(255,255,255,' + line.alpha.toFixed(3) + ')';
+            ctx.beginPath();
+            ctx.moveTo(line.x, line.y);
+            ctx.lineTo(line.x, line.y - line.len);
+            ctx.stroke();
+        }
         ctx.restore();
     }
 

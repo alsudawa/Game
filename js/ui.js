@@ -45,11 +45,15 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
     this.comboPopups.length = writeIdx;
 
     if (comboCount >= 2 && comboTimer > 1.9 && this.comboPopups.length < 6) {
+        var comboColor = comboCount >= 7 ? '#FF0044' : (comboCount >= 5 ? '#FF4444' : (comboCount >= 3 ? '#FF8C42' : '#FFD700'));
+        var comboSize = comboCount >= 7 ? 1.6 : (comboCount >= 5 ? 1.4 : (comboCount >= 3 ? 1.2 : 1.0));
         this.comboPopups.push({
             text: comboCount + 'x COMBO!',
             x: SB.canvasWidth / 2,
             y: SB.canvasHeight * 0.35,
-            timer: 0
+            timer: 0,
+            color: comboColor,
+            sizeScale: comboSize
         });
     }
 
@@ -560,17 +564,20 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     }
     ctx.restore();
 
-    // Combo popups
+    // Combo popups (escalating visual intensity)
     for (var i = 0; i < this.comboPopups.length; i++) {
         var p = this.comboPopups[i];
         var alpha = 1 - p.timer;
+        var baseSize = 18 * (p.sizeScale || 1);
         var scale = 1 + p.timer * 0.3;
+        // Burst effect on spawn: quick scale-up then settle
+        if (p.timer < 0.08) scale = 1 + (p.timer / 0.08) * 0.5;
         ctx.save();
         ctx.globalAlpha = alpha;
-        ctx.font = 'bold ' + Math.floor(18 * scale) + 'px ' + this.font;
-        ctx.fillStyle = '#FFD700';
-        ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
-        ctx.shadowBlur = 8;
+        ctx.font = 'bold ' + Math.floor(baseSize * scale) + 'px ' + this.font;
+        ctx.fillStyle = p.color || '#FFD700';
+        ctx.shadowColor = p.color || 'rgba(255, 215, 0, 0.5)';
+        ctx.shadowBlur = 8 + (p.sizeScale || 1) * 4;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(p.text, p.x, p.y);

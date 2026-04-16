@@ -388,6 +388,18 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 SB.audio.playCoinCollect();
             } else if (this.comboCount >= 2) {
                 SB.audio.playCombo(this.comboCount);
+                // Escalating combo feedback
+                if (this.comboCount >= 5) {
+                    this.screenFlash = 0.08;
+                    this.screenShake = 0.12;
+                    this.screenShakeIntensity = 5;
+                    this.particles.emit(col.x, col.y, SB.FX.comboExplosion);
+                    if (navigator.vibrate) navigator.vibrate(25);
+                } else if (this.comboCount >= 3) {
+                    this.screenShake = 0.06;
+                    this.screenShakeIntensity = 3;
+                    if (navigator.vibrate) navigator.vibrate(12);
+                }
             } else {
                 SB.audio.playCollect();
             }
@@ -493,6 +505,9 @@ SB.Game.prototype._updatePaused = function(dt) {
 SB.Game.prototype._handleDeath = function() {
     // Haptic feedback on death
     if (navigator.vibrate) navigator.vibrate(80);
+    // Strong death shake during slow-mo
+    this.screenShake = 0.4;
+    this.screenShakeIntensity = 14;
     // Trigger slow-mo death sequence
     this.deathSlowMo = 0.3;
     var coins = SB.Storage.getCoins();
@@ -740,9 +755,12 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
     if (this.screenShake > 0) {
         var shakeT = this.screenShake / 0.3;
-        var intensity = this.screenShakeIntensity * shakeT;
-        var shakeX = (Math.random() - 0.5) * intensity;
-        var shakeY = (Math.random() - 0.5) * intensity;
+        // Decaying shake with faster oscillation at start
+        var decay = shakeT * shakeT; // quadratic decay for punchier feel
+        var intensity = this.screenShakeIntensity * decay;
+        var freq = (1 - shakeT) * 30 + 10; // faster vibration as shake ages
+        var shakeX = Math.sin(freq * this.screenShake) * intensity * (Math.random() * 0.4 + 0.6);
+        var shakeY = Math.cos(freq * this.screenShake * 1.3) * intensity * (Math.random() * 0.4 + 0.6);
         ctx.translate(shakeX, shakeY);
     }
 
@@ -954,29 +972,60 @@ SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
             ocx = obs.x + (obs.width || 0) / 2;
             ocy = obs.y + (obs.height || 0) / 2;
         }
-        // Only warn for obstacles just off-screen
+
+        // Left/right edge warnings
         var fromLeft = (ocx < 0 && ocx > -margin);
         var fromRight = (ocx > cw && ocx < cw + margin);
-        if (!fromLeft && !fromRight) continue;
-        if (ocy < 0 || ocy > ch) continue;
-
-        var arrowX = fromLeft ? 8 : cw - 8;
-        var distFrac = fromLeft ? (1 + ocx / margin) : (1 - (ocx - cw) / margin);
-        var arrowAlpha = distFrac * 0.6;
-
-        ctx.fillStyle = 'rgba(231,76,60,' + arrowAlpha.toFixed(2) + ')';
-        ctx.beginPath();
-        if (fromLeft) {
-            ctx.moveTo(arrowX + 6, ocy - 5);
-            ctx.lineTo(arrowX, ocy);
-            ctx.lineTo(arrowX + 6, ocy + 5);
-        } else {
-            ctx.moveTo(arrowX - 6, ocy - 5);
-            ctx.lineTo(arrowX, ocy);
-            ctx.lineTo(arrowX - 6, ocy + 5);
+        if (fromLeft || fromRight) {
+            if (ocy >= 0 && ocy <= ch) {
+                var arrowX = fromLeft ? 8 : cw - 8;
+                var distFrac = fromLeft ? (1 + ocx / margin) : (1 - (ocx - cw) / margin);
+                var arrowAlpha = distFrac * 0.6;
+                ctx.fillStyle = 'rgba(231,76,60,' + arrowAlpha.toFixed(2) + ')';
+                ctx.beginPath();
+                if (fromLeft) {
+                    ctx.moveTo(arrowX + 6, ocy - 5);
+                    ctx.lineTo(arrowX, ocy);
+                    ctx.lineTo(arrowX + 6, ocy + 5);
+                } else {
+                    ctx.moveTo(arrowX - 6, ocy - 5);
+                    ctx.lineTo(arrowX, ocy);
+                    ctx.lineTo(arrowX - 6, ocy + 5);
+                }
+                ctx.closePath();
+                ctx.fill();
+            }
         }
-        ctx.closePath();
-        ctx.fill();
+
+        // Top edge warnings (obstacle approaching from above)
+        var fromTop = (ocy < 0 && ocy > -margin);
+        if (fromTop && ocx >= 0 && ocx <= cw) {
+            var arrowY = 8;
+            var topFrac = (1 + ocy / margin);
+            var topAlpha = topFrac * 0.5;
+            ctx.fillStyle = 'rgba(231,76,60,' + topAlpha.toFixed(2) + ')';
+            ctx.beginPath();
+            ctx.moveTo(ocx - 5, arrowY + 6);
+            ctx.lineTo(ocx, arrowY);
+            ctx.lineTo(ocx + 5, arrowY + 6);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        // Bottom edge warnings (obstacle approaching from below - rare but possible)
+        var fromBottom = (ocy > ch && ocy < ch + margin);
+        if (fromBottom && ocx >= 0 && ocx <= cw) {
+            var bArrowY = ch - 8;
+            var botFrac = (1 - (ocy - ch) / margin);
+            var botAlpha = botFrac * 0.5;
+            ctx.fillStyle = 'rgba(231,76,60,' + botAlpha.toFixed(2) + ')';
+            ctx.beginPath();
+            ctx.moveTo(ocx - 5, bArrowY - 6);
+            ctx.lineTo(ocx, bArrowY);
+            ctx.lineTo(ocx + 5, bArrowY - 6);
+            ctx.closePath();
+            ctx.fill();
+        }
     }
     ctx.restore();
 };

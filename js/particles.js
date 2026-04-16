@@ -203,5 +203,18 @@ SB.FX = {
         color: '255,180,0',
         gravity: 80,
         friction: 0.96
+    },
+    comboExplosion: {
+        count: 18,
+        spread: 6,
+        speedMin: 100,
+        speedMax: 300,
+        lifeMin: 0.3,
+        lifeMax: 0.7,
+        sizeMin: 2,
+        sizeMax: 5,
+        color: '255,140,66',
+        gravity: 80,
+        friction: 0.96
     }
 };
