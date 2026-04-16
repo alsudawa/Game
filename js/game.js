@@ -356,13 +356,15 @@ SB.Game.prototype._updateRevive = function(dt) {
             this.ball.y = SB.canvasHeight * 0.4;
             this.ball.vy = SB.Physics.BOUNCE_IMPULSE * 0.5;
             this.ball.vx = 0;
-            // Clear nearby obstacles
+            // Clear nearby obstacles (handle both rect and circular types)
             var obstacles = this.obstaclePool.getActive();
             for (var i = 0; i < obstacles.length; i++) {
                 var obs = obstacles[i];
-                var dx = this.ball.x - (obs.x + obs.width / 2);
-                var dy = this.ball.y - (obs.y + obs.height / 2);
-                if (Math.sqrt(dx * dx + dy * dy) < 150) {
+                var ocx = obs.radius ? obs.x + (obs.radius || 0) : obs.x + (obs.width || 0) / 2;
+                var ocy = obs.radius ? obs.y + (obs.radius || 0) : obs.y + (obs.height || 0) / 2;
+                var dx = this.ball.x - ocx;
+                var dy = this.ball.y - ocy;
+                if (dx * dx + dy * dy < 22500) { // 150^2
                     obs.active = false;
                 }
             }
@@ -458,6 +460,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.achievements.onRunStart();
         SB._skinBtns = null;
         SB._achBtn = null;
+        SB._muteBtn = null;
         SB._reviveBtn = null;
         SB._reviveBtnTapped = null;
         SB.audio.startBGM();
@@ -529,14 +532,11 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
             if (this.showTutorial) {
                 this.ui.drawTutorial(ctx, cw, ch, this.tutorialStep);
             }
-            // Danger indicator: red vignette when ball in bottom 25%
+            // Danger indicator: red tint when ball in bottom 25%
             if (this.ball.y > ch * 0.75) {
-                var dangerAlpha = ((this.ball.y - ch * 0.75) / (ch * 0.25)) * 0.3;
-                var vGrad = ctx.createLinearGradient(0, ch, 0, ch * 0.5);
-                vGrad.addColorStop(0, 'rgba(231, 76, 60, ' + dangerAlpha.toFixed(2) + ')');
-                vGrad.addColorStop(1, 'rgba(231, 76, 60, 0)');
-                ctx.fillStyle = vGrad;
-                ctx.fillRect(0, ch * 0.5, cw, ch * 0.5);
+                var dangerAlpha = ((this.ball.y - ch * 0.75) / (ch * 0.25)) * 0.25;
+                ctx.fillStyle = 'rgba(231, 76, 60, ' + dangerAlpha.toFixed(2) + ')';
+                ctx.fillRect(0, ch * 0.6, cw, ch * 0.4);
             }
             break;
 

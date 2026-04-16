@@ -28,15 +28,19 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
         this.idleBallY = Math.sin(this.idleBallPhase) * 20;
     }
 
-    // Combo popups
-    for (var i = this.comboPopups.length - 1; i >= 0; i--) {
+    // Combo popups (swap-and-pop to avoid splice in hot loop)
+    var writeIdx = 0;
+    for (var i = 0; i < this.comboPopups.length; i++) {
         var p = this.comboPopups[i];
         p.timer += dt;
         p.y -= 40 * dt;
-        if (p.timer > 1.0) this.comboPopups.splice(i, 1);
+        if (p.timer <= 1.0) {
+            this.comboPopups[writeIdx++] = p;
+        }
     }
+    this.comboPopups.length = writeIdx;
 
-    if (comboCount >= 2 && comboTimer > 1.9) {
+    if (comboCount >= 2 && comboTimer > 1.9 && this.comboPopups.length < 6) {
         this.comboPopups.push({
             text: comboCount + 'x COMBO!',
             x: SB.canvasWidth / 2,
