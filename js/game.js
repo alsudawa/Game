@@ -386,6 +386,16 @@ SB.Game.prototype._updatePlaying = function(dt) {
     if (currentMilestone > this.lastMilestone) {
         this.lastMilestone = currentMilestone;
         SB.audio.playMilestone();
+        // Special celebrations at key milestones
+        var milestoneScore = currentMilestone * 10;
+        if (milestoneScore === 25 || milestoneScore === 50 || milestoneScore === 100 || milestoneScore === 200) {
+            this.screenFlash = 0.1;
+            this.particles.emit(cw / 2, ch * 0.3, SB.FX.starCollect);
+            this.particles.emit(cw / 2, ch * 0.3, SB.FX.starCollect);
+            this.ui.zoneMsg = milestoneScore + '!';
+            this.ui.zoneMsgTimer = 1.5;
+            if (navigator.vibrate) navigator.vibrate(30);
+        }
     }
 
     // Update BGM intensity with difficulty

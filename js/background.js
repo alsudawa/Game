@@ -108,14 +108,47 @@ SB.Background.prototype.draw = function(ctx, cw, ch) {
     var d = this.colorPhase;
 
     // Cache background gradient (only rebuild when difficulty or height changes)
-    var quantD = Math.floor(d * 50) / 50; // quantize to avoid thrashing
+    // Zone-based sky: CALM(deep blue) > RISING(sunset orange) > INTENSE(blood red) > EXTREME(deep purple)
+    var quantD = Math.floor(d * 50) / 50;
     if (!this._cachedGrad || quantD !== this._cachedD || ch !== this._cachedH) {
-        var topR = Math.floor(SB.lerp(15, 40, d));
-        var topG = Math.floor(SB.lerp(12, 10, d));
-        var topB = Math.floor(SB.lerp(41, 60, d));
-        var botR = Math.floor(SB.lerp(30, 233, d));
-        var botG = Math.floor(SB.lerp(50, 100, d));
-        var botB = Math.floor(SB.lerp(80, 67, d));
+        var topR, topG, topB, botR, botG, botB;
+        if (d < 0.3) {
+            // CALM: deep navy to dark blue
+            var t = d / 0.3;
+            topR = Math.floor(SB.lerp(10, 25, t));
+            topG = Math.floor(SB.lerp(10, 15, t));
+            topB = Math.floor(SB.lerp(35, 50, t));
+            botR = Math.floor(SB.lerp(20, 50, t));
+            botG = Math.floor(SB.lerp(35, 60, t));
+            botB = Math.floor(SB.lerp(70, 90, t));
+        } else if (d < 0.5) {
+            // RISING: dark blue to sunset orange
+            var t2 = (d - 0.3) / 0.2;
+            topR = Math.floor(SB.lerp(25, 60, t2));
+            topG = Math.floor(SB.lerp(15, 20, t2));
+            topB = Math.floor(SB.lerp(50, 45, t2));
+            botR = Math.floor(SB.lerp(50, 200, t2));
+            botG = Math.floor(SB.lerp(60, 100, t2));
+            botB = Math.floor(SB.lerp(90, 50, t2));
+        } else if (d < 0.8) {
+            // INTENSE: sunset to blood red
+            var t3 = (d - 0.5) / 0.3;
+            topR = Math.floor(SB.lerp(60, 50, t3));
+            topG = Math.floor(SB.lerp(20, 10, t3));
+            topB = Math.floor(SB.lerp(45, 40, t3));
+            botR = Math.floor(SB.lerp(200, 180, t3));
+            botG = Math.floor(SB.lerp(100, 50, t3));
+            botB = Math.floor(SB.lerp(50, 40, t3));
+        } else {
+            // EXTREME: blood red to deep purple
+            var t4 = (d - 0.8) / 0.2;
+            topR = Math.floor(SB.lerp(50, 40, t4));
+            topG = Math.floor(SB.lerp(10, 5, t4));
+            topB = Math.floor(SB.lerp(40, 60, t4));
+            botR = Math.floor(SB.lerp(180, 120, t4));
+            botG = Math.floor(SB.lerp(50, 30, t4));
+            botB = Math.floor(SB.lerp(40, 100, t4));
+        }
 
         this._cachedGrad = ctx.createLinearGradient(0, 0, 0, ch);
         this._cachedGrad.addColorStop(0, 'rgb(' + topR + ',' + topG + ',' + topB + ')');
