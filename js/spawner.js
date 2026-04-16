@@ -41,7 +41,7 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
     var d = Math.min(this.difficulty + this.veteranBonus, 1.0);
 
     var spawnInterval = SB.lerp(1.8, 0.7, d) - this.extraDifficulty * 0.25;
-    spawnInterval = Math.max(spawnInterval, 0.35);
+    spawnInterval = Math.max(spawnInterval, 0.45);
     var speedMultiplier = SB.lerp(1.0, 2.5, d) + this.extraDifficulty * 1.0;
 
     if (this.graceTimer > this.gracePeriod) {
@@ -178,7 +178,9 @@ SB.Spawner.prototype._spawnBlade = function(cw, ch, speedMult) {
 
 SB.Spawner.prototype._spawnSqueeze = function(cw, ch, speedMult) {
     var y = SB.randRange(ch * 0.2, ch * 0.7);
-    var gapSize = Math.max(60, 80 - this.difficulty * 20);
+    // Minimum gap = 4x ball radius for safe passage
+    var minGap = 56;
+    var gapSize = Math.max(minGap, 80 - this.difficulty * 20);
     var gapCenter = SB.randRange(cw * 0.3, cw * 0.7);
     var speed = SB.randRange(1.5, 2.5) * speedMult;
 
@@ -347,7 +349,9 @@ SB.Spawner.prototype._spawnPincer = function(cw, ch, speedMult) {
 SB.Spawner.prototype._spawnCorridor = function(cw, ch, speedMult) {
     // Two vertical stacks of platforms creating a narrow corridor to fly through
     var gapCenter = SB.randRange(ch * 0.25, ch * 0.65);
-    var gapSize = Math.max(70, 100 - this.difficulty * 30);
+    // Minimum gap = 5x ball radius for comfortable passage
+    var minGap = 70;
+    var gapSize = Math.max(minGap, 100 - this.difficulty * 30);
     var fromLeft = Math.random() < 0.5;
     var speed = SB.randRange(1.0, 2.0) * speedMult;
     var w = SB.randRange(60, 90) * (this.dailySizeMult || 1);

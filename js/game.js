@@ -436,7 +436,18 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (pu.type === SB.POWERUP_TYPES.SCORE_MULT) {
                 this.achievements.onScoreMultUse();
             }
-            SB.audio.playMilestone();
+            // Type-specific pickup sounds
+            if (pu.type === SB.POWERUP_TYPES.SHIELD) {
+                SB.audio.playPowerupShield();
+            } else if (pu.type === SB.POWERUP_TYPES.MAGNET) {
+                SB.audio.playPowerupMagnet();
+            } else if (pu.type === SB.POWERUP_TYPES.SLOW) {
+                SB.audio.playPowerupSlow();
+            } else if (pu.type === SB.POWERUP_TYPES.SCORE_MULT) {
+                SB.audio.playPowerupScoreMult();
+            } else {
+                SB.audio.playMilestone();
+            }
         }
     }
 
@@ -784,26 +795,41 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
         case SB.STATES.PLAYING:
             this._renderGameplay(ctx, cw, ch);
             this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty);
-            // Grace period "GET READY" indicator
-            if (this.spawner.graceTimer < this.spawner.gracePeriod && !this.showTutorial) {
+            // Grace period countdown: 3, 2, 1, GO!
+            if (this.spawner.graceTimer < this.spawner.gracePeriod + 0.4 && !this.showTutorial) {
                 var graceLeft = this.spawner.gracePeriod - this.spawner.graceTimer;
-                var graceAlpha = Math.min(graceLeft, 1);
+                var graceAlpha = graceLeft > 0 ? Math.min(graceLeft + 0.3, 1) : Math.max(0, 1 - (this.spawner.graceTimer - this.spawner.gracePeriod) / 0.4);
                 ctx.save();
                 ctx.globalAlpha = graceAlpha;
                 ctx.textAlign = 'center';
                 ctx.textBaseline = 'middle';
-                ctx.font = 'bold ' + Math.min(cw * 0.05, 20) + 'px ' + this.ui.font;
-                ctx.fillStyle = '#5DADE2';
                 ctx.shadowColor = '#5DADE2';
-                ctx.shadowBlur = 10;
-                ctx.fillText('GET READY', cw / 2, ch * 0.28);
-                // Shrinking circle countdown
-                var countR = 16 * (graceLeft / this.spawner.gracePeriod);
-                ctx.beginPath();
-                ctx.arc(cw / 2, ch * 0.33, countR, 0, SB.TAU);
-                ctx.strokeStyle = 'rgba(93,173,226,0.5)';
-                ctx.lineWidth = 2;
-                ctx.stroke();
+                ctx.shadowBlur = 12;
+
+                if (graceLeft > 0) {
+                    var countNum = Math.ceil(graceLeft);
+                    var countFrac = graceLeft - Math.floor(graceLeft);
+                    // Number scales up then settles
+                    var countScale = countFrac > 0.7 ? 1 + (countFrac - 0.7) / 0.3 * 0.3 : 1.3 - (0.7 - countFrac) / 0.7 * 0.3;
+                    ctx.font = 'bold ' + Math.floor(Math.min(cw * 0.12, 48) * countScale) + 'px ' + this.ui.font;
+                    ctx.fillStyle = '#5DADE2';
+                    ctx.fillText(countNum, cw / 2, ch * 0.28);
+                    // Expanding ring per number
+                    var ringR = 20 + (1 - countFrac) * 20;
+                    var ringAlpha = countFrac * 0.4;
+                    ctx.beginPath();
+                    ctx.arc(cw / 2, ch * 0.28, ringR, 0, SB.TAU);
+                    ctx.strokeStyle = 'rgba(93,173,226,' + ringAlpha.toFixed(2) + ')';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else {
+                    // "GO!" burst
+                    var goScale = 1.2 + (this.spawner.graceTimer - this.spawner.gracePeriod) / 0.4 * 0.3;
+                    ctx.font = 'bold ' + Math.floor(Math.min(cw * 0.14, 56) * goScale) + 'px ' + this.ui.font;
+                    ctx.fillStyle = '#2ECC71';
+                    ctx.shadowColor = '#2ECC71';
+                    ctx.fillText('GO!', cw / 2, ch * 0.28);
+                }
                 ctx.restore();
             }
             if (this.showTutorial) {

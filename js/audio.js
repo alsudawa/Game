@@ -292,6 +292,78 @@ SB.Audio.prototype.playPerfectBounce = function() {
     osc2.stop(now + 0.18);
 };
 
+SB.Audio.prototype.playPowerupShield = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    // Bright rising tone with a "shield deploy" feel
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(400, now);
+    osc.frequency.linearRampToValueAtTime(900, now + 0.12);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.18);
+};
+
+SB.Audio.prototype.playPowerupMagnet = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    // Deep hum with slight wobble
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(220, now);
+    osc.frequency.linearRampToValueAtTime(440, now + 0.1);
+    osc.frequency.linearRampToValueAtTime(330, now + 0.2);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.25);
+};
+
+SB.Audio.prototype.playPowerupSlow = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    // Descending tone (slowing down feel)
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.linearRampToValueAtTime(300, now + 0.2);
+    gain.gain.setValueAtTime(0.14, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.25);
+};
+
+SB.Audio.prototype.playPowerupScoreMult = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    // Double chime (x2 feeling)
+    var notes = [660, 880];
+    for (var i = 0; i < notes.length; i++) {
+        var osc = this.ctx.createOscillator();
+        var gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = notes[i];
+        var t = now + i * 0.06;
+        gain.gain.setValueAtTime(0.16, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.12);
+    }
+};
+
 SB.Audio.prototype.playRevive = function() {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;

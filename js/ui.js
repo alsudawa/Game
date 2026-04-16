@@ -523,16 +523,19 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.fillText(Math.floor(score), cw / 2, 20);
 
-    // Score multiplier badge
+    // Score multiplier badge with countdown
     if (this.powerupEffectsRef && this.powerupEffectsRef.scoreMult) {
         var smPulse = 0.8 + Math.sin((SB.frameTime || 0) * 0.006) * 0.2;
+        var smSec = Math.ceil(this.powerupEffectsRef.scoreMultTimer);
+        // Flash faster in last 2 seconds
+        if (smSec <= 2) smPulse = 0.5 + Math.sin((SB.frameTime || 0) * 0.015) * 0.5;
         ctx.save();
         ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,213,79,' + smPulse.toFixed(2) + ')';
         ctx.shadowColor = '#FFD54F';
         ctx.shadowBlur = 8;
         var scoreW = ctx.measureText(Math.floor(score) + '').width;
-        ctx.fillText('x2', cw / 2 + scoreW / 2 + 18, 28);
+        ctx.fillText('x2 ' + smSec + 's', cw / 2 + scoreW / 2 + 18, 28);
         ctx.restore();
     }
 
