@@ -15,6 +15,7 @@ SB.Input = function(canvas) {
         var touch = e.touches[0];
         self.tapX = touch.clientX;
         self.tapY = touch.clientY;
+        self._checkPlayAgainButton(touch.clientX, touch.clientY);
         self._checkShareButton(touch.clientX, touch.clientY);
         self._checkSkinButton(touch.clientX, touch.clientY);
         self._checkAchButton(touch.clientX, touch.clientY);
@@ -29,6 +30,7 @@ SB.Input = function(canvas) {
     canvas.addEventListener('mousedown', function(e) {
         self.tapX = e.clientX;
         self.tapY = e.clientY;
+        self._checkPlayAgainButton(e.clientX, e.clientY);
         self._checkShareButton(e.clientX, e.clientY);
         self._checkSkinButton(e.clientX, e.clientY);
         self._checkAchButton(e.clientX, e.clientY);
@@ -46,6 +48,17 @@ SB.Input.prototype._handleFirstInteraction = function() {
         this._firstInteraction = true;
         if (SB.audio) {
             SB.audio.init();
+        }
+    }
+};
+
+SB.Input.prototype._checkPlayAgainButton = function(x, y) {
+    if (SB._playAgainBtn) {
+        var btn = SB._playAgainBtn;
+        if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+            SB._playAgainTapped = true;
+            this.tapped = false;
+            return;
         }
     }
 };

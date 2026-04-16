@@ -33,12 +33,19 @@ window.SB = window.SB || {};
         var cappedDelta = Math.min(deltaTime, 100);
         accumulator += cappedDelta;
 
-        while (accumulator >= TICK_RATE) {
-            game.update(TICK_RATE / 1000);
-            accumulator -= TICK_RATE;
+        try {
+            while (accumulator >= TICK_RATE) {
+                game.update(TICK_RATE / 1000);
+                accumulator -= TICK_RATE;
+            }
+            game.render(ctx, SB.canvasWidth, SB.canvasHeight);
+        } catch (e) {
+            // Recover by resetting to start state
+            if (window.console) console.error('Game error:', e);
+            game.state = SB.STATES.START;
+            accumulator = 0;
         }
 
-        game.render(ctx, SB.canvasWidth, SB.canvasHeight);
         requestAnimationFrame(gameLoop);
     }
 

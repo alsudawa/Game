@@ -225,21 +225,6 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.fillText(isMuted ? 'MUTE' : 'SND', muteX + muteSize / 2, muteY + muteSize / 2);
     ctx.restore();
     SB._muteBtn = { x: muteX, y: muteY, w: muteSize + 4, h: muteSize + 4 };
-
-    // Leaderboard top 3
-    var board = SB.Storage.getLeaderboard();
-    if (board.length > 0) {
-        ctx.font = Math.min(cw * 0.022, 9) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.fillText('TOP SCORES', cw / 2, ch * 0.80);
-        ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
-        var showCount = Math.min(board.length, 3);
-        for (var i = 0; i < showCount; i++) {
-            var medals = ['#FFD700', '#C0C0C0', '#CD7F32'];
-            ctx.fillStyle = medals[i] || 'rgba(255,255,255,0.4)';
-            ctx.fillText((i + 1) + '. ' + board[i].score, cw / 2, ch * 0.83 + i * 16);
-        }
-    }
 };
 
 SB.UI.prototype._drawDailyChallenge = function(ctx, cw, y, daily) {
@@ -478,15 +463,20 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
         ctx.restore();
     }
 
-    // Coin counter in HUD (top-right)
+    // Coin counter + PB in HUD (top-right)
     ctx.save();
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 4;
-    ctx.fillStyle = 'rgba(255,215,0,0.85)';
-    ctx.fillText(SB.Storage.getCoins() + ' coins', cw - 12, 12);
+    ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,215,0,0.75)';
+    ctx.fillText(SB.Storage.getCoins() + ' coins', cw - 12, 10);
+    var hs = SB.Storage.getHighScore();
+    if (hs > 0) {
+        ctx.fillStyle = score >= hs ? 'rgba(46,204,113,0.6)' : 'rgba(255,255,255,0.3)';
+        ctx.fillText('PB: ' + hs, cw - 12, 26);
+    }
     ctx.restore();
 
     // Combo popups
@@ -506,15 +496,22 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
         ctx.restore();
     }
 
-    // Pause button (top-left)
+    // Pause button (top-left, 44pt touch target)
+    var pauseR = 18;
+    var pauseCx = 28;
+    var pauseCy = 28;
     ctx.save();
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.font = 'bold ' + Math.min(cw * 0.05, 20) + 'px ' + this.font;
-    ctx.fillStyle = 'rgba(255,255,255,0.45)';
-    ctx.fillText('||', 12, 12);
+    ctx.beginPath();
+    ctx.arc(pauseCx, pauseCy, pauseR, 0, SB.TAU);
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fill();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillText('||', pauseCx, pauseCy);
     ctx.restore();
-    SB._pauseBtn = { x: 0, y: 0, w: 50, h: 50 };
+    SB._pauseBtn = { x: 0, y: 0, w: 56, h: 56 };
 
     // Near-miss feedback
     if (this.nearMissTimer > 0) {
@@ -701,11 +698,17 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
 
         SB._shareBtn = { x: btnX, y: btnY, w: btnW, h: btnH, score: displayScore };
 
-        // Tap to restart
-        var blinkAlpha = (Math.sin(this.blinkPhase) + 1) / 2 * 0.6 + 0.3;
-        ctx.font = 'bold ' + Math.min(cw * 0.05, 20) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255, 255, 255, ' + blinkAlpha + ')';
-        ctx.fillText('TAP TO RESTART', cw / 2, ch * 0.72);
+        // Play Again button
+        var playBtnY = ch * 0.66;
+        ctx.fillStyle = 'rgba(46, 204, 113, ' + alpha * 0.85 + ')';
+        this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
+        ctx.fill();
+
+        ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
+        ctx.fillText('PLAY AGAIN', cw / 2, playBtnY + btnH / 2);
+
+        SB._playAgainBtn = { x: btnX, y: playBtnY, w: btnW, h: btnH };
     }
 };
 

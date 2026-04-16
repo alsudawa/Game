@@ -472,6 +472,14 @@ SB.Game.prototype._updateGameOver = function(dt) {
         }
     }
 
+    // Play Again button (skips start screen)
+    if (SB._playAgainTapped && this.gameOverCooldown >= this.gameOverCooldownTime) {
+        SB._playAgainTapped = null;
+        SB._playAgainBtn = null;
+        this._transitionTo(SB.STATES.PLAYING);
+        return;
+    }
+
     if (this.input.consumeTap() && this.gameOverCooldown >= this.gameOverCooldownTime) {
         this._transitionTo(SB.STATES.START);
     }
@@ -526,6 +534,9 @@ SB.Game.prototype._transitionTo = function(newState) {
     } else if (newState === SB.STATES.GAME_OVER) {
         SB._reviveBtn = null;
         SB._reviveBtnTapped = null;
+        SB._pauseBtn = null;
+        SB._playAgainBtn = null;
+        SB._playAgainTapped = null;
         this.screenFlash = 0.15;
         this.screenShake = 0.3;
         this.screenShakeIntensity = 10;
