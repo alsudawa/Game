@@ -278,6 +278,13 @@ SB.Audio.prototype.startBGM = function() {
     }
 };
 
+SB.Audio.prototype.updateBGMIntensity = function(difficulty) {
+    if (!this._bgmPlaying || !this._bgmLfo) return;
+    // Speed up LFO pulsing with difficulty (0.12 → 0.5 Hz)
+    var targetFreq = SB.lerp(0.12, 0.5, difficulty);
+    this._bgmLfo.frequency.value = targetFreq;
+};
+
 SB.Audio.prototype.stopBGM = function() {
     if (!this._bgmPlaying) return;
     this._bgmPlaying = false;

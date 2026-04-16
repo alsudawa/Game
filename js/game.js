@@ -345,6 +345,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
         SB.audio.playMilestone();
     }
 
+    // Update BGM intensity with difficulty
+    SB.audio.updateBGMIntensity(this.spawner.difficulty);
+
     // Check achievements mid-game
     this.achievements.checkAll();
 
@@ -629,6 +632,14 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 var dangerAlpha = ((this.ball.y - ch * 0.75) / (ch * 0.25)) * 0.25;
                 ctx.fillStyle = 'rgba(231, 76, 60, ' + dangerAlpha.toFixed(2) + ')';
                 ctx.fillRect(0, ch * 0.6, cw, ch * 0.4);
+            }
+            // Zone edge glow (subtle colored border for INTENSE/EXTREME)
+            if (this.currentZone === SB.ZONES.INTENSE || this.currentZone === SB.ZONES.EXTREME) {
+                var zGlowAlpha = this.currentZone === SB.ZONES.EXTREME ? 0.06 : 0.03;
+                var zColor = this.currentZone === SB.ZONES.EXTREME ? '155,89,182' : '231,76,60';
+                var zPulse = (Math.sin(Date.now() * 0.003) + 1) / 2 * zGlowAlpha;
+                ctx.fillStyle = 'rgba(' + zColor + ',' + zPulse.toFixed(3) + ')';
+                ctx.fillRect(0, 0, cw, ch);
             }
             break;
 
