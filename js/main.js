@@ -33,6 +33,8 @@ window.SB = window.SB || {};
         var cappedDelta = Math.min(deltaTime, 100);
         accumulator += cappedDelta;
 
+        SB.frameTime = timestamp;
+
         try {
             while (accumulator >= TICK_RATE) {
                 game.update(TICK_RATE / 1000);

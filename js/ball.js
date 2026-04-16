@@ -75,7 +75,7 @@ SB.Ball.prototype.update = function(dt) {
 
 SB.Ball.prototype.draw = function(ctx) {
     // Invincibility blink effect - skip rendering every other 100ms
-    if (this.blinking && Math.floor(Date.now() / 100) % 2 === 0) {
+    if (this.blinking && Math.floor((SB.frameTime || 0) / 100) % 2 === 0) {
         return;
     }
 

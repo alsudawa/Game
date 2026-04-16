@@ -61,12 +61,16 @@ SB.Game = function(canvas) {
     this.runCoins = 0;
     this.deathSlowMo = 0;
     this.deathPending = null; // stores death context during slow-mo
+    this.hudCoins = 0; // cached for HUD (avoid localStorage reads per frame)
+    this.hudHighScore = 0;
 
     SB.REVIVE_COST = 20;
 };
 
 SB.Game.prototype.init = function() {
     this.highScore = SB.Storage.getHighScore();
+    this.hudCoins = SB.Storage.getCoins();
+    this.hudHighScore = this.highScore;
     this.background.init(SB.canvasWidth, SB.canvasHeight);
     this.ball.reset(SB.canvasWidth, SB.canvasHeight);
     this._applySkin();
@@ -202,7 +206,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         if (isPerfect) {
             this.score += 3;
             this.ui.addScorePopup(this.ball.x, this.ball.y - 25, 'PERFECT +3', '#00FF88');
-            SB.audio.playMilestone();
+            SB.audio.playPerfectBounce();
             if (navigator.vibrate) navigator.vibrate(12);
         } else {
             SB.audio.playBounce();
@@ -287,6 +291,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 this.ui.nearMissTimer = 0.6;
                 this.score += 2;
                 this.achievements.onNearMiss();
+                SB.audio.playNearMiss();
                 if (navigator.vibrate) navigator.vibrate(15);
             }
         }
@@ -303,6 +308,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 continue;
             }
             this.particles.emit(this.ball.x, this.ball.y, SB.FX.deathExplosion);
+            this._emitBallShatter(this.ball.x, this.ball.y);
             this._handleDeath();
             return;
         }
@@ -340,6 +346,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.runStars++;
             this.runCoins += cv;
             SB.Storage.addCoins(cv);
+            this.hudCoins = SB.Storage.getCoins();
             var comboMult = this.comboCount >= 5 ? 4 : (this.comboCount >= 3 ? 3 : (this.comboCount >= 2 ? 2 : 1));
             var bonus = col.pointValue * comboMult * this.dailyStarMult;
             this.score += bonus;
@@ -420,6 +427,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.ball.vy = SB.Physics.BOUNCE_IMPULSE * 0.6;
         } else {
             this.particles.emit(this.ball.x, ch, SB.FX.deathExplosion);
+            this._emitBallShatter(this.ball.x, ch);
             this._handleDeath();
         }
     }
@@ -487,6 +495,7 @@ SB.Game.prototype._updateRevive = function(dt) {
     if (SB._reviveBtnTapped) {
         SB._reviveBtnTapped = null;
         if (SB.Storage.spendCoins(SB.REVIVE_COST)) {
+            this.hudCoins = SB.Storage.getCoins();
             this.revived = true;
             this.state = SB.STATES.PLAYING;
             this.invincibleTimer = 3.0;
@@ -637,6 +646,8 @@ SB.Game.prototype._transitionTo = function(newState) {
         SB.Storage.setHighScore(Math.floor(this.score));
         SB.Storage.addToLeaderboard(this.score);
         this.highScore = SB.Storage.getHighScore();
+        this.hudCoins = SB.Storage.getCoins();
+        this.hudHighScore = this.highScore;
         this.gameOverCooldown = 0;
         this.achievements.onRunEnd(this.score);
         var dailyJustCompleted = this.daily.onRunEnd(this.score);
@@ -666,6 +677,8 @@ SB.Game.prototype._transitionTo = function(newState) {
         SB.audio.playGameOver();
     } else if (newState === SB.STATES.START) {
         this.highScore = SB.Storage.getHighScore();
+        this.hudCoins = SB.Storage.getCoins();
+        this.hudHighScore = this.highScore;
         this.showTutorial = false;
         this.showAchievementViewer = false;
         // Clear all stale button references
@@ -704,7 +717,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
         case SB.STATES.PLAYING:
             this._renderGameplay(ctx, cw, ch);
-            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone);
+            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount);
             if (this.showTutorial) {
                 this.ui.drawTutorial(ctx, cw, ch, this.tutorialStep);
             }
@@ -718,7 +731,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
             if (this.currentZone === SB.ZONES.INTENSE || this.currentZone === SB.ZONES.EXTREME) {
                 var zGlowAlpha = this.currentZone === SB.ZONES.EXTREME ? 0.06 : 0.03;
                 var zColor = this.currentZone === SB.ZONES.EXTREME ? '155,89,182' : '231,76,60';
-                var zPulse = (Math.sin(Date.now() * 0.003) + 1) / 2 * zGlowAlpha;
+                var zPulse = (Math.sin((SB.frameTime || 0) * 0.003) + 1) / 2 * zGlowAlpha;
                 ctx.fillStyle = 'rgba(' + zColor + ',' + zPulse.toFixed(3) + ')';
                 ctx.fillRect(0, 0, cw, ch);
             }
@@ -728,7 +741,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
         case SB.STATES.PAUSED:
             this._renderGameplay(ctx, cw, ch);
-            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone);
+            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount);
             this.ui.drawPauseScreen(ctx, cw, ch);
             break;
 
@@ -828,7 +841,7 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
 
     if (this.powerupEffects.shield) {
         ctx.save();
-        var shimmer = Math.sin(Date.now() * 0.005) * 0.15 + 0.35;
+        var shimmer = Math.sin((SB.frameTime || 0) * 0.005) * 0.15 + 0.35;
         ctx.beginPath();
         ctx.arc(this.ball.x, this.ball.y, this.ball.radius + 8, 0, SB.TAU);
         ctx.strokeStyle = 'rgba(52, 152, 219, ' + shimmer + ')';
@@ -841,7 +854,7 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
 
     if (this.powerupEffects.magnet) {
         ctx.save();
-        var magnetAlpha = Math.sin(Date.now() * 0.004) * 0.08 + 0.12;
+        var magnetAlpha = Math.sin((SB.frameTime || 0) * 0.004) * 0.08 + 0.12;
         ctx.beginPath();
         ctx.arc(this.ball.x, this.ball.y, 120, 0, SB.TAU);
         ctx.strokeStyle = 'rgba(155, 89, 182, ' + magnetAlpha + ')';
@@ -893,4 +906,36 @@ SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
         ctx.fill();
     }
     ctx.restore();
+};
+
+SB.Game.prototype._emitBallShatter = function(x, y) {
+    // Emit skin-colored fragments that scatter outward + fall with gravity
+    var glowRGB = SB.hexToRGB(this.ball.glowColor || '#FFD700');
+    var coreRGB = SB.hexToRGB(this.ball.coreColor || '#FFFFFF');
+    this.particles.emit(x, y, {
+        count: 10,
+        spread: 6,
+        speedMin: 100,
+        speedMax: 280,
+        lifeMin: 0.4,
+        lifeMax: 0.9,
+        sizeMin: 2,
+        sizeMax: 5,
+        color: glowRGB,
+        gravity: 250,
+        friction: 0.97
+    });
+    this.particles.emit(x, y, {
+        count: 6,
+        spread: 3,
+        speedMin: 60,
+        speedMax: 180,
+        lifeMin: 0.3,
+        lifeMax: 0.7,
+        sizeMin: 1.5,
+        sizeMax: 3.5,
+        color: coreRGB,
+        gravity: 200,
+        friction: 0.96
+    });
 };

@@ -491,7 +491,7 @@ SB.UI.prototype.drawTutorial = function(ctx, cw, ch, tutorialStep) {
     ctx.restore();
 };
 
-SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
+SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cachedHighScore, comboTimer, comboCount) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
@@ -538,11 +538,10 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
     ctx.shadowBlur = 4;
     ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255,215,0,0.75)';
-    ctx.fillText(SB.Storage.getCoins() + ' coins', cw - 12, 10);
-    var hs = SB.Storage.getHighScore();
-    if (hs > 0) {
-        ctx.fillStyle = score >= hs ? 'rgba(46,204,113,0.6)' : 'rgba(255,255,255,0.3)';
-        ctx.fillText('PB: ' + hs, cw - 12, 26);
+    ctx.fillText((cachedCoins || 0) + ' coins', cw - 12, 10);
+    if (cachedHighScore > 0) {
+        ctx.fillStyle = score >= cachedHighScore ? 'rgba(46,204,113,0.6)' : 'rgba(255,255,255,0.3)';
+        ctx.fillText('PB: ' + cachedHighScore, cw - 12, 26);
     }
     ctx.restore();
 
@@ -608,6 +607,20 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
         ctx.shadowBlur = 8;
         ctx.fillText('CLOSE! +2', cw / 2, ch * 0.22);
         ctx.restore();
+    }
+
+    // Combo timer bar (thin bar under score showing remaining combo time)
+    if (comboTimer > 0 && comboCount >= 1) {
+        var ctBarW = Math.min(cw * 0.3, 120);
+        var ctBarH = 3;
+        var ctBarX = cw / 2 - ctBarW / 2;
+        var ctBarY = 62;
+        var ctProgress = comboTimer / 2.0;
+        var ctColor = comboCount >= 5 ? '255,68,68' : (comboCount >= 3 ? '255,140,66' : '255,215,0');
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(ctBarX, ctBarY, ctBarW, ctBarH);
+        ctx.fillStyle = 'rgba(' + ctColor + ',0.7)';
+        ctx.fillRect(ctBarX, ctBarY, ctBarW * ctProgress, ctBarH);
     }
 
     this._drawPowerupBar(ctx, cw, ch);

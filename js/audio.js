@@ -233,6 +233,50 @@ SB.Audio.prototype.playZoneWarning = function(level) {
     }
 };
 
+SB.Audio.prototype.playNearMiss = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    // Quick whoosh: noise-like sweep downward
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.linearRampToValueAtTime(200, now + 0.08);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.1);
+};
+
+SB.Audio.prototype.playPerfectBounce = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    // Bright two-note chime: ascending perfect fifth
+    var osc1 = this.ctx.createOscillator();
+    var gain1 = this.ctx.createGain();
+    osc1.type = 'sine';
+    osc1.frequency.value = 880;
+    gain1.gain.setValueAtTime(0.18, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc1.connect(gain1);
+    gain1.connect(this.masterGain);
+    osc1.start(now);
+    osc1.stop(now + 0.12);
+
+    var osc2 = this.ctx.createOscillator();
+    var gain2 = this.ctx.createGain();
+    osc2.type = 'sine';
+    osc2.frequency.value = 1320;
+    gain2.gain.setValueAtTime(0.15, now + 0.04);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    osc2.connect(gain2);
+    gain2.connect(this.masterGain);
+    osc2.start(now + 0.04);
+    osc2.stop(now + 0.18);
+};
+
 SB.Audio.prototype.playRevive = function() {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;
