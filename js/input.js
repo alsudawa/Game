@@ -28,6 +28,16 @@ SB.Input = function(canvas) {
         self._handleFirstInteraction();
     }, { passive: false });
 
+    // Prevent context menu on long-press (mobile)
+    canvas.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
+
+    // Prevent double-tap zoom
+    canvas.addEventListener('touchend', function(e) {
+        e.preventDefault();
+    }, { passive: false });
+
     canvas.addEventListener('mousedown', function(e) {
         self.tapX = e.clientX;
         self.tapY = e.clientY;

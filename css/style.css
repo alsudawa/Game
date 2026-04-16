@@ -11,6 +11,9 @@ html, body {
     overscroll-behavior: none;
     background: #0f0c29;
     -webkit-font-smoothing: antialiased;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
     /* Safe area for notch devices */
     padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }

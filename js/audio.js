@@ -344,6 +344,23 @@ SB.Audio.prototype.playPowerupSlow = function() {
     osc.stop(now + 0.25);
 };
 
+SB.Audio.prototype.playPowerupExpiring = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    // Quick descending warning beep
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.linearRampToValueAtTime(350, now + 0.06);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.08);
+};
+
 SB.Audio.prototype.playPowerupScoreMult = function() {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;

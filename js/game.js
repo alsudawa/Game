@@ -243,6 +243,18 @@ SB.Game.prototype._updatePlaying = function(dt) {
         this.achievements.onWallBounce();
     }
 
+    // Powerup expiry warning (play beep at 2s remaining)
+    var pe = this.powerupEffects;
+    if (pe.scoreMult && pe.scoreMultTimer <= 2.0 && pe.scoreMultTimer + dt > 2.0) {
+        SB.audio.playPowerupExpiring();
+    }
+    if (pe.magnet && pe.magnetTimer <= 2.0 && pe.magnetTimer + dt > 2.0) {
+        SB.audio.playPowerupExpiring();
+    }
+    if (pe.slow && pe.slowTimer <= 2.0 && pe.slowTimer + dt > 2.0) {
+        SB.audio.playPowerupExpiring();
+    }
+
     this.powerupEffects.update(dt);
     this.particles.update(dt);
     this.achievements.updateRunTime(dt);
@@ -900,19 +912,19 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         pyOff = (this.ball.y - ch / 2) / ch * -2;
     }
 
+    // Cache active lists for this render pass (avoids rebuilding in _drawEdgeWarnings)
+    this._renderObstacles = this.obstaclePool.getActive();
+    var collectibles = this.collectiblePool.getActive();
+    var powerups = this.powerupPool.getActive();
+
     ctx.save();
     ctx.translate(pxOff, pyOff);
-    var obstacles = this.obstaclePool.getActive();
-    for (var i = 0; i < obstacles.length; i++) {
-        obstacles[i].draw(ctx);
+    for (var i = 0; i < this._renderObstacles.length; i++) {
+        this._renderObstacles[i].draw(ctx);
     }
-
-    var collectibles = this.collectiblePool.getActive();
     for (var j = 0; j < collectibles.length; j++) {
         collectibles[j].draw(ctx);
     }
-
-    var powerups = this.powerupPool.getActive();
     for (var k = 0; k < powerups.length; k++) {
         powerups[k].draw(ctx);
     }
@@ -1028,7 +1040,7 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
 };
 
 SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
-    var obstacles = this.obstaclePool.getActive();
+    var obstacles = this._renderObstacles || this.obstaclePool.getActive();
     var margin = 40; // How close to edge before warning appears
     ctx.save();
     for (var i = 0; i < obstacles.length; i++) {
