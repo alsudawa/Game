@@ -305,5 +305,35 @@ SB.FX = {
         angleSpread: Math.PI / 3,
         gravity: 80,
         friction: 0.97
+    },
+    wallSparkLeft: {
+        count: 6,
+        spread: 3,
+        speedMin: 60,
+        speedMax: 180,
+        lifeMin: 0.15,
+        lifeMax: 0.35,
+        sizeMin: 1,
+        sizeMax: 3,
+        color: '255,255,255',
+        angle: 0,
+        angleSpread: Math.PI / 3,
+        gravity: 120,
+        friction: 0.93
+    },
+    wallSparkRight: {
+        count: 6,
+        spread: 3,
+        speedMin: 60,
+        speedMax: 180,
+        lifeMin: 0.15,
+        lifeMax: 0.35,
+        sizeMin: 1,
+        sizeMax: 3,
+        color: '255,255,255',
+        angle: Math.PI,
+        angleSpread: Math.PI / 3,
+        gravity: 120,
+        friction: 0.93
     }
 };

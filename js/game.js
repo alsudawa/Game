@@ -67,6 +67,9 @@ SB.Game = function(canvas) {
     this.nearMissStreak = 0;
     this.nearMissStreakTimer = 0;
     this.lastBounceTime = 0;
+    this.deathCause = '';
+    this.wallFlashSide = 0;
+    this.wallFlashTimer = 0;
 
     SB.REVIVE_COST = 20;
 };
@@ -104,6 +107,7 @@ SB.Game.prototype.update = function(dt) {
 
     if (this.screenShake > 0) this.screenShake -= dt;
     if (this.screenFlash > 0) this.screenFlash -= dt;
+    if (this.wallFlashTimer > 0) this.wallFlashTimer -= dt;
     if (this.transitionAlpha > 0) this.transitionAlpha -= dt * 3;
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
@@ -264,24 +268,29 @@ SB.Game.prototype._updatePlaying = function(dt) {
         });
     }
 
-    // Wall hit feedback
+    // Wall hit feedback with sparks
     if (this.ball.wallHitSide !== 0) {
         var wx = this.ball.wallHitSide < 0 ? 0 : SB.canvasWidth;
+        var sparkPreset = this.ball.wallHitSide < 0 ? SB.FX.wallSparkLeft : SB.FX.wallSparkRight;
+        this.particles.emit(wx, this.ball.y, sparkPreset);
+        var glowRGB = SB.hexToRGB(this.ball.glowColor || '#FFD700');
         this.particles.emit(wx, this.ball.y, {
-            count: 4,
+            count: 3,
             spread: 2,
-            speedMin: 30,
-            speedMax: 80,
-            lifeMin: 0.15,
-            lifeMax: 0.3,
-            sizeMin: 1,
-            sizeMax: 2.5,
-            color: '200,200,255',
+            speedMin: 40,
+            speedMax: 120,
+            lifeMin: 0.2,
+            lifeMax: 0.4,
+            sizeMin: 1.5,
+            sizeMax: 3,
+            color: glowRGB,
             angle: this.ball.wallHitSide < 0 ? 0 : Math.PI,
-            angleSpread: Math.PI / 3,
-            gravity: 60,
-            friction: 0.95
+            angleSpread: Math.PI / 4,
+            gravity: 80,
+            friction: 0.94
         });
+        this.wallFlashSide = this.ball.wallHitSide;
+        this.wallFlashTimer = 0.15;
         SB.audio.playWallHit();
         this.achievements.onWallBounce();
     }
@@ -456,6 +465,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 SB.audio.playShieldBreak();
                 continue;
             }
+            this.deathCause = obs.type === SB.OBSTACLE_TYPES.PLATFORM ? 'Platform' :
+                             obs.type === SB.OBSTACLE_TYPES.SPIKE ? 'Spike' :
+                             obs.type === SB.OBSTACLE_TYPES.BLADE ? 'Blade' :
+                             obs.type === SB.OBSTACLE_TYPES.BOOMERANG ? 'Boomerang' :
+                             obs.type === SB.OBSTACLE_TYPES.LASER ? 'Laser' : 'Obstacle';
             this.particles.emit(this.ball.x, this.ball.y, SB.FX.deathExplosion);
             this._emitBallShatter(this.ball.x, this.ball.y);
             this._handleDeath();
@@ -586,6 +600,15 @@ SB.Game.prototype._updatePlaying = function(dt) {
         SB.audio.playScoreTick();
     }
 
+    // Mid-game PB notification (fire once)
+    if (!this.isNewHigh && this.hudHighScore > 0 && this.score > this.hudHighScore) {
+        this.isNewHigh = true;
+        this.screenFlash = 0.08;
+        this.ui.addScorePopup(cw / 2, ch * 0.15, 'NEW PB!', '#76FF03');
+        SB.audio.playMilestone();
+        if (navigator.vibrate) navigator.vibrate(25);
+    }
+
     var currentMilestone = Math.floor(this.score / 10);
     if (currentMilestone > this.lastMilestone) {
         this.lastMilestone = currentMilestone;
@@ -621,6 +644,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.ball.y = ch - this.ball.radius;
             this.ball.vy = SB.Physics.BOUNCE_IMPULSE * 0.6;
         } else {
+            this.deathCause = 'Fell';
             this.particles.emit(this.ball.x, ch, SB.FX.deathExplosion);
             this._emitBallShatter(this.ball.x, ch);
             this._handleDeath();
@@ -834,6 +858,8 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.nearMissStreak = 0;
         this.nearMissStreakTimer = 0;
         this.lastBounceTime = 0;
+        this.isNewHigh = false;
+        this.deathCause = '';
         this.currentZone = SB.ZONES.CALM;
         this.transitionAlpha = 1;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
@@ -916,7 +942,8 @@ SB.Game.prototype._transitionTo = function(newState) {
             stars: this.runStars,
             maxCombo: this.runMaxCombo,
             coins: this.runCoins,
-            zone: this.currentZone.name
+            zone: this.currentZone.name,
+            deathCause: this.deathCause || 'Unknown'
         }, streak, recentRuns);
         SB.audio.stopBGM();
         SB.audio.playGameOver();
@@ -1163,6 +1190,22 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
 
     this.ball.draw(ctx);
     this.particles.draw(ctx);
+
+    // Wall edge flash (brief glow on the edge the ball bounced off)
+    if (this.wallFlashTimer > 0 && !SB.reducedMotion) {
+        var wfAlpha = (this.wallFlashTimer / 0.15) * 0.3;
+        var wfX = this.wallFlashSide < 0 ? 0 : cw - 30;
+        var wfGrad = ctx.createLinearGradient(wfX, 0, wfX + (this.wallFlashSide < 0 ? 30 : 30), 0);
+        if (this.wallFlashSide < 0) {
+            wfGrad.addColorStop(0, 'rgba(255,255,255,' + wfAlpha.toFixed(3) + ')');
+            wfGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        } else {
+            wfGrad.addColorStop(0, 'rgba(255,255,255,0)');
+            wfGrad.addColorStop(1, 'rgba(255,255,255,' + wfAlpha.toFixed(3) + ')');
+        }
+        ctx.fillStyle = wfGrad;
+        ctx.fillRect(wfX, this.ball.y - 60, 30, 120);
+    }
 
     if (this.powerupEffects.shield) {
         ctx.save();

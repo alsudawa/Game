@@ -924,6 +924,14 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
 
     // Run stats
     if (this.runStats) {
+        // Death cause
+        if (this.runStats.deathCause) {
+            ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+            ctx.fillStyle = 'rgba(231,76,60,' + (alpha * 0.5) + ')';
+            ctx.fillText('Killed by: ' + this.runStats.deathCause, cw / 2, y);
+            y += gap;
+        }
+
         ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.45) + ')';
         var statsText = Math.floor(this.runStats.time) + 's  |  ' + this.runStats.stars + ' stars  |  +' + (this.runStats.coins || 0) + ' coins';

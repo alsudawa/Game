@@ -221,18 +221,28 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.fill();
     }
 
-    // Shooting stars
+    // Shooting stars with gradient trail
     for (var s = 0; s < this.shootingStars.length; s++) {
         var ss = this.shootingStars[s];
         var sa = (ss.life / ss.maxLife) * 0.8;
+        var tailX = ss.x - ss.vx * 0.06;
+        var tailY = ss.y - ss.vy * 0.06;
         ctx.save();
-        ctx.strokeStyle = 'rgba(255, 255, 255, ' + sa + ')';
-        ctx.lineWidth = ss.size;
+        var ssGrad = ctx.createLinearGradient(ss.x, ss.y, tailX, tailY);
+        ssGrad.addColorStop(0, 'rgba(255, 255, 255, ' + sa.toFixed(2) + ')');
+        ssGrad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.strokeStyle = ssGrad;
+        ctx.lineWidth = ss.size * 1.5;
         ctx.lineCap = 'round';
         ctx.beginPath();
         ctx.moveTo(ss.x, ss.y);
-        ctx.lineTo(ss.x - ss.vx * 0.04, ss.y - ss.vy * 0.04);
+        ctx.lineTo(tailX, tailY);
         ctx.stroke();
+        // Bright head dot
+        ctx.beginPath();
+        ctx.arc(ss.x, ss.y, ss.size * 0.8, 0, SB.TAU);
+        ctx.fillStyle = 'rgba(255, 255, 240, ' + sa.toFixed(2) + ')';
+        ctx.fill();
         ctx.restore();
     }
 

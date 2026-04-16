@@ -488,9 +488,12 @@ SB.Audio.prototype.startBGM = function() {
 
 SB.Audio.prototype.updateBGMIntensity = function(difficulty) {
     if (!this._bgmPlaying || !this._bgmLfo) return;
-    // Speed up LFO pulsing with difficulty (0.12 → 0.5 Hz)
     var targetFreq = SB.lerp(0.12, 0.5, difficulty);
     this._bgmLfo.frequency.value = targetFreq;
+
+    // Volume scales slightly with difficulty (more presence at high intensity)
+    var targetVol = SB.lerp(0.05, 0.08, difficulty);
+    this._bgmGain.gain.setTargetAtTime(targetVol, this.ctx.currentTime, 0.5);
 
     // Chord progression based on difficulty zone
     // CALM: C major (C3, G3, C4)
