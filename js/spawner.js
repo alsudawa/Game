@@ -21,6 +21,8 @@ SB.Spawner.prototype.reset = function(veteranBonus) {
     this.difficulty = 0;
     this.extraDifficulty = 0;
     this.veteranBonus = veteranBonus || 0;
+    this.dailySpeedMult = 1;
+    this.dailySizeMult = 1;
     this.graceTimer = 0;
     this.gracePeriod = Math.max(0.8, 2.0 - this.veteranBonus * 5);
     this.obstaclePool.releaseAll();
@@ -66,6 +68,7 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
 };
 
 SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedMult) {
+    speedMult *= (this.dailySpeedMult || 1);
     var d = Math.min(this.difficulty + this.veteranBonus, 1.0);
 
     if (d < 0.15) {
@@ -94,7 +97,8 @@ SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedM
 
 SB.Spawner.prototype._spawnPlatform = function(cw, ch, speedMult) {
     var fromLeft = Math.random() < 0.5;
-    var w = SB.randRange(60, 120);
+    var sm = this.dailySizeMult || 1;
+    var w = SB.randRange(60, 120) * sm;
     var h = 14;
     var speed = SB.randRange(1.5, 3.5) * speedMult;
     var y = SB.randRange(ch * 0.1, ch * 0.85);
@@ -116,7 +120,7 @@ SB.Spawner.prototype._spawnPlatform = function(cw, ch, speedMult) {
 
 SB.Spawner.prototype._spawnSpike = function(cw, ch, speedMult) {
     var fromLeft = Math.random() < 0.5;
-    var size = SB.randRange(22, 30);
+    var size = SB.randRange(22, 30) * (this.dailySizeMult || 1);
     var speed = SB.randRange(1.0, 2.5) * speedMult;
     var y = SB.randRange(ch * 0.1, ch * 0.8);
 
@@ -133,7 +137,7 @@ SB.Spawner.prototype._spawnSpike = function(cw, ch, speedMult) {
 
 SB.Spawner.prototype._spawnBlade = function(cw, ch, speedMult) {
     var fromLeft = Math.random() < 0.5;
-    var radius = SB.randRange(16, 22);
+    var radius = SB.randRange(16, 22) * (this.dailySizeMult || 1);
     var speed = SB.randRange(1.5, 3.0) * speedMult;
     var y = SB.randRange(ch * 0.15, ch * 0.75);
 
@@ -202,7 +206,7 @@ SB.Spawner.prototype._spawnCollectible = function(cw, ch) {
 
 SB.Spawner.prototype._spawnBoomerang = function(cw, ch, speedMult) {
     var fromLeft = Math.random() < 0.5;
-    var radius = SB.randRange(14, 20);
+    var radius = SB.randRange(14, 20) * (this.dailySizeMult || 1);
     var speed = SB.randRange(2.0, 3.5) * speedMult;
     var y = SB.randRange(ch * 0.15, ch * 0.75);
     var travelDist = SB.randRange(cw * 0.4, cw * 0.7);

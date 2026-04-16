@@ -91,7 +91,7 @@ SB.UI.prototype.drawAchievementToast = function(ctx, cw, ch) {
     ctx.restore();
 };
 
-SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, achievements, skinManager) {
+SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, achievements, skinManager, daily) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -101,12 +101,12 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.shadowBlur = 20;
     ctx.font = 'bold ' + Math.min(cw * 0.12, 52) + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText('SKY BOUNCE', cw / 2, ch * 0.12);
+    ctx.fillText('SKY BOUNCE', cw / 2, ch * 0.08);
     ctx.restore();
 
     // Level & XP bar
     if (progression) {
-        var lvlY = ch * 0.19;
+        var lvlY = ch * 0.15;
         ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
         ctx.fillText('Lv.' + progression.level, cw / 2, lvlY);
@@ -122,20 +122,16 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         ctx.fillRect(barX, barY, barW, barH);
         ctx.fillStyle = 'rgba(255,215,0,0.7)';
         ctx.fillRect(barX, barY, barW * progress, barH);
-
-        ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.fillText(xpInfo.current + ' / ' + xpInfo.required + ' XP', cw / 2, barY + barH + 10);
     }
 
-    // Subtitle
-    ctx.font = Math.min(cw * 0.032, 13) + 'px ' + this.font;
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-    ctx.fillText('Tap left/right to steer the ball', cw / 2, ch * 0.28);
+    // Daily Challenge box
+    if (daily) {
+        this._drawDailyChallenge(ctx, cw, ch * 0.23, daily);
+    }
 
     // Idle ball with current skin
     var currentSkin = skinManager ? skinManager.getCurrentSkin() : SB.SKINS[0];
-    var ballY = ch * 0.37 + this.idleBallY;
+    var ballY = ch * 0.34 + this.idleBallY;
     ctx.save();
     ctx.shadowColor = currentSkin.glow;
     ctx.shadowBlur = 20;
@@ -150,49 +146,102 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
 
     // Skin selector
     if (skinManager && progression) {
-        this._drawSkinSelector(ctx, cw, ch * 0.47, skinManager, progression.level);
+        this._drawSkinSelector(ctx, cw, ch * 0.44, skinManager, progression.level);
     }
 
-    // Powerup legend
-    var legendY = ch * 0.56;
-    var iconSize = Math.min(cw * 0.02, 8);
-    ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
-    var legends = [
-        { color: '#5DADE2', label: 'Shield: Block 1 hit' },
-        { color: '#AF7AC5', label: 'Magnet: Pull stars' },
-        { color: '#58D68D', label: 'Slow: Slow enemies' }
-    ];
-    for (var i = 0; i < legends.length; i++) {
-        var ly = legendY + i * 18;
-        ctx.beginPath();
-        ctx.arc(cw / 2 - 70, ly, iconSize, 0, SB.TAU);
-        ctx.fillStyle = legends[i].color;
-        ctx.fill();
-        ctx.fillStyle = 'rgba(255,255,255,0.4)';
-        ctx.textAlign = 'left';
-        ctx.fillText(legends[i].label, cw / 2 - 55, ly + 1);
-    }
-    ctx.textAlign = 'center';
-
-    // Achievements count
+    // Achievements button (tappable)
     if (achievements) {
+        var achY = ch * 0.54;
         var achCount = achievements.getUnlockedCount();
-        ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,215,0,0.5)';
-        ctx.fillText(achCount + '/' + SB.ACHIEVEMENTS.length + ' Achievements', cw / 2, ch * 0.66);
+        var achText = achCount + '/' + SB.ACHIEVEMENTS.length + ' Achievements';
+        ctx.font = Math.min(cw * 0.032, 13) + 'px ' + this.font;
+        var tw = ctx.measureText(achText).width;
+        var achW = tw + 24;
+        var achH = 26;
+        var achX = cw / 2 - achW / 2;
+
+        ctx.fillStyle = 'rgba(255,215,0,0.1)';
+        this._roundRect(ctx, achX, achY - achH / 2, achW, achH, 8);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+        ctx.lineWidth = 1;
+        this._roundRect(ctx, achX, achY - achH / 2, achW, achH, 8);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255,215,0,0.7)';
+        ctx.fillText(achText, cw / 2, achY);
+
+        SB._achBtn = { x: achX, y: achY - achH / 2, w: achW, h: achH };
     }
 
     // Tap to start
     var blinkAlpha = (Math.sin(this.blinkPhase) + 1) / 2 * 0.7 + 0.3;
     ctx.font = 'bold ' + Math.min(cw * 0.06, 24) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + blinkAlpha + ')';
-    ctx.fillText('TAP TO START', cw / 2, ch * 0.76);
+    ctx.fillText('TAP TO START', cw / 2, ch * 0.65);
 
     if (highScore > 0) {
         ctx.font = Math.min(cw * 0.045, 18) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
-        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.85);
+        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.74);
     }
+
+    // Leaderboard top 3
+    var board = SB.Storage.getLeaderboard();
+    if (board.length > 0) {
+        ctx.font = Math.min(cw * 0.022, 9) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillText('TOP SCORES', cw / 2, ch * 0.80);
+        ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+        var showCount = Math.min(board.length, 3);
+        for (var i = 0; i < showCount; i++) {
+            var medals = ['#FFD700', '#C0C0C0', '#CD7F32'];
+            ctx.fillStyle = medals[i] || 'rgba(255,255,255,0.4)';
+            ctx.fillText((i + 1) + '. ' + board[i].score, cw / 2, ch * 0.83 + i * 16);
+        }
+    }
+};
+
+SB.UI.prototype._drawDailyChallenge = function(ctx, cw, y, daily) {
+    var boxW = Math.min(cw * 0.75, 260);
+    var boxH = 44;
+    var boxX = cw / 2 - boxW / 2;
+    var boxY = y - boxH / 2;
+
+    // Background
+    ctx.fillStyle = daily.completed ? 'rgba(46,204,113,0.12)' : 'rgba(255,255,255,0.06)';
+    this._roundRect(ctx, boxX, boxY, boxW, boxH, 10);
+    ctx.fill();
+    ctx.strokeStyle = daily.completed ? 'rgba(46,204,113,0.4)' : 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    this._roundRect(ctx, boxX, boxY, boxW, boxH, 10);
+    ctx.stroke();
+
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+
+    // Label
+    ctx.font = Math.min(cw * 0.022, 9) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.fillText('DAILY CHALLENGE', boxX + 10, boxY + 12);
+
+    // Challenge name + desc
+    ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
+    ctx.fillStyle = daily.completed ? 'rgba(46,204,113,0.9)' : 'rgba(255,255,255,0.8)';
+    ctx.fillText(daily.challenge.name + ': ' + daily.challenge.desc, boxX + 10, boxY + 28);
+
+    // Target / status
+    ctx.textAlign = 'right';
+    ctx.font = 'bold ' + Math.min(cw * 0.028, 11) + 'px ' + this.font;
+    if (daily.completed) {
+        ctx.fillStyle = 'rgba(46,204,113,0.9)';
+        ctx.fillText('DONE', boxX + boxW - 10, boxY + 20);
+    } else {
+        ctx.fillStyle = 'rgba(255,215,0,0.7)';
+        ctx.fillText('Goal: ' + daily.challenge.target, boxX + boxW - 10, boxY + 20);
+    }
+
+    ctx.textAlign = 'center';
 };
 
 SB.UI.prototype._drawSkinSelector = function(ctx, cw, y, skinManager, playerLevel) {
@@ -362,13 +411,15 @@ SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
     }
 };
 
-SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression) {
+SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dailyJustCompleted) {
     this.gameOverAlpha = 0;
     this.scoreCountUp = 0;
     this._finalScore = finalScore;
     this.comboPopups = [];
     this.xpResult = xpResult;
     this.progressionRef = progression;
+    this.dailyJustCompleted = dailyJustCompleted || false;
+    this.rank = SB.Storage.getRank(finalScore);
 };
 
 SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh) {
@@ -417,12 +468,21 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.37);
     }
 
+    // Rank
+    if (this.rank && this.rank <= 10) {
+        ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.5) + ')';
+        ctx.fillText('#' + this.rank + ' on leaderboard', cw / 2, ch * 0.41);
+    }
+
     // XP earned + level
     if (this.xpResult && this.progressionRef) {
-        var xpY = ch * 0.44;
+        var xpY = ch * 0.46;
+        var xpText = '+' + this.xpResult.xpEarned + ' XP';
+        if (this.dailyJustCompleted) xpText += '  +25 Daily';
         ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.6) + ')';
-        ctx.fillText('+' + this.xpResult.xpEarned + ' XP   |   Lv.' + this.progressionRef.level, cw / 2, xpY);
+        ctx.fillText(xpText + '   |   Lv.' + this.progressionRef.level, cw / 2, xpY);
 
         if (this.xpResult.leveledUp) {
             ctx.save();
@@ -434,12 +494,22 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
             ctx.restore();
         }
 
+        if (this.dailyJustCompleted) {
+            ctx.save();
+            ctx.shadowColor = '#2ecc71';
+            ctx.shadowBlur = 8;
+            ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
+            ctx.fillStyle = 'rgba(46, 204, 113, ' + alpha + ')';
+            ctx.fillText('DAILY CHALLENGE COMPLETE!', cw / 2, xpY + (this.xpResult.leveledUp ? 42 : 22));
+            ctx.restore();
+        }
+
         // XP bar
         var xpInfo = this.progressionRef.getXPForCurrentLevel();
         var barW = Math.min(cw * 0.5, 180);
         var barH = 5;
         var barX = cw / 2 - barW / 2;
-        var barYPos = xpY + (this.xpResult.leveledUp ? 38 : 16);
+        var barYPos = xpY + (this.xpResult.leveledUp ? 56 : (this.dailyJustCompleted ? 38 : 16));
         var progress = xpInfo.current / xpInfo.required;
 
         ctx.fillStyle = 'rgba(255,255,255,0.15)';
@@ -485,6 +555,79 @@ SB.UI.prototype._roundRect = function(ctx, x, y, w, h, r) {
     ctx.lineTo(x, y + r);
     ctx.quadraticCurveTo(x, y, x + r, y);
     ctx.closePath();
+};
+
+SB.UI.prototype.drawAchievementViewer = function(ctx, cw, ch, achievements) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.88)';
+    ctx.fillRect(0, 0, cw, ch);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    // Title
+    ctx.font = 'bold ' + Math.min(cw * 0.07, 28) + 'px ' + this.font;
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText('ACHIEVEMENTS', cw / 2, ch * 0.06);
+
+    var count = achievements.getUnlockedCount();
+    ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillText(count + ' / ' + SB.ACHIEVEMENTS.length + ' unlocked', cw / 2, ch * 0.10);
+
+    // Achievement list
+    var startY = ch * 0.14;
+    var rowH = Math.min(ch * 0.05, 32);
+    var listW = Math.min(cw * 0.85, 300);
+    var listX = cw / 2 - listW / 2;
+
+    for (var i = 0; i < SB.ACHIEVEMENTS.length; i++) {
+        var ach = SB.ACHIEVEMENTS[i];
+        var unlocked = achievements.unlocked[ach.id];
+        var rowY = startY + i * rowH;
+
+        if (rowY + rowH > ch * 0.90) break;
+
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+
+        var alpha = unlocked ? 1 : 0.35;
+        ctx.globalAlpha = alpha;
+
+        // Icon
+        ctx.font = Math.min(cw * 0.04, 16) + 'px ' + this.font;
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText(ach.icon, listX, rowY + rowH / 2);
+
+        // Name
+        ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
+        ctx.fillStyle = unlocked ? '#FFD700' : '#888888';
+        ctx.fillText(ach.name, listX + 28, rowY + rowH / 2 - 6);
+
+        // Desc
+        ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+        ctx.fillStyle = unlocked ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)';
+        ctx.fillText(ach.desc, listX + 28, rowY + rowH / 2 + 8);
+
+        // Checkmark
+        if (unlocked) {
+            ctx.textAlign = 'right';
+            ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+            ctx.fillStyle = '#2ecc71';
+            ctx.fillText('\u2713', listX + listW, rowY + rowH / 2);
+        }
+
+        ctx.globalAlpha = 1;
+    }
+
+    // Close hint
+    ctx.textAlign = 'center';
+    var blinkAlpha = (Math.sin(this.blinkPhase) + 1) / 2 * 0.4 + 0.3;
+    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,' + blinkAlpha + ')';
+    ctx.fillText('Tap to close', cw / 2, ch * 0.95);
+
+    ctx.restore();
 };
 
 SB.shareScore = function(score) {

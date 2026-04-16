@@ -21,8 +21,10 @@ SB.Game = function(canvas) {
     this.achievements = new SB.AchievementManager();
     this.progression = new SB.Progression();
     this.skinManager = new SB.SkinManager();
+    this.daily = new SB.DailyChallenge();
     this.particles = new SB.ParticleSystem(200);
     this.score = 0;
+    this.dailyStarMult = 1;
     this.scoreTimer = 0;
     this.highScore = 0;
     this.isNewHigh = false;
@@ -36,6 +38,7 @@ SB.Game = function(canvas) {
     this.comboCount = 0;
     this.runStars = 0;
     this.showTutorial = false;
+    this.showAchievementViewer = false;
     this.tutorialTimer = 0;
     this.xpResult = null;
 };
@@ -89,6 +92,19 @@ SB.Game.prototype.update = function(dt) {
 };
 
 SB.Game.prototype._updateStart = function(dt) {
+    // Achievement viewer toggle
+    if (SB._achBtnTapped) {
+        SB._achBtnTapped = null;
+        this.showAchievementViewer = !this.showAchievementViewer;
+        return;
+    }
+    // Dismiss achievement viewer
+    if (this.showAchievementViewer) {
+        if (this.input.consumeTap()) {
+            this.showAchievementViewer = false;
+        }
+        return;
+    }
     // Handle skin selection (set by input handler)
     if (SB._skinTapped) {
         var skinId = SB._skinTapped;
@@ -194,7 +210,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.comboTimer = 2.0;
             this.comboCount++;
             this.runStars++;
-            var bonus = col.pointValue * (this.comboCount >= 2 ? 2 : 1);
+            var bonus = col.pointValue * (this.comboCount >= 2 ? 2 : 1) * this.dailyStarMult;
             this.score += bonus;
             this.achievements.onStarCollect();
             this.achievements.onCombo(this.comboCount);
@@ -274,14 +290,23 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.runStars = 0;
         this.tutorialTimer = 0;
         this.xpResult = null;
+        this.showAchievementViewer = false;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
         this._applySkin();
+        // Apply daily modifiers
+        var mods = this.daily.getMods();
+        if (mods.gravity) this.ball.gravityMult = mods.gravity;
+        if (mods.ballSize) this.ball.radius = this.ball.baseRadius * mods.ballSize;
+        this.dailyStarMult = mods.starValue || 1;
         // Veteran bonus: returning players get a faster start
         var vetBonus = Math.min(this.achievements.stats.totalGames / 15, 0.2);
         this.spawner.reset(vetBonus);
+        if (mods.obstacleSpeed) this.spawner.dailySpeedMult = mods.obstacleSpeed;
+        if (mods.obstacleSize) this.spawner.dailySizeMult = mods.obstacleSize;
         this.powerupEffects.reset();
         this.achievements.onRunStart();
         SB._skinBtns = null;
+        SB._achBtn = null;
         SB.audio.startBGM();
     } else if (newState === SB.STATES.GAME_OVER) {
         this.screenFlash = 0.15;
@@ -289,16 +314,24 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.screenShakeIntensity = 10;
         this.isNewHigh = SB.Storage.isNewHighScore(Math.floor(this.score));
         SB.Storage.setHighScore(Math.floor(this.score));
+        SB.Storage.addToLeaderboard(this.score);
         this.highScore = SB.Storage.getHighScore();
         this.gameOverCooldown = 0;
         this.achievements.onRunEnd(this.score);
+        var dailyJustCompleted = this.daily.onRunEnd(this.score);
+        var dailyBonusXP = this.daily.getBonusXP();
         this.xpResult = this.progression.addRunXP(this.score, this.runStars);
-        this.ui.resetGameOver(this.score, this.xpResult, this.progression);
+        if (dailyJustCompleted && dailyBonusXP > 0) {
+            this.progression.xp += dailyBonusXP;
+            this.progression._save();
+        }
+        this.ui.resetGameOver(this.score, this.xpResult, this.progression, dailyJustCompleted);
         SB.audio.stopBGM();
         SB.audio.playGameOver();
     } else if (newState === SB.STATES.START) {
         this.highScore = SB.Storage.getHighScore();
         this.showTutorial = false;
+        this.showAchievementViewer = false;
     }
 };
 
@@ -317,7 +350,10 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
     switch (this.state) {
         case SB.STATES.START:
-            this.ui.drawStartScreen(ctx, cw, ch, this.highScore, this.progression, this.achievements, this.skinManager);
+            this.ui.drawStartScreen(ctx, cw, ch, this.highScore, this.progression, this.achievements, this.skinManager, this.daily);
+            if (this.showAchievementViewer) {
+                this.ui.drawAchievementViewer(ctx, cw, ch, this.achievements);
+            }
             break;
 
         case SB.STATES.PLAYING:

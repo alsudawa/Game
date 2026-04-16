@@ -11,7 +11,12 @@ SB.ACHIEVEMENTS = [
     { id: 'survivor',      name: 'Survivor',          desc: 'Survive 30 seconds',         icon: '⏱️', check: function(s) { return s.runTime >= 30; } },
     { id: 'shield_save',   name: 'Close Call',        desc: 'Use a shield to survive',    icon: '🛡️', check: function(s) { return s.shieldUsed >= 1; } },
     { id: 'power_player',  name: 'Power Player',      desc: 'Collect 10 powerups total',  icon: '⚡', check: function(s) { return s.totalPowerups >= 10; } },
-    { id: 'dedicated',     name: 'Dedicated',         desc: 'Play 20 games',              icon: '🎮', check: function(s) { return s.totalGames >= 20; } }
+    { id: 'dedicated',     name: 'Dedicated',         desc: 'Play 20 games',              icon: '🎮', check: function(s) { return s.totalGames >= 20; } },
+    { id: 'legend',        name: 'Legend',            desc: 'Score 200 in one run',       icon: '👑', check: function(s) { return s.bestScore >= 200; } },
+    { id: 'long_run',      name: 'Endurance',         desc: 'Survive 60 seconds',         icon: '⏰', check: function(s) { return s.runTime >= 60; } },
+    { id: 'star_collector', name: 'Star Collector',   desc: 'Collect 200 stars total',    icon: '✨', check: function(s) { return s.totalStars >= 200; } },
+    { id: 'combo_master',  name: 'Combo Master',      desc: 'Get a 5x combo',             icon: '💥', check: function(s) { return s.bestCombo >= 5; } },
+    { id: 'veteran',       name: 'Veteran',           desc: 'Play 50 games',              icon: '🏆', check: function(s) { return s.totalGames >= 50; } }
 ];
 
 SB.AchievementManager = function() {

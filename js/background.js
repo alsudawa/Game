@@ -4,6 +4,7 @@ SB.Background = function() {
     this.stars = [];
     this.clouds = [];
     this.particles = [];
+    this.shootingStars = [];
     this.colorPhase = 0;
 };
 
@@ -75,6 +76,27 @@ SB.Background.prototype.update = function(dt, difficulty) {
         if (p.x < -10) p.x = cw + 10;
         if (p.x > cw + 10) p.x = -10;
     }
+
+    // Shooting stars at higher difficulty
+    if (difficulty > 0.3 && Math.random() < 0.004 * dt * 60) {
+        this.shootingStars.push({
+            x: SB.randRange(0, cw),
+            y: SB.randRange(0, ch * 0.4),
+            vx: SB.randRange(-500, -200),
+            vy: SB.randRange(150, 350),
+            life: SB.randRange(0.3, 0.6),
+            maxLife: 0,
+            size: SB.randRange(1, 2.5)
+        });
+        this.shootingStars[this.shootingStars.length - 1].maxLife = this.shootingStars[this.shootingStars.length - 1].life;
+    }
+    for (var s = this.shootingStars.length - 1; s >= 0; s--) {
+        var ss = this.shootingStars[s];
+        ss.x += ss.vx * dt;
+        ss.y += ss.vy * dt;
+        ss.life -= dt;
+        if (ss.life <= 0) this.shootingStars.splice(s, 1);
+    }
 };
 
 SB.Background.prototype.draw = function(ctx, cw, ch) {
@@ -121,5 +143,20 @@ SB.Background.prototype.draw = function(ctx, cw, ch) {
         ctx.arc(p.x, p.y, p.size, 0, SB.TAU);
         ctx.fillStyle = 'rgba(255, 255, 255, ' + pa + ')';
         ctx.fill();
+    }
+
+    // Shooting stars
+    for (var s = 0; s < this.shootingStars.length; s++) {
+        var ss = this.shootingStars[s];
+        var sa = (ss.life / ss.maxLife) * 0.8;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 255, 255, ' + sa + ')';
+        ctx.lineWidth = ss.size;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(ss.x, ss.y);
+        ctx.lineTo(ss.x - ss.vx * 0.04, ss.y - ss.vy * 0.04);
+        ctx.stroke();
+        ctx.restore();
     }
 };

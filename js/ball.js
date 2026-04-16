@@ -5,12 +5,14 @@ SB.Ball = function() {
     this.y = 0;
     this.vx = 0;
     this.vy = 0;
+    this.baseRadius = 14;
     this.radius = 14;
     this.trail = [];
     this.maxTrail = 8;
     this.glowColor = '#FFD700';
     this.coreColor = '#FFFFFF';
     this.trailColor = 'rgba(255,215,0,';
+    this.gravityMult = 1;
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -19,6 +21,8 @@ SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
     this.vx = 0;
     this.vy = 0;
     this.trail = [];
+    this.radius = this.baseRadius;
+    this.gravityMult = 1;
 };
 
 SB.Ball.prototype.bounce = function(tapX) {
@@ -33,7 +37,7 @@ SB.Ball.prototype.bounce = function(tapX) {
 };
 
 SB.Ball.prototype.update = function(dt) {
-    this.vy += SB.Physics.GRAVITY * dt * 60;
+    this.vy += SB.Physics.GRAVITY * this.gravityMult * dt * 60;
     this.vy = SB.clamp(this.vy, -SB.Physics.MAX_FALL_SPEED, SB.Physics.MAX_FALL_SPEED);
 
     this.vx *= SB.Physics.AIR_RESISTANCE;
