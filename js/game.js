@@ -21,6 +21,7 @@ SB.Game = function(canvas) {
     this.achievements = new SB.AchievementManager();
     this.progression = new SB.Progression();
     this.skinManager = new SB.SkinManager();
+    this.particles = new SB.ParticleSystem(200);
     this.score = 0;
     this.scoreTimer = 0;
     this.highScore = 0;
@@ -29,6 +30,7 @@ SB.Game = function(canvas) {
     this.gameOverCooldownTime = 0.8;
     this.lastMilestone = 0;
     this.screenShake = 0;
+    this.screenShakeIntensity = 0;
     this.screenFlash = 0;
     this.comboTimer = 0;
     this.comboCount = 0;
@@ -87,6 +89,14 @@ SB.Game.prototype.update = function(dt) {
 };
 
 SB.Game.prototype._updateStart = function(dt) {
+    // Handle skin selection (set by input handler)
+    if (SB._skinTapped) {
+        var skinId = SB._skinTapped;
+        SB._skinTapped = null;
+        this.skinManager.selectSkin(skinId);
+        this._applySkin();
+        return;
+    }
     if (this.input.consumeTap()) {
         this._transitionTo(SB.STATES.PLAYING);
     }
@@ -100,16 +110,19 @@ SB.Game.prototype._updatePlaying = function(dt) {
         this.tutorialTimer += dt;
         if (this.input.consumeTap()) {
             this.ball.bounce(this.input.tapX);
+            this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
             SB.audio.playBounce();
             if (this.tutorialTimer > 0.5) this.showTutorial = false;
         }
     } else if (this.input.consumeTap()) {
         this.ball.bounce(this.input.tapX);
+        this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
         SB.audio.playBounce();
     }
 
     this.ball.update(dt);
     this.powerupEffects.update(dt);
+    this.particles.update(dt);
     this.achievements.updateRunTime(dt);
 
     var cw = SB.canvasWidth;
@@ -141,11 +154,14 @@ SB.Game.prototype._updatePlaying = function(dt) {
         if (hit) {
             if (this.powerupEffects.useShield()) {
                 obs.active = false;
-                this.screenShake = 0.15;
+                this.screenShake = 0.25;
+                this.screenShakeIntensity = 8;
+                this.particles.emit(this.ball.x, this.ball.y, SB.FX.shieldBreak);
                 this.achievements.onShieldUse();
-                SB.audio.playCollect();
+                SB.audio.playShieldBreak();
                 continue;
             }
+            this.particles.emit(this.ball.x, this.ball.y, SB.FX.deathExplosion);
             this._transitionTo(SB.STATES.GAME_OVER);
             return;
         }
@@ -173,6 +189,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
 
         if (SB.circleCircleCollision(ballBounds, col.getBounds())) {
+            this.particles.emit(col.x, col.y, SB.FX.starCollect);
             col.active = false;
             this.comboTimer = 2.0;
             this.comboCount++;
@@ -197,6 +214,10 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
 
         if (SB.circleCircleCollision(ballBounds, pu.getBounds())) {
+            var puPreset = pu.type === 'shield' ? SB.FX.powerupShield
+                         : pu.type === 'magnet' ? SB.FX.powerupMagnet
+                         : SB.FX.powerupSlow;
+            this.particles.emit(pu.x, pu.y, puPreset);
             pu.active = false;
             this.powerupEffects.activate(pu.type);
             this.achievements.onPowerupCollect();
@@ -221,12 +242,14 @@ SB.Game.prototype._updatePlaying = function(dt) {
     this.achievements.checkAll();
 
     if (this.ball.y - this.ball.radius > ch) {
+        this.particles.emit(this.ball.x, ch, SB.FX.deathExplosion);
         this._transitionTo(SB.STATES.GAME_OVER);
     }
 };
 
 SB.Game.prototype._updateGameOver = function(dt) {
     this.gameOverCooldown += dt;
+    this.particles.update(dt);
 
     // Process achievement notifications
     var notif = this.achievements.popNotification();
@@ -253,11 +276,17 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.xpResult = null;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
         this._applySkin();
-        this.spawner.reset();
+        // Veteran bonus: returning players get a faster start
+        var vetBonus = Math.min(this.achievements.stats.totalGames / 15, 0.2);
+        this.spawner.reset(vetBonus);
         this.powerupEffects.reset();
         this.achievements.onRunStart();
+        SB._skinBtns = null;
+        SB.audio.startBGM();
     } else if (newState === SB.STATES.GAME_OVER) {
         this.screenFlash = 0.15;
+        this.screenShake = 0.3;
+        this.screenShakeIntensity = 10;
         this.isNewHigh = SB.Storage.isNewHighScore(Math.floor(this.score));
         SB.Storage.setHighScore(Math.floor(this.score));
         this.highScore = SB.Storage.getHighScore();
@@ -265,6 +294,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.achievements.onRunEnd(this.score);
         this.xpResult = this.progression.addRunXP(this.score, this.runStars);
         this.ui.resetGameOver(this.score, this.xpResult, this.progression);
+        SB.audio.stopBGM();
         SB.audio.playGameOver();
     } else if (newState === SB.STATES.START) {
         this.highScore = SB.Storage.getHighScore();
@@ -276,8 +306,10 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
     ctx.save();
 
     if (this.screenShake > 0) {
-        var shakeX = (Math.random() - 0.5) * 6;
-        var shakeY = (Math.random() - 0.5) * 6;
+        var shakeT = this.screenShake / 0.3;
+        var intensity = this.screenShakeIntensity * shakeT;
+        var shakeX = (Math.random() - 0.5) * intensity;
+        var shakeY = (Math.random() - 0.5) * intensity;
         ctx.translate(shakeX, shakeY);
     }
 
@@ -285,7 +317,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
     switch (this.state) {
         case SB.STATES.START:
-            this.ui.drawStartScreen(ctx, cw, ch, this.highScore, this.progression, this.achievements);
+            this.ui.drawStartScreen(ctx, cw, ch, this.highScore, this.progression, this.achievements, this.skinManager);
             break;
 
         case SB.STATES.PLAYING:
@@ -330,6 +362,7 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
     }
 
     this.ball.draw(ctx);
+    this.particles.draw(ctx);
 
     if (this.powerupEffects.shield) {
         ctx.save();

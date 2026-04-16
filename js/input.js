@@ -16,6 +16,7 @@ SB.Input = function(canvas) {
         self.tapX = touch.clientX;
         self.tapY = touch.clientY;
         self._checkShareButton(touch.clientX, touch.clientY);
+        self._checkSkinButton(touch.clientX, touch.clientY);
         self.tapped = true;
         self._handleFirstInteraction();
     }, { passive: false });
@@ -24,6 +25,7 @@ SB.Input = function(canvas) {
         self.tapX = e.clientX;
         self.tapY = e.clientY;
         self._checkShareButton(e.clientX, e.clientY);
+        self._checkSkinButton(e.clientX, e.clientY);
         self.tapped = true;
         self._handleFirstInteraction();
     });
@@ -44,6 +46,21 @@ SB.Input.prototype._checkShareButton = function(x, y) {
         if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
             SB.shareScore(btn.score);
             this.tapped = false; // Don't treat share tap as game tap
+        }
+    }
+};
+
+SB.Input.prototype._checkSkinButton = function(x, y) {
+    if (SB._skinBtns) {
+        for (var i = 0; i < SB._skinBtns.length; i++) {
+            var btn = SB._skinBtns[i];
+            var dx = x - btn.x;
+            var dy = y - btn.y;
+            if (dx * dx + dy * dy < btn.r * btn.r && btn.unlocked) {
+                SB._skinTapped = btn.skinId;
+                this.tapped = false;
+                return;
+            }
         }
     }
 };

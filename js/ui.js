@@ -91,7 +91,7 @@ SB.UI.prototype.drawAchievementToast = function(ctx, cw, ch) {
     ctx.restore();
 };
 
-SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, achievements) {
+SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, achievements, skinManager) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
@@ -101,12 +101,12 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.shadowBlur = 20;
     ctx.font = 'bold ' + Math.min(cw * 0.12, 52) + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText('SKY BOUNCE', cw / 2, ch * 0.15);
+    ctx.fillText('SKY BOUNCE', cw / 2, ch * 0.12);
     ctx.restore();
 
     // Level & XP bar
     if (progression) {
-        var lvlY = ch * 0.22;
+        var lvlY = ch * 0.19;
         ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
         ctx.fillText('Lv.' + progression.level, cw / 2, lvlY);
@@ -128,27 +128,33 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         ctx.fillText(xpInfo.current + ' / ' + xpInfo.required + ' XP', cw / 2, barY + barH + 10);
     }
 
-    // Subtitle with better powerup description (일반인 피드백 반영)
+    // Subtitle
     ctx.font = Math.min(cw * 0.032, 13) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
-    ctx.fillText('Tap left/right to steer the ball', cw / 2, ch * 0.34);
+    ctx.fillText('Tap left/right to steer the ball', cw / 2, ch * 0.28);
 
-    // Idle ball
-    var ballY = ch * 0.44 + this.idleBallY;
+    // Idle ball with current skin
+    var currentSkin = skinManager ? skinManager.getCurrentSkin() : SB.SKINS[0];
+    var ballY = ch * 0.37 + this.idleBallY;
     ctx.save();
-    ctx.shadowColor = '#FFD700';
+    ctx.shadowColor = currentSkin.glow;
     ctx.shadowBlur = 20;
     ctx.beginPath();
     ctx.arc(cw / 2, ballY, 18, 0, SB.TAU);
     var gradient = ctx.createRadialGradient(cw / 2 - 5, ballY - 5, 2, cw / 2, ballY, 18);
-    gradient.addColorStop(0, '#FFFFFF');
-    gradient.addColorStop(1, '#FFD700');
+    gradient.addColorStop(0, currentSkin.core);
+    gradient.addColorStop(1, currentSkin.glow);
     ctx.fillStyle = gradient;
     ctx.fill();
     ctx.restore();
 
-    // Powerup legend with descriptions (일반인 피드백: 설명 부족)
-    var legendY = ch * 0.55;
+    // Skin selector
+    if (skinManager && progression) {
+        this._drawSkinSelector(ctx, cw, ch * 0.47, skinManager, progression.level);
+    }
+
+    // Powerup legend
+    var legendY = ch * 0.56;
     var iconSize = Math.min(cw * 0.02, 8);
     ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
     var legends = [
@@ -173,20 +179,90 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         var achCount = achievements.getUnlockedCount();
         ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,215,0,0.5)';
-        ctx.fillText(achCount + '/' + SB.ACHIEVEMENTS.length + ' Achievements', cw / 2, ch * 0.64);
+        ctx.fillText(achCount + '/' + SB.ACHIEVEMENTS.length + ' Achievements', cw / 2, ch * 0.66);
     }
 
     // Tap to start
     var blinkAlpha = (Math.sin(this.blinkPhase) + 1) / 2 * 0.7 + 0.3;
     ctx.font = 'bold ' + Math.min(cw * 0.06, 24) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + blinkAlpha + ')';
-    ctx.fillText('TAP TO START', cw / 2, ch * 0.74);
+    ctx.fillText('TAP TO START', cw / 2, ch * 0.76);
 
     if (highScore > 0) {
         ctx.font = Math.min(cw * 0.045, 18) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
-        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.83);
+        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.85);
     }
+};
+
+SB.UI.prototype._drawSkinSelector = function(ctx, cw, y, skinManager, playerLevel) {
+    var skins = skinManager.getAvailableSkins(playerLevel);
+    var spacing = 42;
+    var totalW = (skins.length - 1) * spacing;
+    var startX = cw / 2 - totalW / 2;
+    var btnR = 16;
+
+    SB._skinBtns = [];
+
+    for (var i = 0; i < skins.length; i++) {
+        var info = skins[i];
+        var skin = info.skin;
+        var x = startX + i * spacing;
+
+        SB._skinBtns.push({
+            x: x,
+            y: y,
+            r: btnR + 6,
+            skinId: skin.id,
+            unlocked: info.unlocked
+        });
+
+        ctx.save();
+
+        if (!info.unlocked) {
+            ctx.globalAlpha = 0.3;
+        }
+
+        // Circle with skin glow color
+        var r = info.selected ? btnR + 2 : btnR - 2;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, SB.TAU);
+        var grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
+        grad.addColorStop(0, skin.core);
+        grad.addColorStop(1, skin.glow);
+        ctx.fillStyle = grad;
+        ctx.fill();
+
+        // Border
+        if (info.selected) {
+            ctx.strokeStyle = '#FFD700';
+            ctx.lineWidth = 2.5;
+            ctx.shadowColor = '#FFD700';
+            ctx.shadowBlur = 8;
+        } else {
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.lineWidth = 1;
+        }
+        ctx.stroke();
+
+        ctx.restore();
+
+        // Lock icon or level requirement
+        if (!info.unlocked) {
+            ctx.font = Math.min(cw * 0.02, 8) + 'px ' + this.font;
+            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('Lv.' + skin.unlockLevel, x, y + btnR + 10);
+        }
+    }
+
+    // Label
+    ctx.font = Math.min(cw * 0.022, 9) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('SKINS', cw / 2, y - btnR - 8);
 };
 
 SB.UI.prototype.drawTutorial = function(ctx, cw, ch) {

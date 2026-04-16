@@ -9,17 +9,20 @@ SB.Spawner = function(obstaclePool, collectiblePool, powerupPool) {
     this.powerupTimer = 0;
     this.difficulty = 0;
     this.extraDifficulty = 0;
+    this.veteranBonus = 0;
     this.graceTimer = 0;
     this.gracePeriod = 2.0;
 };
 
-SB.Spawner.prototype.reset = function() {
+SB.Spawner.prototype.reset = function(veteranBonus) {
     this.obstacleTimer = 0;
     this.collectibleTimer = 0;
     this.powerupTimer = 0;
     this.difficulty = 0;
     this.extraDifficulty = 0;
+    this.veteranBonus = veteranBonus || 0;
     this.graceTimer = 0;
+    this.gracePeriod = Math.max(0.8, 2.0 - this.veteranBonus * 5);
     this.obstaclePool.releaseAll();
     this.collectiblePool.releaseAll();
     if (this.powerupPool) this.powerupPool.releaseAll();
@@ -28,12 +31,14 @@ SB.Spawner.prototype.reset = function() {
 SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
     this.graceTimer += dt;
     this.difficulty = Math.min(score / 50, 1.0);
-    // Beyond score 50, extra difficulty keeps scaling (slower rate)
     this.extraDifficulty = score > 50 ? Math.min((score - 50) / 150, 1.0) : 0;
 
-    var spawnInterval = SB.lerp(2.0, 0.8, this.difficulty) - this.extraDifficulty * 0.25;
-    spawnInterval = Math.max(spawnInterval, 0.4);
-    var speedMultiplier = SB.lerp(1.0, 2.5, this.difficulty) + this.extraDifficulty * 1.0;
+    // Effective difficulty includes veteran bonus for returning players
+    var d = Math.min(this.difficulty + this.veteranBonus, 1.0);
+
+    var spawnInterval = SB.lerp(1.8, 0.7, d) - this.extraDifficulty * 0.25;
+    spawnInterval = Math.max(spawnInterval, 0.35);
+    var speedMultiplier = SB.lerp(1.0, 2.5, d) + this.extraDifficulty * 1.0;
 
     if (this.graceTimer > this.gracePeriod) {
         this.obstacleTimer += dt;
@@ -49,10 +54,10 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
         this._spawnCollectible(canvasWidth, canvasHeight);
     }
 
-    // Powerup spawning (every 12-18 seconds, only after difficulty > 0.2)
-    if (this.powerupPool && this.difficulty > 0.2) {
+    // Powerup spawning (only after effective difficulty > 0.2)
+    if (this.powerupPool && d > 0.2) {
         this.powerupTimer += dt;
-        var puInterval = SB.lerp(18, 10, this.difficulty);
+        var puInterval = SB.lerp(18, 10, d);
         if (this.powerupTimer >= puInterval) {
             this.powerupTimer = 0;
             this._spawnPowerup(canvasWidth, canvasHeight);
@@ -61,12 +66,12 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
 };
 
 SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedMult) {
-    var d = this.difficulty;
+    var d = Math.min(this.difficulty + this.veteranBonus, 1.0);
 
-    if (d < 0.3) {
+    if (d < 0.15) {
         this._spawnPlatform(canvasWidth, canvasHeight, speedMult);
-    } else if (d < 0.6) {
-        if (Math.random() < 0.3) {
+    } else if (d < 0.45) {
+        if (Math.random() < 0.25) {
             this._spawnSpike(canvasWidth, canvasHeight, speedMult);
         } else {
             this._spawnPlatform(canvasWidth, canvasHeight, speedMult);

@@ -113,4 +113,77 @@ SB.Audio.prototype.playMilestone = function() {
     }
 };
 
+SB.Audio.prototype.playShieldBreak = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.linearRampToValueAtTime(200, now + 0.15);
+    gain.gain.setValueAtTime(0.15, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.2);
+};
+
+SB.Audio.prototype.startBGM = function() {
+    if (!this.initialized || this._bgmPlaying) return;
+    this._bgmPlaying = true;
+
+    var ctx = this.ctx;
+    var now = ctx.currentTime;
+
+    this._bgmGain = ctx.createGain();
+    this._bgmGain.gain.setValueAtTime(0, now);
+    this._bgmGain.gain.linearRampToValueAtTime(0.05, now + 2.0);
+    this._bgmGain.connect(this.masterGain);
+
+    // Slow LFO for gentle volume pulsing
+    this._bgmLfo = ctx.createOscillator();
+    this._bgmLfo.type = 'sine';
+    this._bgmLfo.frequency.value = 0.12;
+    var lfoGain = ctx.createGain();
+    lfoGain.gain.value = 0.012;
+    this._bgmLfo.connect(lfoGain);
+    lfoGain.connect(this._bgmGain.gain);
+    this._bgmLfo.start(now);
+
+    // Ambient pad: three triangle waves for warm chord
+    var notes = [130.81, 196.00, 261.63]; // C3, G3, C4
+    var volumes = [0.5, 0.3, 0.15];
+    this._bgmOscs = [];
+
+    for (var i = 0; i < notes.length; i++) {
+        var osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = notes[i];
+        if (i > 0) osc.detune.value = SB.randRange(-4, 4);
+        var g = ctx.createGain();
+        g.gain.value = volumes[i];
+        osc.connect(g);
+        g.connect(this._bgmGain);
+        osc.start(now);
+        this._bgmOscs.push(osc);
+    }
+};
+
+SB.Audio.prototype.stopBGM = function() {
+    if (!this._bgmPlaying) return;
+    this._bgmPlaying = false;
+
+    var now = this.ctx.currentTime;
+    this._bgmGain.gain.cancelScheduledValues(now);
+    this._bgmGain.gain.setValueAtTime(this._bgmGain.gain.value, now);
+    this._bgmGain.gain.linearRampToValueAtTime(0.001, now + 1.0);
+
+    for (var i = 0; i < this._bgmOscs.length; i++) {
+        this._bgmOscs[i].stop(now + 1.1);
+    }
+    this._bgmLfo.stop(now + 1.1);
+};
+
 SB.audio = new SB.Audio();
