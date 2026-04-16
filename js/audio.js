@@ -113,6 +113,42 @@ SB.Audio.prototype.playMilestone = function() {
     }
 };
 
+SB.Audio.prototype.playCombo = function(count) {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    var baseFreq = 500 + Math.min(count, 8) * 120;
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(baseFreq, now);
+    osc.frequency.linearRampToValueAtTime(baseFreq * 1.4, now + 0.08);
+    gain.gain.setValueAtTime(0.18, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.12);
+};
+
+SB.Audio.prototype.playLevelUp = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    var notes = [523, 659, 784, 1047];
+    for (var i = 0; i < notes.length; i++) {
+        var osc = this.ctx.createOscillator();
+        var gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = notes[i];
+        var t = now + i * 0.1;
+        gain.gain.setValueAtTime(0.2, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.25);
+    }
+};
+
 SB.Audio.prototype.playShieldBreak = function() {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;

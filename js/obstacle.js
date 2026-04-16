@@ -4,7 +4,8 @@ SB.OBSTACLE_TYPES = {
     PLATFORM: 'platform',
     SPIKE: 'spike',
     BLADE: 'blade',
-    BOOMERANG: 'boomerang'
+    BOOMERANG: 'boomerang',
+    LASER: 'laser'
 };
 
 SB.Obstacle = function() {
@@ -27,6 +28,8 @@ SB.Obstacle = function() {
     this.travelDist = 0;
     this.traveled = 0;
     this.returning = false;
+    this.laserPhase = 'warning';
+    this.laserTimer = 0;
 };
 
 SB.Obstacle.prototype.init = function(config) {
@@ -49,6 +52,8 @@ SB.Obstacle.prototype.init = function(config) {
     this.travelDist = config.travelDist || 300;
     this.traveled = 0;
     this.returning = false;
+    this.laserPhase = 'warning';
+    this.laserTimer = 0;
 };
 
 SB.Obstacle.prototype.update = function(dt) {
@@ -74,6 +79,20 @@ SB.Obstacle.prototype.update = function(dt) {
             this.returning = true;
             this.direction *= -1;
         }
+    } else if (this.type === SB.OBSTACLE_TYPES.LASER) {
+        this.laserTimer += dt;
+        if (this.laserPhase === 'warning' && this.laserTimer >= 0.8) {
+            this.laserPhase = 'charge';
+            this.laserTimer = 0;
+        } else if (this.laserPhase === 'charge' && this.laserTimer >= 0.3) {
+            this.laserPhase = 'active';
+            this.laserTimer = 0;
+        } else if (this.laserPhase === 'active' && this.laserTimer >= 0.5) {
+            this.laserPhase = 'fade';
+            this.laserTimer = 0;
+        } else if (this.laserPhase === 'fade' && this.laserTimer >= 0.3) {
+            this.active = false;
+        }
     }
 };
 
@@ -88,6 +107,8 @@ SB.Obstacle.prototype.draw = function(ctx) {
         this._drawBlade(ctx);
     } else if (this.type === SB.OBSTACLE_TYPES.BOOMERANG) {
         this._drawBoomerang(ctx);
+    } else if (this.type === SB.OBSTACLE_TYPES.LASER) {
+        this._drawLaser(ctx);
     }
 };
 
@@ -211,7 +232,64 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
     ctx.restore();
 };
 
+SB.Obstacle.prototype._drawLaser = function(ctx) {
+    var cw = SB.canvasWidth;
+
+    if (this.laserPhase === 'warning') {
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 50, 50, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([8, 8]);
+        ctx.beginPath();
+        ctx.moveTo(0, this.y);
+        ctx.lineTo(cw, this.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        // Small warning indicators on edges
+        ctx.fillStyle = 'rgba(255, 50, 50, 0.5)';
+        ctx.beginPath();
+        ctx.arc(8, this.y, 4, 0, SB.TAU);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cw - 8, this.y, 4, 0, SB.TAU);
+        ctx.fill();
+        ctx.restore();
+    } else if (this.laserPhase === 'charge') {
+        var pulse = 0.5 + Math.sin(this.laserTimer * 25) * 0.3;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255, 50, 50, ' + pulse + ')';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, this.y);
+        ctx.lineTo(cw, this.y);
+        ctx.stroke();
+        ctx.restore();
+    } else if (this.laserPhase === 'active') {
+        var beamH = 18;
+        ctx.save();
+        ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
+        ctx.shadowBlur = 20;
+        var grad = ctx.createLinearGradient(0, this.y - beamH / 2, 0, this.y + beamH / 2);
+        grad.addColorStop(0, 'rgba(255, 100, 100, 0.2)');
+        grad.addColorStop(0.3, 'rgba(255, 50, 50, 0.9)');
+        grad.addColorStop(0.5, 'rgba(255, 255, 255, 1)');
+        grad.addColorStop(0.7, 'rgba(255, 50, 50, 0.9)');
+        grad.addColorStop(1, 'rgba(255, 100, 100, 0.2)');
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, this.y - beamH / 2, cw, beamH);
+        ctx.restore();
+    } else if (this.laserPhase === 'fade') {
+        var a = 1 - this.laserTimer / 0.3;
+        var bh = 18 * a;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255, 50, 50, ' + (a * 0.4).toFixed(2) + ')';
+        ctx.fillRect(0, this.y - bh / 2, cw, bh);
+        ctx.restore();
+    }
+};
+
 SB.Obstacle.prototype.isOffScreen = function(canvasWidth, canvasHeight) {
+    if (this.type === SB.OBSTACLE_TYPES.LASER) return false;
     if (this.type === SB.OBSTACLE_TYPES.BLADE) {
         return this.x + this.radius * 2 < -50 || this.x > canvasWidth + 50 ||
                this.y + this.radius * 2 < -50 || this.y > canvasHeight + 50;
@@ -221,6 +299,12 @@ SB.Obstacle.prototype.isOffScreen = function(canvasWidth, canvasHeight) {
 };
 
 SB.Obstacle.prototype.getBounds = function() {
+    if (this.type === SB.OBSTACLE_TYPES.LASER) {
+        if (this.laserPhase === 'active') {
+            return { x: 0, y: this.y - 9, width: SB.canvasWidth, height: 18 };
+        }
+        return null;
+    }
     if (this.type === SB.OBSTACLE_TYPES.BOOMERANG) {
         return { x: this.x + this.radius, y: this.y + this.radius, radius: this.radius * 0.8 };
     }

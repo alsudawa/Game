@@ -81,13 +81,15 @@ SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedM
         }
     } else {
         var roll = Math.random();
-        if (roll < 0.15) {
+        if (roll < 0.12) {
             this._spawnBlade(canvasWidth, canvasHeight, speedMult);
-        } else if (roll < 0.30) {
+        } else if (roll < 0.22) {
             this._spawnBoomerang(canvasWidth, canvasHeight, speedMult);
+        } else if (roll < 0.32) {
+            this._spawnLaser(canvasWidth, canvasHeight);
         } else if (roll < 0.50) {
             this._spawnSpike(canvasWidth, canvasHeight, speedMult);
-        } else if (roll < 0.65) {
+        } else if (roll < 0.63) {
             this._spawnSqueeze(canvasWidth, canvasHeight, speedMult);
         } else {
             this._spawnPlatform(canvasWidth, canvasHeight, speedMult);
@@ -221,6 +223,19 @@ SB.Spawner.prototype._spawnBoomerang = function(cw, ch, speedMult) {
         direction: fromLeft ? 1 : -1,
         radius: radius,
         travelDist: travelDist
+    });
+};
+
+SB.Spawner.prototype._spawnLaser = function(cw, ch) {
+    var y = SB.randRange(ch * 0.15, ch * 0.8);
+    this.obstaclePool.acquire({
+        type: SB.OBSTACLE_TYPES.LASER,
+        x: 0,
+        y: y,
+        width: cw,
+        height: 18,
+        speed: 0,
+        direction: 0
     });
 };
 

@@ -411,7 +411,7 @@ SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
     }
 };
 
-SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dailyJustCompleted) {
+SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dailyJustCompleted, runStats) {
     this.gameOverAlpha = 0;
     this.scoreCountUp = 0;
     this._finalScore = finalScore;
@@ -420,6 +420,7 @@ SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dail
     this.progressionRef = progression;
     this.dailyJustCompleted = dailyJustCompleted || false;
     this.rank = SB.Storage.getRank(finalScore);
+    this.runStats = runStats || { time: 0, stars: 0, maxCombo: 0 };
 };
 
 SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh) {
@@ -466,6 +467,15 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.font = Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, ' + (alpha * 0.7) + ')';
         ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.37);
+    }
+
+    // Run stats
+    if (this.runStats) {
+        ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.45) + ')';
+        var statsText = Math.floor(this.runStats.time) + 's  |  ' + this.runStats.stars + ' stars';
+        if (this.runStats.maxCombo >= 2) statsText += '  |  ' + this.runStats.maxCombo + 'x combo';
+        ctx.fillText(statsText, cw / 2, ch * 0.40);
     }
 
     // Rank

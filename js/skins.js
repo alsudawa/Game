@@ -5,7 +5,10 @@ SB.SKINS = [
     { id: 'fire',     name: 'Fire',     core: '#FFEB3B', glow: '#FF5722', trail: 'rgba(255,87,34,',   unlockLevel: 3 },
     { id: 'ice',      name: 'Ice',      core: '#E0F7FA', glow: '#00BCD4', trail: 'rgba(0,188,212,',   unlockLevel: 5 },
     { id: 'neon',     name: 'Neon',     core: '#E8F5E9', glow: '#76FF03', trail: 'rgba(118,255,3,',   unlockLevel: 8 },
-    { id: 'phantom',  name: 'Phantom',  core: '#E1BEE7', glow: '#9C27B0', trail: 'rgba(156,39,176,',  unlockLevel: 12 }
+    { id: 'phantom',  name: 'Phantom',  core: '#E1BEE7', glow: '#9C27B0', trail: 'rgba(156,39,176,',  unlockLevel: 12 },
+    { id: 'solar',    name: 'Solar',    core: '#FFF9C4', glow: '#FF9800', trail: 'rgba(255,152,0,',   unlockLevel: 15 },
+    { id: 'ocean',    name: 'Ocean',    core: '#E0F7FA', glow: '#006064', trail: 'rgba(0,96,100,',    unlockLevel: 20 },
+    { id: 'galaxy',   name: 'Galaxy',   core: '#F3E5F5', glow: '#E91E63', trail: 'rgba(233,30,99,',   unlockLevel: 25 }
 ];
 
 SB.SkinManager = function() {

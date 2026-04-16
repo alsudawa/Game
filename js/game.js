@@ -41,6 +41,9 @@ SB.Game = function(canvas) {
     this.showAchievementViewer = false;
     this.tutorialTimer = 0;
     this.xpResult = null;
+    this.transitionAlpha = 0;
+    this.runMaxCombo = 0;
+    this.runSurviveTime = 0;
 };
 
 SB.Game.prototype.init = function() {
@@ -73,6 +76,7 @@ SB.Game.prototype.update = function(dt) {
 
     if (this.screenShake > 0) this.screenShake -= dt;
     if (this.screenFlash > 0) this.screenFlash -= dt;
+    if (this.transitionAlpha > 0) this.transitionAlpha -= dt * 3;
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
         if (this.comboTimer <= 0) this.comboCount = 0;
@@ -140,6 +144,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
     this.powerupEffects.update(dt);
     this.particles.update(dt);
     this.achievements.updateRunTime(dt);
+    this.runSurviveTime += dt;
 
     var cw = SB.canvasWidth;
     var ch = SB.canvasHeight;
@@ -160,6 +165,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
 
         var obsBounds = obs.getBounds();
+        if (!obsBounds) continue;
         var hit = false;
         if (obs.type === SB.OBSTACLE_TYPES.BLADE || obs.type === SB.OBSTACLE_TYPES.BOOMERANG) {
             hit = SB.circleCircleCollision(ballBounds, obsBounds);
@@ -209,12 +215,17 @@ SB.Game.prototype._updatePlaying = function(dt) {
             col.active = false;
             this.comboTimer = 2.0;
             this.comboCount++;
+            if (this.comboCount > this.runMaxCombo) this.runMaxCombo = this.comboCount;
             this.runStars++;
             var bonus = col.pointValue * (this.comboCount >= 2 ? 2 : 1) * this.dailyStarMult;
             this.score += bonus;
             this.achievements.onStarCollect();
             this.achievements.onCombo(this.comboCount);
-            SB.audio.playCollect();
+            if (this.comboCount >= 2) {
+                SB.audio.playCombo(this.comboCount);
+            } else {
+                SB.audio.playCollect();
+            }
         }
     }
 
@@ -291,6 +302,9 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.tutorialTimer = 0;
         this.xpResult = null;
         this.showAchievementViewer = false;
+        this.runMaxCombo = 0;
+        this.runSurviveTime = 0;
+        this.transitionAlpha = 1;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
         this._applySkin();
         // Apply daily modifiers
@@ -325,7 +339,12 @@ SB.Game.prototype._transitionTo = function(newState) {
             this.progression.xp += dailyBonusXP;
             this.progression._save();
         }
-        this.ui.resetGameOver(this.score, this.xpResult, this.progression, dailyJustCompleted);
+        if (this.xpResult.leveledUp) SB.audio.playLevelUp();
+        this.ui.resetGameOver(this.score, this.xpResult, this.progression, dailyJustCompleted, {
+            time: this.runSurviveTime,
+            stars: this.runStars,
+            maxCombo: this.runMaxCombo
+        });
         SB.audio.stopBGM();
         SB.audio.playGameOver();
     } else if (newState === SB.STATES.START) {
@@ -375,6 +394,11 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
     if (this.screenFlash > 0) {
         ctx.fillStyle = 'rgba(255, 255, 255, ' + (this.screenFlash / 0.15) * 0.4 + ')';
+        ctx.fillRect(0, 0, cw, ch);
+    }
+
+    if (this.transitionAlpha > 0) {
+        ctx.fillStyle = 'rgba(0, 0, 0, ' + Math.max(0, this.transitionAlpha).toFixed(2) + ')';
         ctx.fillRect(0, 0, cw, ch);
     }
 
