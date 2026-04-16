@@ -21,6 +21,7 @@ SB.UI = function() {
     this.milestoneMsgTimer = 0;
     this.nearMissTimer = 0;
     this.scorePopups = [];
+    this.pickupRings = [];
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -72,6 +73,15 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
     }
     this.scorePopups.length = spWi;
 
+    // Pickup rings
+    var prWi = 0;
+    for (var pi = 0; pi < this.pickupRings.length; pi++) {
+        var pr = this.pickupRings[pi];
+        pr.timer += dt;
+        if (pr.timer <= pr.duration) this.pickupRings[prWi++] = pr;
+    }
+    this.pickupRings.length = prWi;
+
     // Achievement toast
     if (this.achievementToast) {
         this.achievementToastTimer += dt;
@@ -84,6 +94,12 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
 SB.UI.prototype.addScorePopup = function(x, y, text, color) {
     if (this.scorePopups.length < 8) {
         this.scorePopups.push({ x: x, y: y, text: text, color: color || '#FFD700', timer: 0 });
+    }
+};
+
+SB.UI.prototype.addPickupRing = function(x, y, color) {
+    if (this.pickupRings.length < 6) {
+        this.pickupRings.push({ x: x, y: y, color: color || '255,215,0', timer: 0, duration: 0.35 });
     }
 };
 
@@ -497,7 +513,7 @@ SB.UI.prototype.drawTutorial = function(ctx, cw, ch, tutorialStep) {
     ctx.restore();
 };
 
-SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cachedHighScore, comboTimer, comboCount) {
+SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cachedHighScore, comboTimer, comboCount, difficulty) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
@@ -602,6 +618,21 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.restore();
     }
 
+    // Pickup rings (expanding circle on collect)
+    for (var ri = 0; ri < this.pickupRings.length; ri++) {
+        var ring = this.pickupRings[ri];
+        var rProgress = ring.timer / ring.duration;
+        var rRadius = 10 + rProgress * 35;
+        var rAlpha = (1 - rProgress) * 0.5;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(ring.x, ring.y, rRadius, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(' + ring.color + ',' + rAlpha.toFixed(2) + ')';
+        ctx.lineWidth = 2 * (1 - rProgress);
+        ctx.stroke();
+        ctx.restore();
+    }
+
     // Pause button (top-left, 44pt touch target)
     var pauseR = 18;
     var pauseCx = 28;
@@ -647,6 +678,16 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.fillRect(ctBarX, ctBarY, ctBarW, ctBarH);
         ctx.fillStyle = 'rgba(' + ctColor + ',0.7)';
         ctx.fillRect(ctBarX, ctBarY, ctBarW * ctProgress, ctBarH);
+    }
+
+    // Difficulty progress bar (thin bar at very top of screen)
+    if (typeof difficulty === 'number' && difficulty > 0) {
+        var dpBarW = cw;
+        var dpBarH = 2;
+        var dpProgress = Math.min(difficulty, 1);
+        var dpColor = difficulty < 0.3 ? '93,173,226' : (difficulty < 0.5 ? '243,156,18' : (difficulty < 0.8 ? '231,76,60' : '155,89,182'));
+        ctx.fillStyle = 'rgba(' + dpColor + ',0.3)';
+        ctx.fillRect(0, 0, dpBarW * dpProgress, dpBarH);
     }
 
     this._drawPowerupBar(ctx, cw, ch);

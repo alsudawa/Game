@@ -204,6 +204,21 @@ SB.FX = {
         gravity: 80,
         friction: 0.96
     },
+    bounceDust: {
+        count: 4,
+        spread: 2,
+        speedMin: 20,
+        speedMax: 60,
+        lifeMin: 0.12,
+        lifeMax: 0.25,
+        sizeMin: 1,
+        sizeMax: 2,
+        color: '200,200,220',
+        angle: Math.PI / 2,
+        angleSpread: Math.PI / 4,
+        gravity: -20,
+        friction: 0.92
+    },
     comboExplosion: {
         count: 18,
         spread: 6,

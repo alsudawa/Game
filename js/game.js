@@ -199,9 +199,15 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
     } else if (this.input.consumeTap()) {
         // Perfect bounce: ball falling fast + near bottom half of screen
-        var isPerfect = this.ball.vy > SB.Physics.MAX_FALL_SPEED * 0.65 && this.ball.y > SB.canvasHeight * 0.6;
+        var preBounceVy = this.ball.vy;
+        var isPerfect = preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.65 && this.ball.y > SB.canvasHeight * 0.6;
         this.ball.bounce(this.input.tapX);
         this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
+        // Dust puff when bouncing while falling (heavier at higher speed)
+        if (preBounceVy > 100) {
+            this.particles.emit(this.ball.x - this.ball.radius, this.ball.y + this.ball.radius, SB.FX.bounceDust);
+            this.particles.emit(this.ball.x + this.ball.radius, this.ball.y + this.ball.radius, SB.FX.bounceDust);
+        }
         this.achievements.onBounce();
         if (isPerfect) {
             this.score += 3;
@@ -364,6 +370,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         if (SB.circleCircleCollision(ballBounds, col.getBounds())) {
             var isCoin = col.type === SB.COLLECTIBLE_TYPES.COIN;
             this.particles.emit(col.x, col.y, isCoin ? SB.FX.coinCollect : SB.FX.starCollect);
+            this.ui.addPickupRing(col.x, col.y, isCoin ? '255,180,0' : '255,215,0');
             col.active = false;
             this.comboTimer = 2.0;
             this.comboCount++;
@@ -776,7 +783,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
         case SB.STATES.PLAYING:
             this._renderGameplay(ctx, cw, ch);
-            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount);
+            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty);
             // Grace period "GET READY" indicator
             if (this.spawner.graceTimer < this.spawner.gracePeriod && !this.showTutorial) {
                 var graceLeft = this.spawner.gracePeriod - this.spawner.graceTimer;
@@ -822,7 +829,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
         case SB.STATES.PAUSED:
             this._renderGameplay(ctx, cw, ch);
-            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount);
+            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty);
             this.ui.drawPauseScreen(ctx, cw, ch);
             break;
 

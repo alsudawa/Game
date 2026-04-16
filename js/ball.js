@@ -84,16 +84,20 @@ SB.Ball.prototype.draw = function(ctx) {
     }
 
     // Draw trail from ring buffer (oldest to newest)
+    // Trail intensifies when ball is falling fast
+    var speedFrac = Math.min(Math.abs(this.vy) / SB.Physics.MAX_FALL_SPEED, 1);
+    var trailAlphaMult = 1 + speedFrac * 1.5; // up to 2.5x brighter
+    var trailSizeMult = 1 + speedFrac * 0.3;  // up to 1.3x wider
     var start = (this._trailHead - this._trailLen + this.maxTrail) % this.maxTrail;
     for (var i = 0; i < this._trailLen; i++) {
         var idx = (start + i) % this.maxTrail;
         var t = this._trailBuf[idx];
         var frac = i / this._trailLen;
-        var alpha = frac * 0.3;
-        var size = this.radius * (0.4 + 0.6 * frac);
+        var alpha = Math.min(frac * 0.3 * trailAlphaMult, 0.6);
+        var size = this.radius * (0.4 + 0.6 * frac) * trailSizeMult;
         ctx.beginPath();
         ctx.arc(t.x, t.y, size, 0, SB.TAU);
-        ctx.fillStyle = this.trailColor + alpha + ')';
+        ctx.fillStyle = this.trailColor + alpha.toFixed(2) + ')';
         ctx.fill();
     }
 
@@ -104,7 +108,7 @@ SB.Ball.prototype.draw = function(ctx) {
 
     ctx.save();
     ctx.shadowColor = this.glowColor;
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 20 + speedFrac * 15; // brighter glow at high speed
     ctx.translate(this.x, this.y);
     ctx.scale(stretchX, stretchY);
     ctx.beginPath();
