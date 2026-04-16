@@ -226,7 +226,26 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     if (highScore > 0) {
         ctx.font = Math.min(cw * 0.045, 18) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
-        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.74);
+        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.72);
+    }
+
+    // Last run summary
+    var lastRun = SB.Storage.getLastRun();
+    if (lastRun) {
+        ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.35)';
+        ctx.fillText('Last: ' + lastRun.score + ' pts  |  ' + lastRun.stars + ' stars  |  ' + lastRun.time + 's', cw / 2, ch * 0.77);
+    }
+
+    // Lifetime stats
+    var lifetime = SB.Storage.getLifetimeStats();
+    if (lifetime.totalGames > 0) {
+        var streak = SB.Storage.getStreak();
+        ctx.font = Math.min(cw * 0.02, 8) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.2)';
+        var ltText = lifetime.totalGames + ' games  |  ' + lifetime.totalScore + ' total pts';
+        if (streak.best >= 2) ltText += '  |  ' + streak.best + ' day best streak';
+        ctx.fillText(ltText, cw / 2, ch * 0.82);
     }
 
     // Mute button (top-right corner)

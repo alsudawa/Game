@@ -601,6 +601,13 @@ SB.Game.prototype._transitionTo = function(newState) {
         if (this.xpResult.leveledUp) SB.audio.playLevelUp();
         var streak = SB.Storage.updateStreak();
         var recentRuns = SB.Storage.addRecentRun(this.score);
+        SB.Storage.updateLifetimeStats(this.score, this.runCoins);
+        SB.Storage.saveLastRun({
+            score: Math.floor(this.score),
+            stars: this.runStars,
+            time: Math.floor(this.runSurviveTime),
+            coins: this.runCoins
+        });
         this.ui.resetGameOver(this.score, this.xpResult, this.progression, dailyJustCompleted, {
             time: this.runSurviveTime,
             stars: this.runStars,

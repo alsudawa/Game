@@ -120,5 +120,36 @@ SB.Storage = {
             localStorage.setItem('skyBounce_recentRuns', JSON.stringify(runs));
         } catch (e) {}
         return runs;
+    },
+
+    getLifetimeStats: function() {
+        try {
+            var data = localStorage.getItem('skyBounce_lifetime');
+            return data ? JSON.parse(data) : { totalGames: 0, totalCoins: 0, totalScore: 0 };
+        } catch (e) { return { totalGames: 0, totalCoins: 0, totalScore: 0 }; }
+    },
+
+    updateLifetimeStats: function(score, coins) {
+        var stats = this.getLifetimeStats();
+        stats.totalGames++;
+        stats.totalCoins += (coins || 0);
+        stats.totalScore += Math.floor(score || 0);
+        try {
+            localStorage.setItem('skyBounce_lifetime', JSON.stringify(stats));
+        } catch (e) {}
+        return stats;
+    },
+
+    getLastRun: function() {
+        try {
+            var data = localStorage.getItem('skyBounce_lastRun');
+            return data ? JSON.parse(data) : null;
+        } catch (e) { return null; }
+    },
+
+    saveLastRun: function(runData) {
+        try {
+            localStorage.setItem('skyBounce_lastRun', JSON.stringify(runData));
+        } catch (e) {}
     }
 };

@@ -317,8 +317,15 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
     var cy = this.y + this.radius;
     var pulse = 0.6 + Math.sin(this.wellPhase) * 0.2;
 
+    // Entry fade-in (0.5s) and exit fade-out (last 0.5s of lifetime)
+    var fadeIn = Math.min(this.lifetime / 0.5, 1);
+    var fadeOut = this.maxLifetime > 0 ? Math.min((this.maxLifetime - this.lifetime) / 0.5, 1) : 1;
+    var wellAlpha = fadeIn * Math.max(0, fadeOut);
+    if (wellAlpha <= 0) return;
+
     // Pull field rings (expanding outward)
     ctx.save();
+    ctx.globalAlpha = wellAlpha;
     for (var ring = 2; ring >= 0; ring--) {
         var ringPhase = (this.wellPhase * 0.5 + ring * 0.8) % 2;
         var ringR = this.radius + ringPhase * (this.pullRadius - this.radius);
