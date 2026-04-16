@@ -22,6 +22,7 @@ SB.Ball = function() {
     this.bounceGlow = 0; // brief glow pulse on bounce (decays per frame)
     this.wallSquash = 0; // brief horizontal squash on wall hit
     this.bounceSquash = 0; // brief vertical squash on bounce landing
+    this.comboIntensity = 0; // 0-1 based on active combo count
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -97,10 +98,11 @@ SB.Ball.prototype.draw = function(ctx) {
     }
 
     // Draw trail from ring buffer (oldest to newest)
-    // Trail intensifies when ball is falling fast
+    // Trail intensifies when ball is falling fast or combo is active
     var speedFrac = Math.min(Math.abs(this.vy) / SB.Physics.MAX_FALL_SPEED, 1);
-    var trailAlphaMult = 1 + speedFrac * 1.5; // up to 2.5x brighter
-    var trailSizeMult = 1 + speedFrac * 0.3;  // up to 1.3x wider
+    var comboBoost = this.comboIntensity;
+    var trailAlphaMult = 1 + speedFrac * 1.5 + comboBoost * 1.0;
+    var trailSizeMult = 1 + speedFrac * 0.3 + comboBoost * 0.2;
     var start = (this._trailHead - this._trailLen + this.maxTrail) % this.maxTrail;
     for (var i = 0; i < this._trailLen; i++) {
         var idx = (start + i) % this.maxTrail;
@@ -150,11 +152,14 @@ SB.Ball.prototype.draw = function(ctx) {
     }
     ctx.restore();
 
-    // Drop shadow (ellipse via scale transform)
+    // Drop shadow (scales with height: larger/darker near bottom)
+    var heightFrac = SB.canvasHeight > 0 ? SB.clamp(this.y / SB.canvasHeight, 0, 1) : 0.5;
+    var shadowScale = 0.4 + heightFrac * 0.6;
+    var shadowAlpha = 0.05 + heightFrac * 0.15;
     ctx.save();
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
-    ctx.translate(this.x, this.y + this.radius + 8);
-    ctx.scale(1, 0.35);
+    ctx.fillStyle = 'rgba(0, 0, 0, ' + shadowAlpha.toFixed(2) + ')';
+    ctx.translate(this.x, this.y + this.radius + 6 + (1 - heightFrac) * 4);
+    ctx.scale(shadowScale, 0.35 * shadowScale);
     ctx.beginPath();
     ctx.arc(0, 0, this.radius * 0.7, 0, SB.TAU);
     ctx.fill();

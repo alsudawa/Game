@@ -413,6 +413,21 @@ SB.Audio.prototype.playRevive = function() {
     shimmer.stop(sStart + 0.4);
 };
 
+SB.Audio.prototype.playScoreTick = function() {
+    if (!this.initialized) return;
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 1000;
+    var now = this.ctx.currentTime;
+    gain.gain.setValueAtTime(0.04, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.03);
+};
+
 SB.Audio.prototype.startBGM = function() {
     if (!this.initialized || this._bgmPlaying) return;
     this._bgmPlaying = true;

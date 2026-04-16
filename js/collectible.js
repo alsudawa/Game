@@ -96,6 +96,7 @@ SB.Collectible.prototype.draw = function(ctx) {
 
     var pulse = 1 + Math.sin(this.pulsePhase) * 0.15;
     var r = this.radius * pulse;
+    var bobY = Math.sin(this.lifetime * 2.2) * 4;
 
     // Edge proximity warning glow
     var edgeWarn = this._edgeProximity();
@@ -105,7 +106,7 @@ SB.Collectible.prototype.draw = function(ctx) {
     ctx.shadowColor = 'rgba(255, 215, 0, ' + (0.6 + edgeWarn * 0.4).toFixed(2) + ')';
     ctx.shadowBlur = 15 + extraGlow;
 
-    ctx.translate(this.x, this.y);
+    ctx.translate(this.x, this.y + bobY);
     ctx.rotate(this.rotation);
 
     ctx.beginPath();
@@ -142,7 +143,7 @@ SB.Collectible.prototype.draw = function(ctx) {
         var s = this.sparkles[j];
         var alpha = (Math.sin(s.phase) + 1) / 2 * 0.8;
         var sx = this.x + Math.cos(s.angle + s.phase * 0.3) * s.dist;
-        var sy = this.y + Math.sin(s.angle + s.phase * 0.3) * s.dist;
+        var sy = this.y + bobY + Math.sin(s.angle + s.phase * 0.3) * s.dist;
         ctx.beginPath();
         ctx.arc(sx, sy, s.size, 0, SB.TAU);
         ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';

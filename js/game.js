@@ -222,6 +222,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
     }
 
+    this.ball.comboIntensity = this.comboCount >= 5 ? 1.0 : (this.comboCount >= 3 ? 0.5 : 0);
     this.ball.update(dt);
 
     // Wall hit feedback
@@ -494,6 +495,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
     if (this.scoreTimer >= 1.0) {
         this.scoreTimer -= 1.0;
         this.score += (1 + Math.floor(this.spawner.difficulty * 2)) * scorePuMult;
+        SB.audio.playScoreTick();
     }
 
     var currentMilestone = Math.floor(this.score / 10);
@@ -568,6 +570,8 @@ SB.Game.prototype._updatePaused = function(dt) {
 SB.Game.prototype._handleDeath = function() {
     // Haptic feedback on death
     if (navigator.vibrate) navigator.vibrate(80);
+    // Brief white freeze-frame flash at moment of impact
+    this.screenFlash = 0.12;
     // Strong death shake during slow-mo
     this.screenShake = 0.4;
     this.screenShakeIntensity = 14;
