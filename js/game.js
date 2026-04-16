@@ -194,10 +194,19 @@ SB.Game.prototype._updatePlaying = function(dt) {
             }
         }
     } else if (this.input.consumeTap()) {
+        // Perfect bounce: ball falling fast + near bottom half of screen
+        var isPerfect = this.ball.vy > SB.Physics.MAX_FALL_SPEED * 0.65 && this.ball.y > ch * 0.6;
         this.ball.bounce(this.input.tapX);
         this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
         this.achievements.onBounce();
-        SB.audio.playBounce();
+        if (isPerfect) {
+            this.score += 3;
+            this.ui.addScorePopup(this.ball.x, this.ball.y - 25, 'PERFECT +3', '#00FF88');
+            SB.audio.playMilestone();
+            if (navigator.vibrate) navigator.vibrate(12);
+        } else {
+            SB.audio.playBounce();
+        }
     }
 
     this.ball.update(dt);
