@@ -195,7 +195,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
     } else if (this.input.consumeTap()) {
         // Perfect bounce: ball falling fast + near bottom half of screen
-        var isPerfect = this.ball.vy > SB.Physics.MAX_FALL_SPEED * 0.65 && this.ball.y > ch * 0.6;
+        var isPerfect = this.ball.vy > SB.Physics.MAX_FALL_SPEED * 0.65 && this.ball.y > SB.canvasHeight * 0.6;
         this.ball.bounce(this.input.tapX);
         this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
         this.achievements.onBounce();
@@ -646,7 +646,7 @@ SB.Game.prototype._transitionTo = function(newState) {
             this.progression.xp += dailyBonusXP;
             this.progression._save();
         }
-        if (this.xpResult.leveledUp) SB.audio.playLevelUp();
+        if (this.xpResult && this.xpResult.leveledUp) SB.audio.playLevelUp();
         var streak = SB.Storage.updateStreak();
         var recentRuns = SB.Storage.addRecentRun(this.score);
         SB.Storage.updateLifetimeStats(this.score, this.runCoins);
