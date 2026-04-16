@@ -262,7 +262,7 @@ SB.Spawner.prototype._spawnLaser = function(cw, ch) {
 };
 
 SB.Spawner.prototype._spawnPowerup = function(cw, ch) {
-    var types = [SB.POWERUP_TYPES.SHIELD, SB.POWERUP_TYPES.MAGNET, SB.POWERUP_TYPES.SLOW];
+    var types = [SB.POWERUP_TYPES.SHIELD, SB.POWERUP_TYPES.MAGNET, SB.POWERUP_TYPES.SLOW, SB.POWERUP_TYPES.SCORE_MULT];
     var type = types[SB.randInt(0, types.length - 1)];
     var x = SB.randRange(cw * 0.15, cw * 0.85);
     var y = SB.randRange(ch * 0.15, ch * 0.6);

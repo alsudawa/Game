@@ -501,6 +501,19 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
     ctx.fillText(Math.floor(score), cw / 2, 20);
 
+    // Score multiplier badge
+    if (this.powerupEffectsRef && this.powerupEffectsRef.scoreMult) {
+        var smPulse = 0.8 + Math.sin((SB.frameTime || 0) * 0.006) * 0.2;
+        ctx.save();
+        ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,213,79,' + smPulse.toFixed(2) + ')';
+        ctx.shadowColor = '#FFD54F';
+        ctx.shadowBlur = 8;
+        var scoreW = ctx.measureText(Math.floor(score) + '').width;
+        ctx.fillText('x2', cw / 2 + scoreW / 2 + 18, 28);
+        ctx.restore();
+    }
+
     // Zone message popup
     if (this.zoneMsgTimer > 0) {
         var zA = Math.min(this.zoneMsgTimer, 1);
@@ -635,6 +648,7 @@ SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
     if (effects.shield) items.push({ color: '#5DADE2', label: 'SHIELD', timer: effects.shieldTimer, max: effects.shieldDuration });
     if (effects.magnet) items.push({ color: '#AF7AC5', label: 'MAGNET', timer: effects.magnetTimer, max: effects.magnetDuration });
     if (effects.slow) items.push({ color: '#58D68D', label: 'SLOW', timer: effects.slowTimer, max: effects.slowDuration });
+    if (effects.scoreMult) items.push({ color: '#FFD54F', label: 'x2 SCORE', timer: effects.scoreMultTimer, max: effects.scoreMultDuration });
 
     if (items.length === 0) return;
 

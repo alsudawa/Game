@@ -3,7 +3,8 @@ window.SB = window.SB || {};
 SB.POWERUP_TYPES = {
     SHIELD: 'shield',
     MAGNET: 'magnet',
-    SLOW: 'slow'
+    SLOW: 'slow',
+    SCORE_MULT: 'score_mult'
 };
 
 SB.Powerup = function() {
@@ -39,9 +40,10 @@ SB.Powerup.prototype.draw = function(ctx) {
 
     // Outer glow
     var colors = {
-        shield: { glow: 'rgba(52, 152, 219, 0.5)', fill1: '#5DADE2', fill2: '#2E86C1', icon: '\u25CB' },
-        magnet: { glow: 'rgba(155, 89, 182, 0.5)', fill1: '#AF7AC5', fill2: '#7D3C98', icon: 'M' },
-        slow:   { glow: 'rgba(46, 204, 113, 0.5)', fill1: '#58D68D', fill2: '#27AE60', icon: '\u25F7' }
+        shield:     { glow: 'rgba(52, 152, 219, 0.5)', fill1: '#5DADE2', fill2: '#2E86C1', icon: '\u25CB' },
+        magnet:     { glow: 'rgba(155, 89, 182, 0.5)', fill1: '#AF7AC5', fill2: '#7D3C98', icon: 'M' },
+        slow:       { glow: 'rgba(46, 204, 113, 0.5)', fill1: '#58D68D', fill2: '#27AE60', icon: '\u25F7' },
+        score_mult: { glow: 'rgba(255, 193, 7, 0.5)',  fill1: '#FFD54F', fill2: '#FF8F00', icon: 'x2' }
     };
     var c = colors[this.type];
 
@@ -95,6 +97,10 @@ SB.Powerup.prototype.draw = function(ctx) {
         ctx.moveTo(0, 0);
         ctx.lineTo(r * 0.2, r * 0.1);
         ctx.stroke();
+    } else if (this.type === SB.POWERUP_TYPES.SCORE_MULT) {
+        ctx.font = 'bold ' + Math.floor(r * 0.9) + 'px sans-serif';
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillText('x2', 0, 1);
     }
 
     ctx.restore();
@@ -150,9 +156,12 @@ SB.PowerupEffects = function() {
     this.magnetTimer = 0;
     this.slow = false;
     this.slowTimer = 0;
+    this.scoreMult = false;
+    this.scoreMultTimer = 0;
     this.shieldDuration = 5.0;
     this.magnetDuration = 4.0;
     this.slowDuration = 3.0;
+    this.scoreMultDuration = 6.0;
     this.shieldHits = 0;
 };
 
@@ -167,6 +176,9 @@ SB.PowerupEffects.prototype.activate = function(type) {
     } else if (type === SB.POWERUP_TYPES.SLOW) {
         this.slow = true;
         this.slowTimer = this.slowDuration;
+    } else if (type === SB.POWERUP_TYPES.SCORE_MULT) {
+        this.scoreMult = true;
+        this.scoreMultTimer = this.scoreMultDuration;
     }
 };
 
@@ -185,6 +197,10 @@ SB.PowerupEffects.prototype.update = function(dt) {
         this.slowTimer -= dt;
         if (this.slowTimer <= 0) this.slow = false;
     }
+    if (this.scoreMult) {
+        this.scoreMultTimer -= dt;
+        if (this.scoreMultTimer <= 0) this.scoreMult = false;
+    }
 };
 
 SB.PowerupEffects.prototype.useShield = function() {
@@ -200,6 +216,10 @@ SB.PowerupEffects.prototype.getSpeedMultiplier = function() {
     return this.slow ? 0.4 : 1.0;
 };
 
+SB.PowerupEffects.prototype.getScoreMultiplier = function() {
+    return this.scoreMult ? 2 : 1;
+};
+
 SB.PowerupEffects.prototype.reset = function() {
     this.shield = false;
     this.shieldTimer = 0;
@@ -207,9 +227,11 @@ SB.PowerupEffects.prototype.reset = function() {
     this.magnetTimer = 0;
     this.slow = false;
     this.slowTimer = 0;
+    this.scoreMult = false;
+    this.scoreMultTimer = 0;
     this.shieldHits = 0;
 };
 
 SB.PowerupEffects.prototype.hasAnyActive = function() {
-    return this.shield || this.magnet || this.slow;
+    return this.shield || this.magnet || this.slow || this.scoreMult;
 };

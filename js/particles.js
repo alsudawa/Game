@@ -178,6 +178,19 @@ SB.FX = {
         gravity: -30,
         friction: 0.95
     },
+    powerupScoreMult: {
+        count: 14,
+        spread: 5,
+        speedMin: 60,
+        speedMax: 180,
+        lifeMin: 0.4,
+        lifeMax: 0.8,
+        sizeMin: 2,
+        sizeMax: 5,
+        color: '255,193,7',
+        gravity: 50,
+        friction: 0.95
+    },
     coinCollect: {
         count: 8,
         spread: 2,

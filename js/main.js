@@ -41,6 +41,21 @@ window.SB = window.SB || {};
                 accumulator -= TICK_RATE;
             }
             game.render(ctx, SB.canvasWidth, SB.canvasHeight);
+
+            // Landscape orientation hint (mobile only: screen width > height and < 900px)
+            if (SB.canvasWidth > SB.canvasHeight && SB.canvasHeight < 500) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(0,0,0,0.85)';
+                ctx.fillRect(0, 0, SB.canvasWidth, SB.canvasHeight);
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold ' + Math.min(SB.canvasWidth * 0.05, 24) + 'px sans-serif';
+                ctx.fillStyle = '#FFFFFF';
+                ctx.fillText('Please rotate to portrait', SB.canvasWidth / 2, SB.canvasHeight / 2 - 15);
+                ctx.font = Math.min(SB.canvasWidth * 0.08, 36) + 'px sans-serif';
+                ctx.fillText('\u21BB', SB.canvasWidth / 2, SB.canvasHeight / 2 + 25);
+                ctx.restore();
+            }
         } catch (e) {
             // Recover by resetting to start state
             if (window.console) console.error('Game error:', e);

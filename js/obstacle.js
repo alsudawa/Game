@@ -265,15 +265,23 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
     ctx.quadraticCurveTo(-this.radius * 0.6, 2, -this.radius, -2);
     ctx.closePath();
 
-    var grad = ctx.createLinearGradient(-this.radius, 0, this.radius, 0);
-    grad.addColorStop(0, '#FF9800');
-    grad.addColorStop(0.5, '#FFC107');
-    grad.addColorStop(1, '#FF9800');
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.strokeStyle = '#E65100';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    if (SB.highContrast) {
+        ctx.fillStyle = '#FF8800';
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    } else {
+        var grad = ctx.createLinearGradient(-this.radius, 0, this.radius, 0);
+        grad.addColorStop(0, '#FF9800');
+        grad.addColorStop(0.5, '#FFC107');
+        grad.addColorStop(1, '#FF9800');
+        ctx.fillStyle = grad;
+        ctx.fill();
+        ctx.strokeStyle = '#E65100';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
 
     ctx.restore();
 };
@@ -281,10 +289,11 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
 SB.Obstacle.prototype._drawLaser = function(ctx) {
     var cw = SB.canvasWidth;
 
+    var hc = SB.highContrast;
     if (this.laserPhase === 'warning') {
         ctx.save();
-        ctx.strokeStyle = 'rgba(255, 50, 50, 0.35)';
-        ctx.lineWidth = 1;
+        ctx.strokeStyle = hc ? 'rgba(255, 255, 0, 0.6)' : 'rgba(255, 50, 50, 0.35)';
+        ctx.lineWidth = hc ? 2 : 1;
         ctx.setLineDash([8, 8]);
         ctx.beginPath();
         ctx.moveTo(0, this.y);
@@ -292,7 +301,7 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         ctx.stroke();
         ctx.setLineDash([]);
         // Small warning indicators on edges
-        ctx.fillStyle = 'rgba(255, 50, 50, 0.5)';
+        ctx.fillStyle = hc ? 'rgba(255, 255, 0, 0.8)' : 'rgba(255, 50, 50, 0.5)';
         ctx.beginPath();
         ctx.arc(8, this.y, 4, 0, SB.TAU);
         ctx.fill();
@@ -313,16 +322,24 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
     } else if (this.laserPhase === 'active') {
         var beamH = 18;
         ctx.save();
-        ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
-        ctx.shadowBlur = 20;
-        var grad = ctx.createLinearGradient(0, this.y - beamH / 2, 0, this.y + beamH / 2);
-        grad.addColorStop(0, 'rgba(255, 100, 100, 0.2)');
-        grad.addColorStop(0.3, 'rgba(255, 50, 50, 0.9)');
-        grad.addColorStop(0.5, 'rgba(255, 255, 255, 1)');
-        grad.addColorStop(0.7, 'rgba(255, 50, 50, 0.9)');
-        grad.addColorStop(1, 'rgba(255, 100, 100, 0.2)');
-        ctx.fillStyle = grad;
-        ctx.fillRect(0, this.y - beamH / 2, cw, beamH);
+        if (hc) {
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+            ctx.fillRect(0, this.y - beamH / 2, cw, beamH);
+            ctx.strokeStyle = '#FFFFFF';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, this.y - beamH / 2, cw, beamH);
+        } else {
+            ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
+            ctx.shadowBlur = 20;
+            var grad = ctx.createLinearGradient(0, this.y - beamH / 2, 0, this.y + beamH / 2);
+            grad.addColorStop(0, 'rgba(255, 100, 100, 0.2)');
+            grad.addColorStop(0.3, 'rgba(255, 50, 50, 0.9)');
+            grad.addColorStop(0.5, 'rgba(255, 255, 255, 1)');
+            grad.addColorStop(0.7, 'rgba(255, 50, 50, 0.9)');
+            grad.addColorStop(1, 'rgba(255, 100, 100, 0.2)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, this.y - beamH / 2, cw, beamH);
+        }
         ctx.restore();
     } else if (this.laserPhase === 'fade') {
         var a = 1 - this.laserTimer / 0.3;
@@ -345,34 +362,44 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
     var wellAlpha = fadeIn * Math.max(0, fadeOut);
     if (wellAlpha <= 0) return;
 
+    var hcg = SB.highContrast;
+
     // Pull field rings (expanding outward)
     ctx.save();
     ctx.globalAlpha = wellAlpha;
     for (var ring = 2; ring >= 0; ring--) {
         var ringPhase = (this.wellPhase * 0.5 + ring * 0.8) % 2;
         var ringR = this.radius + ringPhase * (this.pullRadius - this.radius);
-        var ringAlpha = (1 - ringPhase / 2) * 0.12;
+        var ringAlpha = (1 - ringPhase / 2) * (hcg ? 0.3 : 0.12);
         ctx.beginPath();
         ctx.arc(cx, cy, ringR, 0, SB.TAU);
-        ctx.strokeStyle = 'rgba(155,89,182,' + ringAlpha.toFixed(3) + ')';
-        ctx.lineWidth = 1.5;
+        ctx.strokeStyle = hcg ? 'rgba(255,180,255,' + ringAlpha.toFixed(3) + ')' : 'rgba(155,89,182,' + ringAlpha.toFixed(3) + ')';
+        ctx.lineWidth = hcg ? 2 : 1.5;
         ctx.stroke();
     }
 
     // Core
     ctx.beginPath();
     ctx.arc(cx, cy, this.radius * pulse, 0, SB.TAU);
-    var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, this.radius * pulse);
-    grad.addColorStop(0, 'rgba(142,68,173,0.8)');
-    grad.addColorStop(0.6, 'rgba(155,89,182,0.4)');
-    grad.addColorStop(1, 'rgba(155,89,182,0)');
-    ctx.fillStyle = grad;
-    ctx.fill();
+    if (hcg) {
+        ctx.fillStyle = 'rgba(200,100,255,0.8)';
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    } else {
+        var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, this.radius * pulse);
+        grad.addColorStop(0, 'rgba(142,68,173,0.8)');
+        grad.addColorStop(0.6, 'rgba(155,89,182,0.4)');
+        grad.addColorStop(1, 'rgba(155,89,182,0)');
+        ctx.fillStyle = grad;
+        ctx.fill();
+    }
 
     // Inner dot
     ctx.beginPath();
     ctx.arc(cx, cy, 3, 0, SB.TAU);
-    ctx.fillStyle = 'rgba(200,150,255,0.9)';
+    ctx.fillStyle = hcg ? '#FFFFFF' : 'rgba(200,150,255,0.9)';
     ctx.fill();
     ctx.restore();
 };

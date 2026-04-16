@@ -336,6 +336,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
     }
 
+    // Score multiplier (from powerup)
+    var scorePuMult = this.powerupEffects.getScoreMultiplier();
+
     // --- Collectibles ---
     var collectibles = this.collectiblePool.getActive();
     for (var j = collectibles.length - 1; j >= 0; j--) {
@@ -370,7 +373,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             SB.Storage.addCoins(cv);
             this.hudCoins = SB.Storage.getCoins();
             var comboMult = this.comboCount >= 5 ? 4 : (this.comboCount >= 3 ? 3 : (this.comboCount >= 2 ? 2 : 1));
-            var bonus = col.pointValue * comboMult * this.dailyStarMult;
+            var bonus = col.pointValue * comboMult * this.dailyStarMult * scorePuMult;
             this.score += bonus;
             var popColor = isCoin ? '#FFB300' : (this.comboCount >= 5 ? '#FF4444' : (this.comboCount >= 3 ? '#FF6B6B' : (this.comboCount >= 2 ? '#FF8C42' : '#FFD700')));
             this.ui.addScorePopup(col.x, col.y - 15, '+' + bonus + (cv > 1 ? ' +' + cv + 'c' : ''), popColor);
@@ -404,6 +407,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         if (SB.circleCircleCollision(ballBounds, pu.getBounds())) {
             var puPreset = pu.type === 'shield' ? SB.FX.powerupShield
                          : pu.type === 'magnet' ? SB.FX.powerupMagnet
+                         : pu.type === 'score_mult' ? SB.FX.powerupScoreMult
                          : SB.FX.powerupSlow;
             this.particles.emit(pu.x, pu.y, puPreset);
             pu.active = false;
@@ -417,7 +421,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
     this.scoreTimer += dt;
     if (this.scoreTimer >= 1.0) {
         this.scoreTimer -= 1.0;
-        this.score += 1 + Math.floor(this.spawner.difficulty * 2);
+        this.score += (1 + Math.floor(this.spawner.difficulty * 2)) * scorePuMult;
     }
 
     var currentMilestone = Math.floor(this.score / 10);
