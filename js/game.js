@@ -337,6 +337,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             var popColor = isCoin ? '#FFB300' : (this.comboCount >= 5 ? '#FF4444' : (this.comboCount >= 3 ? '#FF6B6B' : (this.comboCount >= 2 ? '#FF8C42' : '#FFD700')));
             this.ui.addScorePopup(col.x, col.y - 15, '+' + bonus + (cv > 1 ? ' +' + cv + 'c' : ''), popColor);
             this.achievements.onStarCollect();
+            this.achievements.onCoinEarn(cv);
             this.achievements.onCombo(this.comboCount);
             if (isCoin) {
                 this.screenShake = 0.08;

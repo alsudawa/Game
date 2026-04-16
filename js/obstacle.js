@@ -173,7 +173,6 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
 SB.Obstacle.prototype._drawSpike = function(ctx) {
     var size = this.width;
     var cx = this.x + size / 2;
-    var cy = this.y + size / 2;
 
     ctx.save();
     ctx.shadowColor = 'rgba(255, 100, 50, 0.5)';
@@ -185,15 +184,22 @@ SB.Obstacle.prototype._drawSpike = function(ctx) {
     ctx.lineTo(this.x, this.y + size);
     ctx.closePath();
 
-    var gradient = ctx.createLinearGradient(cx, this.y, cx, this.y + size);
-    gradient.addColorStop(0, '#ff6347');
-    gradient.addColorStop(1, '#e74c3c');
-    ctx.fillStyle = gradient;
-    ctx.fill();
-
-    ctx.strokeStyle = '#c0392b';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
+    if (SB.highContrast) {
+        ctx.fillStyle = '#FF4400';
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    } else {
+        var gradient = ctx.createLinearGradient(cx, this.y, cx, this.y + size);
+        gradient.addColorStop(0, '#ff6347');
+        gradient.addColorStop(1, '#e74c3c');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+        ctx.strokeStyle = '#c0392b';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+    }
     ctx.restore();
 };
 
@@ -209,13 +215,21 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
 
     ctx.beginPath();
     ctx.arc(0, 0, this.radius, 0, SB.TAU);
-    var gradient = ctx.createRadialGradient(0, 0, 2, 0, 0, this.radius);
-    gradient.addColorStop(0, '#bdc3c7');
-    gradient.addColorStop(1, '#7f8c8d');
-    ctx.fillStyle = gradient;
-    ctx.fill();
+    if (SB.highContrast) {
+        ctx.fillStyle = '#CCCCCC';
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+    } else {
+        var gradient = ctx.createRadialGradient(0, 0, 2, 0, 0, this.radius);
+        gradient.addColorStop(0, '#bdc3c7');
+        gradient.addColorStop(1, '#7f8c8d');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+    }
 
-    ctx.strokeStyle = '#95a5a6';
+    ctx.strokeStyle = SB.highContrast ? '#FFFFFF' : '#95a5a6';
     ctx.lineWidth = 2;
     for (var i = 0; i < 6; i++) {
         var angle = (SB.TAU / 6) * i;
@@ -227,7 +241,7 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
 
     ctx.beginPath();
     ctx.arc(0, 0, 4, 0, SB.TAU);
-    ctx.fillStyle = '#2c3e50';
+    ctx.fillStyle = SB.highContrast ? '#FF0000' : '#2c3e50';
     ctx.fill();
 
     ctx.restore();
