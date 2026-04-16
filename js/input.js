@@ -20,6 +20,8 @@ SB.Input = function(canvas) {
         self._checkAchButton(touch.clientX, touch.clientY);
         self._checkReviveButton(touch.clientX, touch.clientY);
         self._checkMuteButton(touch.clientX, touch.clientY);
+        self._checkPauseButton(touch.clientX, touch.clientY);
+        self._checkResumeQuitButtons(touch.clientX, touch.clientY);
         self.tapped = true;
         self._handleFirstInteraction();
     }, { passive: false });
@@ -32,6 +34,8 @@ SB.Input = function(canvas) {
         self._checkAchButton(e.clientX, e.clientY);
         self._checkReviveButton(e.clientX, e.clientY);
         self._checkMuteButton(e.clientX, e.clientY);
+        self._checkPauseButton(e.clientX, e.clientY);
+        self._checkResumeQuitButtons(e.clientX, e.clientY);
         self.tapped = true;
         self._handleFirstInteraction();
     });
@@ -80,6 +84,36 @@ SB.Input.prototype._checkAchButton = function(x, y) {
         var btn = SB._achBtn;
         if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
             SB._achBtnTapped = true;
+            this.tapped = false;
+            return;
+        }
+    }
+};
+
+SB.Input.prototype._checkPauseButton = function(x, y) {
+    if (SB._pauseBtn) {
+        var btn = SB._pauseBtn;
+        if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+            SB._pauseBtnTapped = true;
+            this.tapped = false;
+            return;
+        }
+    }
+};
+
+SB.Input.prototype._checkResumeQuitButtons = function(x, y) {
+    if (SB._resumeBtn) {
+        var btn = SB._resumeBtn;
+        if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+            SB._resumeBtnTapped = true;
+            this.tapped = false;
+            return;
+        }
+    }
+    if (SB._quitBtn) {
+        var btn = SB._quitBtn;
+        if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+            SB._quitBtnTapped = true;
             this.tapped = false;
             return;
         }

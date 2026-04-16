@@ -3,6 +3,7 @@ window.SB = window.SB || {};
 SB.STATES = {
     START: 'start',
     PLAYING: 'playing',
+    PAUSED: 'paused',
     REVIVE: 'revive',
     GAME_OVER: 'game_over'
 };
@@ -105,6 +106,9 @@ SB.Game.prototype.update = function(dt) {
         case SB.STATES.PLAYING:
             this._updatePlaying(dt);
             break;
+        case SB.STATES.PAUSED:
+            this._updatePaused(dt);
+            break;
         case SB.STATES.REVIVE:
             this._updateRevive(dt);
             break;
@@ -148,6 +152,14 @@ SB.Game.prototype._updateStart = function(dt) {
 };
 
 SB.Game.prototype._updatePlaying = function(dt) {
+    // Check pause
+    if (SB._pauseBtnTapped) {
+        SB._pauseBtnTapped = null;
+        this.state = SB.STATES.PAUSED;
+        SB.audio.stopBGM();
+        return;
+    }
+
     var slowMult = this.powerupEffects.getSpeedMultiplier();
 
     // Multi-step tutorial
@@ -230,6 +242,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 obs._nearMissed = true;
                 this.ui.nearMissTimer = 0.6;
                 this.score += 2;
+                if (navigator.vibrate) navigator.vibrate(15);
             }
         }
 
@@ -343,7 +356,29 @@ SB.Game.prototype._updatePlaying = function(dt) {
     }
 };
 
+SB.Game.prototype._updatePaused = function(dt) {
+    // Resume button
+    if (SB._resumeBtnTapped) {
+        SB._resumeBtnTapped = null;
+        SB._resumeBtn = null;
+        SB._quitBtn = null;
+        this.state = SB.STATES.PLAYING;
+        SB.audio.startBGM();
+        return;
+    }
+    // Quit button
+    if (SB._quitBtnTapped) {
+        SB._quitBtnTapped = null;
+        SB._resumeBtn = null;
+        SB._quitBtn = null;
+        this._transitionTo(SB.STATES.GAME_OVER);
+        return;
+    }
+};
+
 SB.Game.prototype._handleDeath = function() {
+    // Haptic feedback on death
+    if (navigator.vibrate) navigator.vibrate(80);
     var coins = SB.Storage.getCoins();
     if (!this.revived && coins >= SB.REVIVE_COST) {
         this.state = SB.STATES.REVIVE;
@@ -481,6 +516,10 @@ SB.Game.prototype._transitionTo = function(newState) {
         SB._skinBtns = null;
         SB._achBtn = null;
         SB._muteBtn = null;
+        SB._pauseBtn = null;
+        SB._pauseBtnTapped = null;
+        SB._resumeBtn = null;
+        SB._quitBtn = null;
         SB._reviveBtn = null;
         SB._reviveBtnTapped = null;
         SB.audio.startBGM();
@@ -558,6 +597,12 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 ctx.fillStyle = 'rgba(231, 76, 60, ' + dangerAlpha.toFixed(2) + ')';
                 ctx.fillRect(0, ch * 0.6, cw, ch * 0.4);
             }
+            break;
+
+        case SB.STATES.PAUSED:
+            this._renderGameplay(ctx, cw, ch);
+            this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone);
+            this.ui.drawPauseScreen(ctx, cw, ch);
             break;
 
         case SB.STATES.REVIVE:

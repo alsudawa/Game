@@ -124,6 +124,29 @@ SB.AchievementManager.prototype.getUnlockedCount = function() {
     return count;
 };
 
+SB.AchievementManager.prototype.getProgress = function(ach) {
+    // Returns { current, target } for displayable progress
+    var s = this.stats;
+    switch (ach.id) {
+        case 'first_bounce': return { current: Math.min(s.totalScore, 1), target: 1 };
+        case 'sky_walker': return { current: Math.min(s.bestScore, 50), target: 50 };
+        case 'astronaut': return { current: Math.min(s.bestScore, 100), target: 100 };
+        case 'legend': return { current: Math.min(s.bestScore, 200), target: 200 };
+        case 'star_hunter': return { current: Math.min(s.runStars, 10), target: 10 };
+        case 'star_master': return { current: Math.min(s.totalStars, 50), target: 50 };
+        case 'star_collector': return { current: Math.min(s.totalStars, 200), target: 200 };
+        case 'combo_king': return { current: Math.min(s.bestCombo, 3), target: 3 };
+        case 'combo_master': return { current: Math.min(s.bestCombo, 5), target: 5 };
+        case 'survivor': return { current: Math.floor(Math.min(s.runTime, 30)), target: 30 };
+        case 'long_run': return { current: Math.floor(Math.min(s.runTime, 60)), target: 60 };
+        case 'shield_save': return { current: Math.min(s.shieldUsed, 1), target: 1 };
+        case 'power_player': return { current: Math.min(s.totalPowerups, 10), target: 10 };
+        case 'dedicated': return { current: Math.min(s.totalGames, 20), target: 20 };
+        case 'veteran': return { current: Math.min(s.totalGames, 50), target: 50 };
+        default: return null;
+    }
+};
+
 SB.AchievementManager.prototype.popNotification = function() {
     if (this.pendingNotifications.length > 0) {
         return this.pendingNotifications.shift();

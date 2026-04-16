@@ -506,6 +506,16 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
         ctx.restore();
     }
 
+    // Pause button (top-left)
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'top';
+    ctx.font = 'bold ' + Math.min(cw * 0.05, 20) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.45)';
+    ctx.fillText('||', 12, 12);
+    ctx.restore();
+    SB._pauseBtn = { x: 0, y: 0, w: 50, h: 50 };
+
     // Near-miss feedback
     if (this.nearMissTimer > 0) {
         var nmAlpha = this.nearMissTimer / 0.6;
@@ -699,6 +709,44 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     }
 };
 
+SB.UI.prototype.drawPauseScreen = function(ctx, cw, ch) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(0, 0, cw, ch);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+
+    ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText('PAUSED', cw / 2, ch * 0.3);
+
+    // Resume button
+    var btnW = Math.min(cw * 0.5, 180);
+    var btnH = 44;
+    var resumeY = ch * 0.48;
+    var resumeX = cw / 2 - btnW / 2;
+
+    ctx.fillStyle = 'rgba(46, 204, 113, 0.85)';
+    this._roundRect(ctx, resumeX, resumeY, btnW, btnH, 10);
+    ctx.fill();
+    ctx.font = 'bold ' + Math.min(cw * 0.045, 18) + 'px ' + this.font;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText('RESUME', cw / 2, resumeY + btnH / 2);
+
+    SB._resumeBtn = { x: resumeX, y: resumeY, w: btnW, h: btnH };
+
+    // Quit button
+    var quitY = ch * 0.58;
+    ctx.fillStyle = 'rgba(231, 76, 60, 0.7)';
+    this._roundRect(ctx, resumeX, quitY, btnW, btnH, 10);
+    ctx.fill();
+    ctx.font = 'bold ' + Math.min(cw * 0.045, 18) + 'px ' + this.font;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText('QUIT', cw / 2, quitY + btnH / 2);
+
+    SB._quitBtn = { x: resumeX, y: quitY, w: btnW, h: btnH };
+};
+
 SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost) {
     // Darken background
     ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
@@ -840,12 +888,29 @@ SB.UI.prototype.drawAchievementViewer = function(ctx, cw, ch, achievements) {
         ctx.fillStyle = unlocked ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.3)';
         ctx.fillText(ach.desc, listX + 28, rowY + rowH / 2 + 8);
 
-        // Checkmark
+        // Checkmark or progress bar
         if (unlocked) {
             ctx.textAlign = 'right';
             ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
             ctx.fillStyle = '#2ecc71';
             ctx.fillText('\u2713', listX + listW, rowY + rowH / 2);
+        } else {
+            var prog = achievements.getProgress(ach);
+            if (prog && prog.target > 1) {
+                var barW = Math.min(listW * 0.2, 50);
+                var barH = 4;
+                var barX = listX + listW - barW;
+                var barY = rowY + rowH / 2 - barH / 2;
+                var pct = prog.current / prog.target;
+                ctx.fillStyle = 'rgba(255,255,255,0.1)';
+                ctx.fillRect(barX, barY, barW, barH);
+                ctx.fillStyle = 'rgba(255,215,0,0.5)';
+                ctx.fillRect(barX, barY, barW * pct, barH);
+                ctx.textAlign = 'right';
+                ctx.font = Math.min(cw * 0.02, 8) + 'px ' + this.font;
+                ctx.fillStyle = 'rgba(255,255,255,0.4)';
+                ctx.fillText(prog.current + '/' + prog.target, barX - 4, rowY + rowH / 2);
+            }
         }
 
         ctx.globalAlpha = 1;
