@@ -154,11 +154,19 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
     ctx.quadraticCurveTo(this.x, this.y, this.x + r, this.y);
     ctx.closePath();
 
-    var gradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
-    gradient.addColorStop(0, '#e74c3c');
-    gradient.addColorStop(1, '#c0392b');
-    ctx.fillStyle = gradient;
-    ctx.fill();
+    if (SB.highContrast) {
+        ctx.fillStyle = '#FF0000';
+        ctx.fill();
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    } else {
+        var gradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
+        gradient.addColorStop(0, '#e74c3c');
+        gradient.addColorStop(1, '#c0392b');
+        ctx.fillStyle = gradient;
+        ctx.fill();
+    }
     ctx.restore();
 };
 

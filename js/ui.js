@@ -261,6 +261,17 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.fillText(isMuted ? 'MUTE' : 'SND', muteX + muteSize / 2, muteY + muteSize / 2);
     ctx.restore();
     SB._muteBtn = { x: muteX, y: muteY, w: muteSize + 4, h: muteSize + 4 };
+
+    // High contrast toggle (top-right, below mute)
+    var hcY = muteY + muteSize + 8;
+    ctx.save();
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
+    ctx.fillStyle = SB.highContrast ? 'rgba(46,204,113,0.7)' : 'rgba(255,255,255,0.3)';
+    ctx.fillText('HC', muteX + muteSize / 2, hcY + muteSize / 2);
+    ctx.restore();
+    SB._hcBtn = { x: muteX, y: hcY, w: muteSize + 4, h: muteSize + 4 };
 };
 
 SB.UI.prototype._drawDailyChallenge = function(ctx, cw, y, daily) {

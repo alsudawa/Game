@@ -21,6 +21,7 @@ SB.Input = function(canvas) {
         self._checkAchButton(touch.clientX, touch.clientY);
         self._checkReviveButton(touch.clientX, touch.clientY);
         self._checkMuteButton(touch.clientX, touch.clientY);
+        self._checkHCButton(touch.clientX, touch.clientY);
         self._checkPauseButton(touch.clientX, touch.clientY);
         self._checkResumeQuitButtons(touch.clientX, touch.clientY);
         self.tapped = true;
@@ -36,6 +37,7 @@ SB.Input = function(canvas) {
         self._checkAchButton(e.clientX, e.clientY);
         self._checkReviveButton(e.clientX, e.clientY);
         self._checkMuteButton(e.clientX, e.clientY);
+        self._checkHCButton(e.clientX, e.clientY);
         self._checkPauseButton(e.clientX, e.clientY);
         self._checkResumeQuitButtons(e.clientX, e.clientY);
         self.tapped = true;
@@ -138,6 +140,18 @@ SB.Input.prototype._checkMuteButton = function(x, y) {
         var btn = SB._muteBtn;
         if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
             SB.audio.toggleMute();
+            this.tapped = false;
+            return;
+        }
+    }
+};
+
+SB.Input.prototype._checkHCButton = function(x, y) {
+    if (SB._hcBtn) {
+        var btn = SB._hcBtn;
+        if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+            SB.highContrast = !SB.highContrast;
+            SB.Storage.setHighContrast(SB.highContrast);
             this.tapped = false;
             return;
         }

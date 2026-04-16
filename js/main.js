@@ -59,6 +59,8 @@ window.SB = window.SB || {};
             setTimeout(resizeCanvas, 100);
         });
 
+        SB.highContrast = SB.Storage.getHighContrast();
+
         game = new SB.Game(canvas);
         game.init();
 

@@ -48,6 +48,7 @@ SB.Ball.prototype.update = function(dt) {
     this.vy = SB.clamp(this.vy, -SB.Physics.MAX_FALL_SPEED, SB.Physics.MAX_FALL_SPEED);
 
     this.vx *= SB.Physics.AIR_RESISTANCE;
+    this.vx = SB.clamp(this.vx, -SB.Physics.MAX_FALL_SPEED, SB.Physics.MAX_FALL_SPEED);
 
     this.x += this.vx * dt;
     this.y += this.vy * dt;

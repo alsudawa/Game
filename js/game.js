@@ -590,6 +590,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         SB._skinBtns = null;
         SB._achBtn = null;
         SB._muteBtn = null;
+        SB._hcBtn = null;
         SB._pauseBtn = null;
         SB._pauseBtnTapped = null;
         SB._resumeBtn = null;

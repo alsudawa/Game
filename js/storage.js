@@ -151,5 +151,17 @@ SB.Storage = {
         try {
             localStorage.setItem('skyBounce_lastRun', JSON.stringify(runData));
         } catch (e) {}
+    },
+
+    getHighContrast: function() {
+        try {
+            return localStorage.getItem('skyBounce_hc') === '1';
+        } catch (e) { return false; }
+    },
+
+    setHighContrast: function(on) {
+        try {
+            localStorage.setItem('skyBounce_hc', on ? '1' : '0');
+        } catch (e) {}
     }
 };
