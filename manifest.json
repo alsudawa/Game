@@ -2,7 +2,7 @@
     "name": "Sky Bounce",
     "short_name": "Sky Bounce",
     "description": "Tap to bounce, avoid obstacles, collect stars!",
-    "start_url": "/",
+    "start_url": "./",
     "display": "fullscreen",
     "orientation": "portrait",
     "theme_color": "#0f0c29",
