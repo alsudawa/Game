@@ -166,6 +166,38 @@ SB.Audio.prototype.playShieldBreak = function() {
     osc.stop(now + 0.2);
 };
 
+SB.Audio.prototype.playRevive = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    // Rising hopeful tone: C5 → E5 → G5 (fast ascending)
+    var notes = [523, 659, 784];
+    for (var i = 0; i < notes.length; i++) {
+        var osc = this.ctx.createOscillator();
+        var gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = notes[i];
+        var t = now + i * 0.06;
+        gain.gain.setValueAtTime(0.22, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.2);
+    }
+    // Sustained shimmer at top note
+    var shimmer = this.ctx.createOscillator();
+    var sGain = this.ctx.createGain();
+    shimmer.type = 'sine';
+    shimmer.frequency.value = 1047; // C6
+    var sStart = now + 0.18;
+    sGain.gain.setValueAtTime(0.12, sStart);
+    sGain.gain.exponentialRampToValueAtTime(0.001, sStart + 0.4);
+    shimmer.connect(sGain);
+    sGain.connect(this.masterGain);
+    shimmer.start(sStart);
+    shimmer.stop(sStart + 0.4);
+};
+
 SB.Audio.prototype.startBGM = function() {
     if (!this.initialized || this._bgmPlaying) return;
     this._bgmPlaying = true;

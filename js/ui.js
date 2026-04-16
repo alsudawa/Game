@@ -391,7 +391,7 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
         ctx.fillStyle = zoneColors[this.zoneMsg] || '#FFFFFF';
         ctx.shadowColor = ctx.fillStyle;
         ctx.shadowBlur = 12;
-        ctx.fillText(this.zoneMsg + ' ZONE', cw / 2, ch * 0.15);
+        ctx.fillText(this.zoneMsg + ' ZONE', cw / 2, ch * 0.12);
         ctx.restore();
     }
 
@@ -399,8 +399,10 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
     ctx.save();
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
-    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
-    ctx.fillStyle = 'rgba(255,215,0,0.6)';
+    ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 4;
+    ctx.fillStyle = 'rgba(255,215,0,0.85)';
     ctx.fillText(SB.Storage.getCoins() + ' coins', cw - 12, 12);
     ctx.restore();
 
@@ -600,22 +602,27 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
 
 SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost) {
     // Darken background
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
     ctx.fillRect(0, 0, cw, ch);
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
+    // Heading
+    ctx.font = 'bold ' + Math.min(cw * 0.06, 24) + 'px ' + this.font;
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillText('Continue your run?', cw / 2, ch * 0.2);
+
     // Countdown circle
-    var countY = ch * 0.3;
-    var countR = Math.min(cw * 0.12, 50);
+    var countY = ch * 0.33;
+    var countR = Math.min(cw * 0.1, 42);
     var countNum = Math.ceil(countdown);
 
     // Background ring
     ctx.beginPath();
     ctx.arc(cw / 2, countY, countR, 0, SB.TAU);
     ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 5;
     ctx.stroke();
 
     // Countdown arc
@@ -623,19 +630,19 @@ SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost)
     ctx.beginPath();
     ctx.arc(cw / 2, countY, countR, -Math.PI / 2, -Math.PI / 2 + SB.TAU * progress);
     ctx.strokeStyle = '#E74C3C';
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 5;
     ctx.stroke();
 
     // Number
-    ctx.font = 'bold ' + Math.min(cw * 0.12, 48) + 'px ' + this.font;
+    ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(countNum, cw / 2, countY);
 
-    // Revive button
-    var btnW = Math.min(cw * 0.6, 220);
-    var btnH = 48;
+    // Revive button (includes countdown in text)
+    var btnW = Math.min(cw * 0.65, 240);
+    var btnH = 50;
     var btnX = cw / 2 - btnW / 2;
-    var btnY = ch * 0.5;
+    var btnY = ch * 0.48;
 
     var canAfford = coins >= cost;
     ctx.fillStyle = canAfford ? 'rgba(46, 204, 113, 0.9)' : 'rgba(100, 100, 100, 0.6)';
@@ -649,25 +656,23 @@ SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost)
         ctx.stroke();
     }
 
-    ctx.font = 'bold ' + Math.min(cw * 0.045, 18) + 'px ' + this.font;
+    ctx.font = 'bold ' + Math.min(cw * 0.042, 17) + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText('REVIVE  (' + cost + ' coins)', cw / 2, btnY + btnH / 2);
+    ctx.fillText('REVIVE (' + cost + ' coins) - ' + countNum + 's', cw / 2, btnY + btnH / 2);
 
     // Current coins
-    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+    ctx.font = Math.min(cw * 0.032, 13) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255,215,0,0.7)';
-    ctx.fillText('You have ' + coins + ' coins', cw / 2, btnY + btnH + 20);
+    ctx.fillText('You have ' + coins + ' coins', cw / 2, btnY + btnH + 18);
 
     // Store button bounds for tap detection
     SB._reviveBtn = { x: btnX, y: btnY, w: btnW, h: btnH };
 
-    // Skip text
-    if (countdown < 2.5) {
-        var blinkAlpha = (Math.sin(this.blinkPhase * 2) + 1) / 2 * 0.4 + 0.2;
-        ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,255,255,' + blinkAlpha + ')';
-        ctx.fillText('Tap elsewhere to skip', cw / 2, ch * 0.72);
-    }
+    // Skip text — visible immediately
+    var blinkAlpha = (Math.sin(this.blinkPhase * 2) + 1) / 2 * 0.3 + 0.2;
+    ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,' + blinkAlpha + ')';
+    ctx.fillText('Tap elsewhere to skip', cw / 2, ch * 0.68);
 };
 
 SB.UI.prototype._roundRect = function(ctx, x, y, w, h, r) {

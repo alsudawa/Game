@@ -9,7 +9,7 @@ SB.STATES = {
 
 SB.ZONES = {
     CALM: { name: 'CALM', threshold: 0 },
-    RISING: { name: 'RISING', threshold: 10 },
+    RISING: { name: 'RISING', threshold: 15 },
     INTENSE: { name: 'INTENSE', threshold: 25 },
     EXTREME: { name: 'EXTREME', threshold: 50 }
 };
@@ -56,10 +56,9 @@ SB.Game = function(canvas) {
     this.reviveCountdown = 0;
     this.invincibleTimer = 0;
     this.currentZone = SB.ZONES.CALM;
-    this.lastZone = null;
     this.runCoins = 0;
 
-    SB.REVIVE_COST = 30;
+    SB.REVIVE_COST = 20;
 };
 
 SB.Game.prototype.init = function() {
@@ -308,8 +307,14 @@ SB.Game.prototype._updatePlaying = function(dt) {
     this.achievements.checkAll();
 
     if (this.ball.y - this.ball.radius > ch) {
-        this.particles.emit(this.ball.x, ch, SB.FX.deathExplosion);
-        this._handleDeath();
+        if (this.invincibleTimer > 0) {
+            // Bounce back up during invincibility
+            this.ball.y = ch - this.ball.radius;
+            this.ball.vy = SB.Physics.BOUNCE_IMPULSE * 0.6;
+        } else {
+            this.particles.emit(this.ball.x, ch, SB.FX.deathExplosion);
+            this._handleDeath();
+        }
     }
 };
 
@@ -328,13 +333,20 @@ SB.Game.prototype._updateRevive = function(dt) {
     this.reviveCountdown -= dt;
     this.particles.update(dt);
 
+    // Countdown expired — must check BEFORE button to avoid race
+    if (this.reviveCountdown <= 0) {
+        SB._reviveBtnTapped = null;
+        this._transitionTo(SB.STATES.GAME_OVER);
+        return;
+    }
+
     // Revive button tapped
     if (SB._reviveBtnTapped) {
         SB._reviveBtnTapped = null;
         if (SB.Storage.spendCoins(SB.REVIVE_COST)) {
             this.revived = true;
             this.state = SB.STATES.PLAYING;
-            this.invincibleTimer = 2.0;
+            this.invincibleTimer = 3.0;
             this.ball.blinking = true;
             this.ball.y = SB.canvasHeight * 0.4;
             this.ball.vy = SB.Physics.BOUNCE_IMPULSE * 0.5;
@@ -350,19 +362,13 @@ SB.Game.prototype._updateRevive = function(dt) {
                 }
             }
             SB.audio.startBGM();
-            SB.audio.playMilestone();
+            SB.audio.playRevive();
             return;
         }
     }
 
-    // Skip revive (tap anywhere else, or countdown expired)
-    if (this.reviveCountdown <= 0) {
-        this._transitionTo(SB.STATES.GAME_OVER);
-        return;
-    }
-
-    if (this.input.consumeTap() && this.reviveCountdown < 2.5) {
-        // Give a small window before allowing skip
+    // Skip revive (tap anywhere except button)
+    if (this.input.consumeTap()) {
         this._transitionTo(SB.STATES.GAME_OVER);
     }
 };
@@ -420,7 +426,6 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.revived = false;
         this.invincibleTimer = 0;
         this.currentZone = SB.ZONES.CALM;
-        this.lastZone = null;
         this.transitionAlpha = 1;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
         this.ball.blinking = false;
@@ -448,6 +453,12 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.screenFlash = 0.15;
         this.screenShake = 0.3;
         this.screenShakeIntensity = 10;
+        // Coin floor: always earn at least 3 coins per run
+        if (this.runCoins < 3) {
+            var bonus = 3 - this.runCoins;
+            SB.Storage.addCoins(bonus);
+            this.runCoins = 3;
+        }
         this.isNewHigh = SB.Storage.isNewHighScore(Math.floor(this.score));
         SB.Storage.setHighScore(Math.floor(this.score));
         SB.Storage.addToLeaderboard(this.score);
