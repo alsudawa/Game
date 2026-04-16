@@ -63,6 +63,8 @@ SB.Game = function(canvas) {
     this.deathPending = null; // stores death context during slow-mo
     this.hudCoins = 0; // cached for HUD (avoid localStorage reads per frame)
     this.hudHighScore = 0;
+    this.nearMissStreak = 0;
+    this.nearMissStreakTimer = 0;
 
     SB.REVIVE_COST = 20;
 };
@@ -260,6 +262,12 @@ SB.Game.prototype._updatePlaying = function(dt) {
         this.ui.addScorePopup(SB.canvasWidth / 2, 60, 'x2 ENDED', 'rgba(255,213,79,0.6)');
     }
 
+    // Near-miss streak timer decay
+    if (this.nearMissStreakTimer > 0) {
+        this.nearMissStreakTimer -= dt;
+        if (this.nearMissStreakTimer <= 0) this.nearMissStreak = 0;
+    }
+
     this.powerupEffects.update(dt);
     this.particles.update(dt);
     this.achievements.updateRunTime(dt);
@@ -335,7 +343,18 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (nearHit) {
                 obs._nearMissed = true;
                 this.ui.nearMissTimer = 0.6;
-                this.score += 2;
+                // Streak tracking: consecutive near-misses within 3s
+                if (this.nearMissStreakTimer > 0) {
+                    this.nearMissStreak++;
+                } else {
+                    this.nearMissStreak = 1;
+                }
+                this.nearMissStreakTimer = 3.0;
+                var nmBonus = 2 * this.nearMissStreak;
+                this.score += nmBonus;
+                if (this.nearMissStreak >= 2) {
+                    this.ui.addScorePopup(this.ball.x, this.ball.y - 30, 'DAREDEVIL x' + this.nearMissStreak + ' +' + nmBonus, '#F39C12');
+                }
                 this.achievements.onNearMiss();
                 SB.audio.playNearMiss();
                 if (navigator.vibrate) navigator.vibrate(15);
@@ -447,6 +466,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                          : pu.type === 'score_mult' ? SB.FX.powerupScoreMult
                          : SB.FX.powerupSlow;
             this.particles.emit(pu.x, pu.y, puPreset);
+            this.ui.addPickupRing(pu.x, pu.y, puPreset.color);
             pu.active = false;
             this.powerupEffects.activate(pu.type);
             this.achievements.onPowerupCollect();
@@ -689,6 +709,8 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.invincibleTimer = 0;
         this.deathSlowMo = 0;
         this.deathPending = null;
+        this.nearMissStreak = 0;
+        this.nearMissStreakTimer = 0;
         this.currentZone = SB.ZONES.CALM;
         this.transitionAlpha = 1;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
@@ -919,6 +941,19 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 };
 
 SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
+    // Subtle edge vignette (darkens corners for focus)
+    if (!this._vignetteGrad || this._vigCw !== cw || this._vigCh !== ch) {
+        var vcx = cw / 2, vcy = ch / 2;
+        var vr = Math.sqrt(vcx * vcx + vcy * vcy);
+        this._vignetteGrad = ctx.createRadialGradient(vcx, vcy, vr * 0.5, vcx, vcy, vr);
+        this._vignetteGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        this._vignetteGrad.addColorStop(1, 'rgba(0,0,0,0.25)');
+        this._vigCw = cw;
+        this._vigCh = ch;
+    }
+    ctx.fillStyle = this._vignetteGrad;
+    ctx.fillRect(0, 0, cw, ch);
+
     // Subtle camera parallax: shift world objects opposite to ball's offset from center
     var pxOff = 0, pyOff = 0;
     if (this.state === SB.STATES.PLAYING) {

@@ -20,6 +20,7 @@ SB.Ball = function() {
     this.blinking = false;
     this.wallHitSide = 0; // -1 left, 1 right, 0 none (consumed per frame)
     this.bounceGlow = 0; // brief glow pulse on bounce (decays per frame)
+    this.wallSquash = 0; // brief horizontal squash on wall hit
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -58,15 +59,19 @@ SB.Ball.prototype.update = function(dt) {
 
     if (this.bounceGlow > 0) this.bounceGlow = Math.max(0, this.bounceGlow - dt * 5);
 
+    if (this.wallSquash > 0) this.wallSquash = Math.max(0, this.wallSquash - dt * 6);
+
     this.wallHitSide = 0;
     if (this.x - this.radius < 0) {
         this.x = this.radius;
         this.vx *= -0.5;
         this.wallHitSide = -1;
+        this.wallSquash = 1.0;
     } else if (this.x + this.radius > SB.canvasWidth) {
         this.x = SB.canvasWidth - this.radius;
         this.vx *= -0.5;
         this.wallHitSide = 1;
+        this.wallSquash = 1.0;
     }
 
     if (this.y - this.radius < 0) {
@@ -105,10 +110,14 @@ SB.Ball.prototype.draw = function(ctx) {
         ctx.fill();
     }
 
-    // Squash/stretch based on vertical velocity
+    // Squash/stretch based on vertical velocity + wall impact
     var vyNorm = SB.clamp(this.vy / SB.Physics.MAX_FALL_SPEED, -1, 1);
     var stretchY = 1 + Math.abs(vyNorm) * 0.2;
     var stretchX = 1 / stretchY; // preserve volume
+    if (this.wallSquash > 0) {
+        stretchX *= (1 - this.wallSquash * 0.25); // compress horizontally
+        stretchY *= (1 + this.wallSquash * 0.15); // expand vertically
+    }
 
     ctx.save();
     ctx.shadowColor = this.glowColor;
