@@ -96,6 +96,34 @@ SB.Audio.prototype.playCollect = function() {
     osc2.stop(now + 0.15);
 };
 
+SB.Audio.prototype.playCoinCollect = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+
+    // Metallic clink: two quick high tones
+    var osc1 = this.ctx.createOscillator();
+    var gain1 = this.ctx.createGain();
+    osc1.type = 'triangle';
+    osc1.frequency.value = 1200;
+    gain1.gain.setValueAtTime(0.15, now);
+    gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+    osc1.connect(gain1);
+    gain1.connect(this.masterGain);
+    osc1.start(now);
+    osc1.stop(now + 0.06);
+
+    var osc2 = this.ctx.createOscillator();
+    var gain2 = this.ctx.createGain();
+    osc2.type = 'triangle';
+    osc2.frequency.value = 1600;
+    gain2.gain.setValueAtTime(0.12, now + 0.03);
+    gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc2.connect(gain2);
+    gain2.connect(this.masterGain);
+    osc2.start(now + 0.03);
+    osc2.stop(now + 0.1);
+};
+
 SB.Audio.prototype.playGameOver = function() {
     if (!this.initialized) return;
     var osc = this.ctx.createOscillator();

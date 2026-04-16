@@ -288,7 +288,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
 
         if (SB.circleCircleCollision(ballBounds, col.getBounds())) {
-            this.particles.emit(col.x, col.y, SB.FX.starCollect);
+            var isCoin = col.type === SB.COLLECTIBLE_TYPES.COIN;
+            this.particles.emit(col.x, col.y, isCoin ? SB.FX.coinCollect : SB.FX.starCollect);
             col.active = false;
             this.comboTimer = 2.0;
             this.comboCount++;
@@ -299,11 +300,16 @@ SB.Game.prototype._updatePlaying = function(dt) {
             SB.Storage.addCoins(cv);
             var bonus = col.pointValue * (this.comboCount >= 2 ? 2 : 1) * this.dailyStarMult;
             this.score += bonus;
-            var popColor = col.type === SB.COLLECTIBLE_TYPES.COIN ? '#FFB300' : (this.comboCount >= 2 ? '#FF6B6B' : '#FFD700');
+            var popColor = isCoin ? '#FFB300' : (this.comboCount >= 2 ? '#FF6B6B' : '#FFD700');
             this.ui.addScorePopup(col.x, col.y - 15, '+' + bonus + (cv > 1 ? ' +' + cv + 'c' : ''), popColor);
             this.achievements.onStarCollect();
             this.achievements.onCombo(this.comboCount);
-            if (this.comboCount >= 2) {
+            if (isCoin) {
+                this.screenShake = 0.08;
+                this.screenShakeIntensity = 3;
+                if (navigator.vibrate) navigator.vibrate(10);
+                SB.audio.playCoinCollect();
+            } else if (this.comboCount >= 2) {
                 SB.audio.playCombo(this.comboCount);
             } else {
                 SB.audio.playCollect();

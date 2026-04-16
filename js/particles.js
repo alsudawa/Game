@@ -177,5 +177,18 @@ SB.FX = {
         angleSpread: Math.PI / 3,
         gravity: -30,
         friction: 0.95
+    },
+    coinCollect: {
+        count: 8,
+        spread: 2,
+        speedMin: 60,
+        speedMax: 160,
+        lifeMin: 0.25,
+        lifeMax: 0.5,
+        sizeMin: 1.5,
+        sizeMax: 3,
+        color: '255,180,0',
+        gravity: 80,
+        friction: 0.96
     }
 };

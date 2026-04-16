@@ -424,10 +424,13 @@ SB.UI.prototype.drawTutorial = function(ctx, cw, ch, tutorialStep) {
 
         ctx.font = fontSize + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,215,0,0.8)';
-        ctx.fillText('Stars = +5 points + 1 coin', cw / 2, ch * 0.38);
+        ctx.fillText('Stars = +5 pts + 1 coin', cw / 2, ch * 0.36);
+
+        ctx.fillStyle = 'rgba(255,180,0,0.8)';
+        ctx.fillText('Moving coins = +3 pts + 2 coins', cw / 2, ch * 0.42);
 
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.fillText('Combo: collect 2+ in 2 seconds!', cw / 2, ch * 0.46);
+        ctx.fillText('Combo: collect 2+ in 2 seconds!', cw / 2, ch * 0.48);
 
         // Powerup colors
         ctx.font = smallFont + 'px ' + this.font;
