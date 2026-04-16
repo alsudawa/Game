@@ -125,6 +125,12 @@ SB.Ball.prototype.draw = function(ctx) {
     gradient.addColorStop(1, this.glowColor);
     ctx.fillStyle = gradient;
     ctx.fill();
+    // High contrast: thick white outline for ball
+    if (SB.highContrast) {
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+    }
     ctx.restore();
 
     // Drop shadow (ellipse via scale transform)

@@ -33,6 +33,12 @@ SB.hexToRGB = function(hex) {
     return r + ',' + g + ',' + b;
 };
 
+SB.formatNum = function(n) {
+    n = Math.floor(n);
+    if (n < 1000) return '' + n;
+    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+};
+
 SB.circleRectCollision = function(circle, rect) {
     var closestX = SB.clamp(circle.x, rect.x, rect.x + rect.width);
     var closestY = SB.clamp(circle.y, rect.y, rect.y + rect.height);

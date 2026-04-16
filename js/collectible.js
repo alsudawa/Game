@@ -130,6 +130,11 @@ SB.Collectible.prototype.draw = function(ctx) {
     gradient.addColorStop(1, '#FFD700');
     ctx.fillStyle = gradient;
     ctx.fill();
+    if (SB.highContrast) {
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
 
     ctx.restore();
 
@@ -168,12 +173,17 @@ SB.Collectible.prototype._drawCoin = function(ctx) {
     grad.addColorStop(1, '#CC8800');
     ctx.fillStyle = grad;
     ctx.fill();
+    if (SB.highContrast) {
+        ctx.strokeStyle = '#FFFFFF';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
 
     // Inner circle border
     ctx.beginPath();
     ctx.arc(0, 0, r * 0.7, 0, SB.TAU);
-    ctx.strokeStyle = 'rgba(204, 136, 0, 0.4)';
-    ctx.lineWidth = 1;
+    ctx.strokeStyle = SB.highContrast ? 'rgba(255,255,255,0.5)' : 'rgba(204, 136, 0, 0.4)';
+    ctx.lineWidth = SB.highContrast ? 1.5 : 1;
     ctx.stroke();
 
     // Dollar sign (only visible when not edge-on)

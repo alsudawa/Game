@@ -275,7 +275,7 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     if (highScore > 0) {
         ctx.font = Math.min(cw * 0.045, 18) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
-        ctx.fillText('BEST: ' + highScore, cw / 2, ch * 0.72);
+        ctx.fillText('BEST: ' + SB.formatNum(highScore), cw / 2, ch * 0.72);
     }
 
     // Last run summary
@@ -544,10 +544,11 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.textBaseline = 'top';
     ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
 
+    var scoreText = SB.formatNum(score);
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-    ctx.fillText(Math.floor(score), cw / 2 + 2, 22);
+    ctx.fillText(scoreText, cw / 2 + 2, 22);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.fillText(Math.floor(score), cw / 2, 20);
+    ctx.fillText(scoreText, cw / 2, 20);
 
     // Score multiplier badge with countdown
     if (this.powerupEffectsRef && this.powerupEffectsRef.scoreMult) {
@@ -560,7 +561,7 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.fillStyle = 'rgba(255,213,79,' + smPulse.toFixed(2) + ')';
         ctx.shadowColor = '#FFD54F';
         ctx.shadowBlur = 8;
-        var scoreW = ctx.measureText(Math.floor(score) + '').width;
+        var scoreW = ctx.measureText(scoreText).width;
         ctx.fillText('x2 ' + smSec + 's', cw / 2 + scoreW / 2 + 18, 28);
         ctx.restore();
     }
@@ -751,7 +752,8 @@ SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
         ctx.fillStyle = item.color;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        ctx.fillText(item.label, x + 35, barY - 2);
+        var secLeft = Math.ceil(item.timer);
+        ctx.fillText(item.label + ' ' + secLeft + 's', x + 35, barY - 2);
     }
 };
 
@@ -806,7 +808,7 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     var scoreFontSize = Math.min(cw * 0.15, 60);
     ctx.font = 'bold ' + scoreFontSize + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
-    ctx.fillText(Math.floor(this.scoreCountUp), cw / 2, y);
+    ctx.fillText(SB.formatNum(this.scoreCountUp), cw / 2, y);
     y += scoreFontSize * 0.5 + gap;
 
     // New best or best
@@ -822,7 +824,7 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     } else {
         ctx.font = Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, ' + (alpha * 0.7) + ')';
-        ctx.fillText('BEST: ' + highScore, cw / 2, y);
+        ctx.fillText('BEST: ' + SB.formatNum(highScore), cw / 2, y);
     }
     y += gap + 4;
 
@@ -882,9 +884,14 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         var barGap2 = 3;
         var barW2 = (chartW - (this.recentRuns.length - 1) * barGap2) / this.recentRuns.length;
 
+        // Calculate average
+        var runSum = 0;
+        for (var ra = 0; ra < this.recentRuns.length; ra++) runSum += this.recentRuns[ra];
+        var runAvg = Math.floor(runSum / this.recentRuns.length);
+
         ctx.font = Math.min(cw * 0.02, 8) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.fillText('Recent runs', cw / 2, y);
+        ctx.fillText('Recent runs (avg ' + runAvg + ')', cw / 2, y);
         y += 8;
 
         for (var rj = 0; rj < this.recentRuns.length; rj++) {
