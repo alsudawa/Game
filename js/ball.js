@@ -92,14 +92,21 @@ SB.Ball.prototype.draw = function(ctx) {
         ctx.fill();
     }
 
+    // Squash/stretch based on vertical velocity
+    var vyNorm = SB.clamp(this.vy / SB.Physics.MAX_FALL_SPEED, -1, 1);
+    var stretchY = 1 + Math.abs(vyNorm) * 0.2;
+    var stretchX = 1 / stretchY; // preserve volume
+
     ctx.save();
     ctx.shadowColor = this.glowColor;
     ctx.shadowBlur = 20;
+    ctx.translate(this.x, this.y);
+    ctx.scale(stretchX, stretchY);
     ctx.beginPath();
-    ctx.arc(this.x, this.y, this.radius, 0, SB.TAU);
+    ctx.arc(0, 0, this.radius, 0, SB.TAU);
     var gradient = ctx.createRadialGradient(
-        this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.1,
-        this.x, this.y, this.radius
+        -this.radius * 0.3, -this.radius * 0.3, this.radius * 0.1,
+        0, 0, this.radius
     );
     gradient.addColorStop(0, this.coreColor);
     gradient.addColorStop(1, this.glowColor);

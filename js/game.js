@@ -298,6 +298,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             SB.Storage.addCoins(1);
             var bonus = col.pointValue * (this.comboCount >= 2 ? 2 : 1) * this.dailyStarMult;
             this.score += bonus;
+            this.ui.addScorePopup(col.x, col.y - 15, '+' + bonus, this.comboCount >= 2 ? '#FF6B6B' : '#FFD700');
             this.achievements.onStarCollect();
             this.achievements.onCombo(this.comboCount);
             if (this.comboCount >= 2) {

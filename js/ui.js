@@ -18,6 +18,7 @@ SB.UI = function() {
     this.zoneMsg = '';
     this.zoneMsgTimer = 0;
     this.nearMissTimer = 0;
+    this.scorePopups = [];
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -54,12 +55,28 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
     if (this.zoneMsgTimer > 0) this.zoneMsgTimer -= dt;
     if (this.nearMissTimer > 0) this.nearMissTimer -= dt;
 
+    // Score popups
+    var spWi = 0;
+    for (var si = 0; si < this.scorePopups.length; si++) {
+        var sp = this.scorePopups[si];
+        sp.timer += dt;
+        sp.y -= 50 * dt;
+        if (sp.timer <= 0.8) this.scorePopups[spWi++] = sp;
+    }
+    this.scorePopups.length = spWi;
+
     // Achievement toast
     if (this.achievementToast) {
         this.achievementToastTimer += dt;
         if (this.achievementToastTimer > 3.0) {
             this.achievementToast = null;
         }
+    }
+};
+
+SB.UI.prototype.addScorePopup = function(x, y, text, color) {
+    if (this.scorePopups.length < 8) {
+        this.scorePopups.push({ x: x, y: y, text: text, color: color || '#FFD700', timer: 0 });
     }
 };
 
@@ -493,6 +510,20 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone) {
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         ctx.fillText(p.text, p.x, p.y);
+        ctx.restore();
+    }
+
+    // Score popups
+    for (var si = 0; si < this.scorePopups.length; si++) {
+        var sp = this.scorePopups[si];
+        var spAlpha = 1 - sp.timer / 0.8;
+        ctx.save();
+        ctx.globalAlpha = spAlpha;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
+        ctx.fillStyle = sp.color;
+        ctx.fillText(sp.text, sp.x, sp.y);
         ctx.restore();
     }
 
