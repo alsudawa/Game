@@ -36,6 +36,7 @@ SB.Obstacle = function() {
     this.pullRadius = 0;
     this.pullStrength = 0;
     this.wellPhase = 0;
+    this.spawnAge = 0;
 };
 
 SB.Obstacle.prototype.init = function(config) {
@@ -65,10 +66,13 @@ SB.Obstacle.prototype.init = function(config) {
     this.pullRadius = config.pullRadius || 80;
     this.pullStrength = config.pullStrength || 200;
     this.wellPhase = 0;
+    this.spawnAge = 0;
 };
 
 SB.Obstacle.prototype.update = function(dt) {
     if (!this.active) return;
+
+    this.spawnAge += dt;
 
     if (this.maxLifetime > 0) {
         this.lifetime += dt;
@@ -121,6 +125,12 @@ SB.Obstacle.prototype.update = function(dt) {
 SB.Obstacle.prototype.draw = function(ctx) {
     if (!this.active) return;
 
+    var fadeIn = Math.min(this.spawnAge / 0.3, 1);
+    if (fadeIn < 1) {
+        ctx.save();
+        ctx.globalAlpha = fadeIn;
+    }
+
     if (this.type === SB.OBSTACLE_TYPES.PLATFORM) {
         this._drawPlatform(ctx);
     } else if (this.type === SB.OBSTACLE_TYPES.SPIKE) {
@@ -133,6 +143,10 @@ SB.Obstacle.prototype.draw = function(ctx) {
         this._drawLaser(ctx);
     } else if (this.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) {
         this._drawGravityWell(ctx);
+    }
+
+    if (fadeIn < 1) {
+        ctx.restore();
     }
 };
 

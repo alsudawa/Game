@@ -200,6 +200,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             }
         }
     } else if (this.input.consumeTap()) {
+        this.ui.addTapRipple(this.input.tapX, this.input.tapY);
         // Perfect bounce: ball falling fast + near bottom half of screen
         var preBounceVy = this.ball.vy;
         var isPerfect = preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.65 && this.ball.y > SB.canvasHeight * 0.6;
@@ -505,6 +506,13 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.screenFlash = 0.1;
             this.particles.emit(cw / 2, ch * 0.3, SB.FX.starCollect);
             this.particles.emit(cw / 2, ch * 0.3, SB.FX.starCollect);
+            // Fireworks from screen edges
+            this.particles.emit(0, ch * 0.6, SB.FX.milestoneFirework);
+            this.particles.emit(cw, ch * 0.6, SB.FX.milestoneFireworkR);
+            if (milestoneScore >= 100) {
+                this.particles.emit(cw * 0.3, 0, SB.FX.milestoneFireworkDown);
+                this.particles.emit(cw * 0.7, 0, SB.FX.milestoneFireworkDown);
+            }
             this.ui.milestoneMsg = milestoneScore + ' POINTS!';
             this.ui.milestoneMsgTimer = 1.5;
             if (navigator.vibrate) navigator.vibrate(30);
@@ -830,7 +838,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
         ctx.translate(shakeX, shakeY);
     }
 
-    this.background.draw(ctx, cw, ch);
+    this.background.draw(ctx, cw, ch, this.ball.x, this.ball.y);
 
     switch (this.state) {
         case SB.STATES.START:

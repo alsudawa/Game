@@ -33,6 +33,7 @@ SB.UI = function() {
     this.nearMissTimer = 0;
     this.scorePopups = [];
     this.pickupRings = [];
+    this.tapRipples = [];
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -93,6 +94,15 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
     }
     this.pickupRings.length = prWi;
 
+    // Tap ripples
+    var trWi = 0;
+    for (var tri = 0; tri < this.tapRipples.length; tri++) {
+        var tr = this.tapRipples[tri];
+        tr.timer += dt;
+        if (tr.timer <= tr.duration) this.tapRipples[trWi++] = tr;
+    }
+    this.tapRipples.length = trWi;
+
     // Achievement toast
     if (this.achievementToast) {
         this.achievementToastTimer += dt;
@@ -105,6 +115,12 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
 SB.UI.prototype.addScorePopup = function(x, y, text, color) {
     if (this.scorePopups.length < 8) {
         this.scorePopups.push({ x: x, y: y, text: text, color: color || '#FFD700', timer: 0 });
+    }
+};
+
+SB.UI.prototype.addTapRipple = function(x, y) {
+    if (this.tapRipples.length < 4) {
+        this.tapRipples.push({ x: x, y: y, timer: 0, duration: 0.4 });
     }
 };
 
@@ -660,6 +676,27 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.strokeStyle = 'rgba(' + ring.color + ',' + rAlpha.toFixed(2) + ')';
         ctx.lineWidth = 2 * (1 - rProgress);
         ctx.stroke();
+        ctx.restore();
+    }
+
+    // Tap ripples (expanding rings at tap position)
+    for (var tri = 0; tri < this.tapRipples.length; tri++) {
+        var tap = this.tapRipples[tri];
+        var tProgress = tap.timer / tap.duration;
+        var tRadius = 8 + tProgress * 40;
+        var tAlpha = (1 - tProgress) * 0.3;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(tap.x, tap.y, tRadius, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(255,255,255,' + tAlpha.toFixed(2) + ')';
+        ctx.lineWidth = 1.5 * (1 - tProgress);
+        ctx.stroke();
+        if (tProgress < 0.15) {
+            ctx.beginPath();
+            ctx.arc(tap.x, tap.y, 3 * (1 - tProgress / 0.15), 0, SB.TAU);
+            ctx.fillStyle = 'rgba(255,255,255,' + (0.4 * (1 - tProgress / 0.15)).toFixed(2) + ')';
+            ctx.fill();
+        }
         ctx.restore();
     }
 

@@ -128,7 +128,7 @@ SB.Background.prototype.update = function(dt, difficulty) {
     this.shootingStars.length = wi;
 };
 
-SB.Background.prototype.draw = function(ctx, cw, ch) {
+SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
     var d = this.colorPhase;
 
     // Cache background gradient (only rebuild when difficulty or height changes)
@@ -183,11 +183,19 @@ SB.Background.prototype.draw = function(ctx, cw, ch) {
     ctx.fillStyle = this._cachedGrad;
     ctx.fillRect(0, 0, cw, ch);
 
+    // Parallax offsets based on ball position (subtle depth)
+    var pxNorm = typeof ballX === 'number' ? (ballX - cw / 2) / cw : 0;
+    var pyNorm = typeof ballY === 'number' ? (ballY - ch / 2) / ch : 0;
+    var starPx = pxNorm * -2;
+    var starPy = pyNorm * -1.5;
+    var cloudPx = pxNorm * -5;
+    var cloudPy = pyNorm * -3;
+
     for (var i = 0; i < this.stars.length; i++) {
         var star = this.stars[i];
         var alpha = (Math.sin(star.twinklePhase) + 1) / 2 * 0.7 + 0.1;
         ctx.beginPath();
-        ctx.arc(star.x, star.y, star.size, 0, SB.TAU);
+        ctx.arc(star.x + starPx, star.y + starPy, star.size, 0, SB.TAU);
         ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
         ctx.fill();
     }
@@ -196,7 +204,7 @@ SB.Background.prototype.draw = function(ctx, cw, ch) {
         var cloud = this.clouds[j];
         ctx.save();
         ctx.fillStyle = 'rgba(255, 255, 255, ' + cloud.alpha + ')';
-        ctx.translate(cloud.x, cloud.y);
+        ctx.translate(cloud.x + cloudPx, cloud.y + cloudPy);
         ctx.scale(1, cloud.height / cloud.width);
         ctx.beginPath();
         ctx.arc(0, 0, cloud.width / 2, 0, SB.TAU);

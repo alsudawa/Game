@@ -231,5 +231,50 @@ SB.FX = {
         color: '255,140,66',
         gravity: 80,
         friction: 0.96
+    },
+    milestoneFirework: {
+        count: 12,
+        spread: 4,
+        speedMin: 120,
+        speedMax: 300,
+        lifeMin: 0.5,
+        lifeMax: 1.0,
+        sizeMin: 1.5,
+        sizeMax: 4,
+        color: '255,215,0',
+        angle: -Math.PI / 4,
+        angleSpread: Math.PI / 4,
+        gravity: 100,
+        friction: 0.97
+    },
+    milestoneFireworkR: {
+        count: 12,
+        spread: 4,
+        speedMin: 120,
+        speedMax: 300,
+        lifeMin: 0.5,
+        lifeMax: 1.0,
+        sizeMin: 1.5,
+        sizeMax: 4,
+        color: '255,150,50',
+        angle: Math.PI - Math.PI / 4,
+        angleSpread: Math.PI / 4,
+        gravity: 100,
+        friction: 0.97
+    },
+    milestoneFireworkDown: {
+        count: 10,
+        spread: 4,
+        speedMin: 100,
+        speedMax: 250,
+        lifeMin: 0.4,
+        lifeMax: 0.9,
+        sizeMin: 1.5,
+        sizeMax: 3.5,
+        color: '255,100,100',
+        angle: Math.PI / 2,
+        angleSpread: Math.PI / 3,
+        gravity: 80,
+        friction: 0.97
     }
 };

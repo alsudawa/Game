@@ -21,6 +21,7 @@ SB.Ball = function() {
     this.wallHitSide = 0; // -1 left, 1 right, 0 none (consumed per frame)
     this.bounceGlow = 0; // brief glow pulse on bounce (decays per frame)
     this.wallSquash = 0; // brief horizontal squash on wall hit
+    this.bounceSquash = 0; // brief vertical squash on bounce landing
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -33,11 +34,13 @@ SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
     this.radius = this.baseRadius;
     this.gravityMult = 1;
     this.blinking = false;
+    this.bounceSquash = 0;
 };
 
 SB.Ball.prototype.bounce = function(tapX) {
     this.vy = SB.Physics.BOUNCE_IMPULSE;
     this.bounceGlow = 1.0;
+    this.bounceSquash = 1.0;
 
     // Directional bounce based on tap position
     if (typeof tapX === 'number') {
@@ -60,6 +63,7 @@ SB.Ball.prototype.update = function(dt) {
     if (this.bounceGlow > 0) this.bounceGlow = Math.max(0, this.bounceGlow - dt * 5);
 
     if (this.wallSquash > 0) this.wallSquash = Math.max(0, this.wallSquash - dt * 6);
+    if (this.bounceSquash > 0) this.bounceSquash = Math.max(0, this.bounceSquash - dt * 8);
 
     this.wallHitSide = 0;
     if (this.x - this.radius < 0) {
@@ -115,8 +119,12 @@ SB.Ball.prototype.draw = function(ctx) {
     var stretchY = 1 + Math.abs(vyNorm) * 0.2;
     var stretchX = 1 / stretchY; // preserve volume
     if (this.wallSquash > 0) {
-        stretchX *= (1 - this.wallSquash * 0.25); // compress horizontally
-        stretchY *= (1 + this.wallSquash * 0.15); // expand vertically
+        stretchX *= (1 - this.wallSquash * 0.25);
+        stretchY *= (1 + this.wallSquash * 0.15);
+    }
+    if (this.bounceSquash > 0) {
+        stretchX *= (1 + this.bounceSquash * 0.2);
+        stretchY *= (1 - this.bounceSquash * 0.15);
     }
 
     ctx.save();
