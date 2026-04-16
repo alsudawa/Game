@@ -215,8 +215,10 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.ball.vy *= 1.25;
             this.screenFlash = 0.04;
             this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.powerBounce);
+            this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '93,173,226');
         } else {
             this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
+            this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '255,255,255');
         }
         // Dust puff when bouncing while falling (heavier at higher speed)
         if (preBounceVy > 100) {
@@ -400,10 +402,29 @@ SB.Game.prototype._updatePlaying = function(dt) {
         if (hit) {
             if (this.invincibleTimer > 0) continue; // Post-revive invincibility
             if (this.powerupEffects.useShield()) {
+                var obsCx = obs.radius ? obs.x + obs.radius : obs.x + (obs.width || 0) / 2;
+                var obsCy = obs.radius ? obs.y + obs.radius : obs.y + (obs.height || 0) / 2;
                 obs.active = false;
                 this.screenShake = 0.25;
                 this.screenShakeIntensity = 8;
                 this.particles.emit(this.ball.x, this.ball.y, SB.FX.shieldBreak);
+                // Obstacle destruction scatter (colored by obstacle type)
+                var obsColor = obs.type === SB.OBSTACLE_TYPES.BLADE ? '180,180,190' :
+                               obs.type === SB.OBSTACLE_TYPES.SPIKE ? '255,99,71' :
+                               obs.type === SB.OBSTACLE_TYPES.BOOMERANG ? '255,152,0' : '231,76,60';
+                this.particles.emit(obsCx, obsCy, {
+                    count: 8,
+                    spread: 4,
+                    speedMin: 80,
+                    speedMax: 220,
+                    lifeMin: 0.3,
+                    lifeMax: 0.6,
+                    sizeMin: 2,
+                    sizeMax: 4,
+                    color: obsColor,
+                    gravity: 180,
+                    friction: 0.96
+                });
                 this.achievements.onShieldUse();
                 SB.audio.playShieldBreak();
                 continue;
@@ -436,7 +457,12 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (dist < 120) {
                 col.x += dx * 5 * dt;
                 col.y += dy * 5 * dt;
+                col._magnetPull = 1 - dist / 120;
+            } else {
+                col._magnetPull = 0;
             }
+        } else {
+            col._magnetPull = 0;
         }
 
         if (SB.circleCircleCollision(ballBounds, col.getBounds())) {
@@ -1020,6 +1046,18 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
     }
     for (var j = 0; j < collectibles.length; j++) {
         collectibles[j].draw(ctx);
+        if (collectibles[j]._magnetPull > 0) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(155,89,182,' + (collectibles[j]._magnetPull * 0.2).toFixed(2) + ')';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([4, 6]);
+            ctx.beginPath();
+            ctx.moveTo(collectibles[j].x, collectibles[j].y);
+            ctx.lineTo(this.ball.x - pxOff, this.ball.y - pyOff);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+        }
     }
     for (var k = 0; k < powerups.length; k++) {
         powerups[k].draw(ctx);

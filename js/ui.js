@@ -34,6 +34,7 @@ SB.UI = function() {
     this.scorePopups = [];
     this.pickupRings = [];
     this.tapRipples = [];
+    this.displayScore = 0;
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -231,12 +232,13 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         this._drawDailyChallenge(ctx, cw, ch * 0.23, daily);
     }
 
-    // Idle ball with current skin
+    // Idle ball with current skin + breathing glow
     var currentSkin = skinManager ? skinManager.getCurrentSkin() : SB.SKINS[0];
     var ballY = ch * 0.34 + this.idleBallY;
+    var breathe = Math.sin(this.blinkPhase * 0.8) * 0.5 + 0.5;
     ctx.save();
     ctx.shadowColor = currentSkin.glow;
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 18 + breathe * 15;
     ctx.beginPath();
     ctx.arc(cw / 2, ballY, 18, 0, SB.TAU);
     var gradient = ctx.createRadialGradient(cw / 2 - 5, ballY - 5, 2, cw / 2, ballY, 18);
@@ -244,6 +246,14 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     gradient.addColorStop(1, currentSkin.glow);
     ctx.fillStyle = gradient;
     ctx.fill();
+    ctx.restore();
+    // Outer glow ring
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cw / 2, ballY, 22 + breathe * 4, 0, SB.TAU);
+    ctx.strokeStyle = 'rgba(' + SB.hexToRGB(currentSkin.glow) + ',' + (breathe * 0.2).toFixed(2) + ')';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
     ctx.restore();
 
     // Skin selector
@@ -558,11 +568,20 @@ SB.UI.prototype.drawTutorial = function(ctx, cw, ch, tutorialStep) {
 };
 
 SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cachedHighScore, comboTimer, comboCount, difficulty) {
+    // Smooth score counter (lerp toward actual)
+    if (this.displayScore < score) {
+        var diff = score - this.displayScore;
+        this.displayScore += Math.max(1, Math.ceil(diff * 0.15));
+        if (this.displayScore > score) this.displayScore = score;
+    } else {
+        this.displayScore = score;
+    }
+
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
 
-    var scoreText = SB.formatNum(score);
+    var scoreText = SB.formatNum(Math.floor(this.displayScore));
     ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
     ctx.fillText(scoreText, cw / 2 + 2, 22);
     ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
@@ -799,6 +818,7 @@ SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
 SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dailyJustCompleted, runStats, streak, recentRuns) {
     this.gameOverAlpha = 0;
     this.scoreCountUp = 0;
+    this.displayScore = 0;
     this._finalScore = finalScore;
     this.comboPopups = [];
     this.xpResult = xpResult;
