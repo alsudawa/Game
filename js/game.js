@@ -214,6 +214,28 @@ SB.Game.prototype._updatePlaying = function(dt) {
     }
 
     this.ball.update(dt);
+
+    // Wall hit feedback
+    if (this.ball.wallHitSide !== 0) {
+        var wx = this.ball.wallHitSide < 0 ? 0 : SB.canvasWidth;
+        this.particles.emit(wx, this.ball.y, {
+            count: 4,
+            spread: 2,
+            speedMin: 30,
+            speedMax: 80,
+            lifeMin: 0.15,
+            lifeMax: 0.3,
+            sizeMin: 1,
+            sizeMax: 2.5,
+            color: '200,200,255',
+            angle: this.ball.wallHitSide < 0 ? 0 : Math.PI,
+            angleSpread: Math.PI / 3,
+            gravity: 60,
+            friction: 0.95
+        });
+        SB.audio.playWallHit();
+    }
+
     this.powerupEffects.update(dt);
     this.particles.update(dt);
     this.achievements.updateRunTime(dt);
@@ -718,6 +740,28 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
         case SB.STATES.PLAYING:
             this._renderGameplay(ctx, cw, ch);
             this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount);
+            // Grace period "GET READY" indicator
+            if (this.spawner.graceTimer < this.spawner.gracePeriod && !this.showTutorial) {
+                var graceLeft = this.spawner.gracePeriod - this.spawner.graceTimer;
+                var graceAlpha = Math.min(graceLeft, 1);
+                ctx.save();
+                ctx.globalAlpha = graceAlpha;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.font = 'bold ' + Math.min(cw * 0.05, 20) + 'px ' + this.ui.font;
+                ctx.fillStyle = '#5DADE2';
+                ctx.shadowColor = '#5DADE2';
+                ctx.shadowBlur = 10;
+                ctx.fillText('GET READY', cw / 2, ch * 0.28);
+                // Shrinking circle countdown
+                var countR = 16 * (graceLeft / this.spawner.gracePeriod);
+                ctx.beginPath();
+                ctx.arc(cw / 2, ch * 0.33, countR, 0, SB.TAU);
+                ctx.strokeStyle = 'rgba(93,173,226,0.5)';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.restore();
+            }
             if (this.showTutorial) {
                 this.ui.drawTutorial(ctx, cw, ch, this.tutorialStep);
             }

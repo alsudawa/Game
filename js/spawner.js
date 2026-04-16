@@ -93,18 +93,24 @@ SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedM
         }
     } else {
         var roll = Math.random();
-        if (roll < 0.10) {
+        if (roll < 0.08) {
             this._spawnBlade(canvasWidth, canvasHeight, speedMult);
-        } else if (roll < 0.19) {
+        } else if (roll < 0.15) {
             this._spawnBoomerang(canvasWidth, canvasHeight, speedMult);
-        } else if (roll < 0.28) {
+        } else if (roll < 0.22) {
             this._spawnLaser(canvasWidth, canvasHeight);
-        } else if (roll < 0.36 && this.extraDifficulty > 0.1) {
+        } else if (roll < 0.29 && this.extraDifficulty > 0.1) {
             this._spawnGravityWell(canvasWidth, canvasHeight);
-        } else if (roll < 0.52) {
+        } else if (roll < 0.40) {
             this._spawnSpike(canvasWidth, canvasHeight, speedMult);
-        } else if (roll < 0.64) {
+        } else if (roll < 0.50) {
             this._spawnSqueeze(canvasWidth, canvasHeight, speedMult);
+        } else if (roll < 0.58) {
+            this._spawnWave(canvasWidth, canvasHeight, speedMult);
+        } else if (roll < 0.66) {
+            this._spawnPincer(canvasWidth, canvasHeight, speedMult);
+        } else if (roll < 0.74 && this.extraDifficulty > 0.05) {
+            this._spawnCorridor(canvasWidth, canvasHeight, speedMult);
         } else {
             this._spawnPlatform(canvasWidth, canvasHeight, speedMult);
         }
@@ -283,6 +289,101 @@ SB.Spawner.prototype._spawnGravityWell = function(cw, ch) {
         speed: 0,
         direction: 0,
         maxLifetime: SB.randRange(4, 7)
+    });
+};
+
+SB.Spawner.prototype._spawnWave = function(cw, ch, speedMult) {
+    // Three spikes in a diagonal wave pattern, staggered vertically
+    var fromLeft = Math.random() < 0.5;
+    var baseY = SB.randRange(ch * 0.2, ch * 0.5);
+    var size = SB.randRange(20, 26) * (this.dailySizeMult || 1);
+    var speed = SB.randRange(1.2, 2.2) * speedMult;
+    var spacing = SB.randRange(35, 55);
+
+    for (var i = 0; i < 3; i++) {
+        this.obstaclePool.acquire({
+            type: SB.OBSTACLE_TYPES.SPIKE,
+            x: fromLeft ? -(size + i * spacing * 0.5) : cw + i * spacing * 0.5,
+            y: baseY + i * spacing,
+            width: size,
+            height: size,
+            speed: speed,
+            direction: fromLeft ? 1 : -1
+        });
+    }
+};
+
+SB.Spawner.prototype._spawnPincer = function(cw, ch, speedMult) {
+    // Two platforms converging from opposite sides at same height
+    var y = SB.randRange(ch * 0.2, ch * 0.7);
+    var w = SB.randRange(50, 90) * (this.dailySizeMult || 1);
+    var speed = SB.randRange(1.5, 2.5) * speedMult;
+
+    this.obstaclePool.acquire({
+        type: SB.OBSTACLE_TYPES.PLATFORM,
+        x: -w,
+        y: y,
+        width: w,
+        height: 14,
+        speed: speed,
+        direction: 1
+    });
+    this.obstaclePool.acquire({
+        type: SB.OBSTACLE_TYPES.PLATFORM,
+        x: cw,
+        y: y,
+        width: w,
+        height: 14,
+        speed: speed,
+        direction: -1
+    });
+    // Reward star in the center gap
+    this.collectiblePool.acquire({
+        x: cw / 2,
+        y: y - 25
+    });
+};
+
+SB.Spawner.prototype._spawnCorridor = function(cw, ch, speedMult) {
+    // Two vertical stacks of platforms creating a narrow corridor to fly through
+    var gapCenter = SB.randRange(ch * 0.25, ch * 0.65);
+    var gapSize = Math.max(70, 100 - this.difficulty * 30);
+    var fromLeft = Math.random() < 0.5;
+    var speed = SB.randRange(1.0, 2.0) * speedMult;
+    var w = SB.randRange(60, 90) * (this.dailySizeMult || 1);
+
+    // Top block
+    if (gapCenter - gapSize / 2 > 30) {
+        this.obstaclePool.acquire({
+            type: SB.OBSTACLE_TYPES.PLATFORM,
+            x: fromLeft ? -w : cw,
+            y: gapCenter - gapSize / 2 - 14,
+            width: w,
+            height: 14,
+            speed: speed,
+            direction: fromLeft ? 1 : -1
+        });
+    }
+    // Bottom block
+    if (gapCenter + gapSize / 2 < ch - 30) {
+        this.obstaclePool.acquire({
+            type: SB.OBSTACLE_TYPES.PLATFORM,
+            x: fromLeft ? -w : cw,
+            y: gapCenter + gapSize / 2,
+            width: w,
+            height: 14,
+            speed: speed,
+            direction: fromLeft ? 1 : -1
+        });
+    }
+    // Coin reward in gap
+    this.collectiblePool.acquire({
+        type: SB.COLLECTIBLE_TYPES.COIN,
+        x: fromLeft ? -15 : cw + 15,
+        y: gapCenter,
+        vx: (fromLeft ? 1 : -1) * speed * 40,
+        sineAmp: 0,
+        sineFreq: 0
     });
 };
 

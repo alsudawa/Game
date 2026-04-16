@@ -18,6 +18,7 @@ SB.Ball = function() {
     this.trailColor = 'rgba(255,215,0,';
     this.gravityMult = 1;
     this.blinking = false;
+    this.wallHitSide = 0; // -1 left, 1 right, 0 none (consumed per frame)
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -53,12 +54,15 @@ SB.Ball.prototype.update = function(dt) {
     this.x += this.vx * dt;
     this.y += this.vy * dt;
 
+    this.wallHitSide = 0;
     if (this.x - this.radius < 0) {
         this.x = this.radius;
         this.vx *= -0.5;
+        this.wallHitSide = -1;
     } else if (this.x + this.radius > SB.canvasWidth) {
         this.x = SB.canvasWidth - this.radius;
         this.vx *= -0.5;
+        this.wallHitSide = 1;
     }
 
     if (this.y - this.radius < 0) {

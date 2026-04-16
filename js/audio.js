@@ -233,6 +233,21 @@ SB.Audio.prototype.playZoneWarning = function(level) {
     }
 };
 
+SB.Audio.prototype.playWallHit = function() {
+    if (!this.initialized) return;
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.value = 180;
+    var now = this.ctx.currentTime;
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.05);
+};
+
 SB.Audio.prototype.playNearMiss = function() {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;
@@ -355,6 +370,26 @@ SB.Audio.prototype.updateBGMIntensity = function(difficulty) {
     // Speed up LFO pulsing with difficulty (0.12 → 0.5 Hz)
     var targetFreq = SB.lerp(0.12, 0.5, difficulty);
     this._bgmLfo.frequency.value = targetFreq;
+
+    // Chord progression based on difficulty zone
+    // CALM: C major (C3, G3, C4)
+    // RISING: A minor (A2, E3, A3)
+    // INTENSE: D minor (D3, A3, D4)
+    // EXTREME: B diminished (B2, F3, B3)
+    if (this._bgmOscs && this._bgmOscs.length === 3) {
+        var now = this.ctx.currentTime;
+        var chords = [
+            [130.81, 196.00, 261.63],  // C3, G3, C4
+            [110.00, 164.81, 220.00],  // A2, E3, A3
+            [146.83, 220.00, 293.66],  // D3, A3, D4
+            [123.47, 174.61, 246.94]   // B2, F3, B3
+        ];
+        var ci = difficulty < 0.3 ? 0 : (difficulty < 0.5 ? 1 : (difficulty < 0.8 ? 2 : 3));
+        var chord = chords[ci];
+        for (var i = 0; i < 3; i++) {
+            this._bgmOscs[i].frequency.linearRampToValueAtTime(chord[i], now + 0.5);
+        }
+    }
 };
 
 SB.Audio.prototype.stopBGM = function() {
