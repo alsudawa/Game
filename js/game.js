@@ -234,6 +234,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             friction: 0.95
         });
         SB.audio.playWallHit();
+        this.achievements.onWallBounce();
     }
 
     this.powerupEffects.update(dt);
@@ -413,6 +414,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
             pu.active = false;
             this.powerupEffects.activate(pu.type);
             this.achievements.onPowerupCollect();
+            if (pu.type === SB.POWERUP_TYPES.SCORE_MULT) {
+                this.achievements.onScoreMultUse();
+            }
             SB.audio.playMilestone();
         }
     }
@@ -570,6 +574,7 @@ SB.Game.prototype._updateZone = function() {
         this.screenFlash = 0.12;
         // Zone transition sound
         if (this.currentZone === SB.ZONES.EXTREME) {
+            this.achievements.onReachExtreme();
             SB.audio.playZoneWarning(2);
         } else if (this.currentZone === SB.ZONES.INTENSE) {
             SB.audio.playZoneWarning(1);
@@ -683,7 +688,16 @@ SB.Game.prototype._transitionTo = function(newState) {
             this.progression.xp += dailyBonusXP;
             this.progression._save();
         }
-        if (this.xpResult && this.xpResult.leveledUp) SB.audio.playLevelUp();
+        if (this.xpResult && this.xpResult.leveledUp) {
+            SB.audio.playLevelUp();
+            // Check if new level unlocks a skin
+            for (var si = 0; si < SB.SKINS.length; si++) {
+                if (SB.SKINS[si].unlockLevel === this.xpResult.newLevel) {
+                    this.xpResult.unlockedSkin = SB.SKINS[si];
+                    break;
+                }
+            }
+        }
         var streak = SB.Storage.updateStreak();
         var recentRuns = SB.Storage.addRecentRun(this.score);
         SB.Storage.updateLifetimeStats(this.score, this.runCoins);
@@ -697,7 +711,8 @@ SB.Game.prototype._transitionTo = function(newState) {
             time: this.runSurviveTime,
             stars: this.runStars,
             maxCombo: this.runMaxCombo,
-            coins: this.runCoins
+            coins: this.runCoins,
+            zone: this.currentZone.name
         }, streak, recentRuns);
         SB.audio.stopBGM();
         SB.audio.playGameOver();

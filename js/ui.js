@@ -468,11 +468,13 @@ SB.UI.prototype.drawTutorial = function(ctx, cw, ch, tutorialStep) {
         // Powerup colors
         ctx.font = smallFont + 'px ' + this.font;
         ctx.fillStyle = '#5DADE2';
-        ctx.fillText('Shield - absorb one hit', cw / 2, ch * 0.56);
+        ctx.fillText('Shield - absorb one hit', cw / 2, ch * 0.54);
         ctx.fillStyle = '#AF7AC5';
-        ctx.fillText('Magnet - attract stars', cw / 2, ch * 0.62);
+        ctx.fillText('Magnet - attract stars', cw / 2, ch * 0.59);
         ctx.fillStyle = '#58D68D';
-        ctx.fillText('Slow - slow obstacles', cw / 2, ch * 0.68);
+        ctx.fillText('Slow - slow obstacles', cw / 2, ch * 0.64);
+        ctx.fillStyle = '#FFD54F';
+        ctx.fillText('x2 - double score', cw / 2, ch * 0.69);
     }
 
     // Step indicator
@@ -751,6 +753,15 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         if (this.runStats.maxCombo >= 2) statsText += '  |  ' + this.runStats.maxCombo + 'x combo';
         ctx.fillText(statsText, cw / 2, y);
         y += gap;
+
+        // Zone reached
+        if (this.runStats.zone && this.runStats.zone !== 'CALM') {
+            var zoneColors = { RISING: '#F39C12', INTENSE: '#E74C3C', EXTREME: '#9B59B6' };
+            ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+            ctx.fillStyle = zoneColors[this.runStats.zone] || 'rgba(255,255,255,0.4)';
+            ctx.fillText('Reached ' + this.runStats.zone + ' zone', cw / 2, y);
+            y += gap;
+        }
     }
 
     // Rank (inline, small)
@@ -828,6 +839,18 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
             ctx.fillText('LEVEL UP!', cw / 2, y);
             ctx.restore();
             y += gap + 4;
+
+            // Skin unlock notification
+            if (this.xpResult.unlockedSkin) {
+                ctx.save();
+                ctx.shadowColor = this.xpResult.unlockedSkin.glow;
+                ctx.shadowBlur = 10;
+                ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
+                ctx.fillStyle = this.xpResult.unlockedSkin.glow;
+                ctx.fillText('New skin: ' + this.xpResult.unlockedSkin.name + '!', cw / 2, y);
+                ctx.restore();
+                y += gap;
+            }
         }
 
         if (this.dailyJustCompleted) {

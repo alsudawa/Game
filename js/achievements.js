@@ -21,7 +21,10 @@ SB.ACHIEVEMENTS = [
     { id: 'near_miss_pro', name: 'Daredevil',         desc: 'Get 10 near-misses total',   icon: '😎', check: function(s) { return s.totalNearMisses >= 10; } },
     { id: 'coin_hoard',    name: 'Coin Hoarder',      desc: 'Earn 100 coins total',       icon: '💰', check: function(s) { return s.totalCoinsEarned >= 100; } },
     { id: 'marathon',      name: 'Marathon',           desc: 'Survive 90 seconds',         icon: '🏃', check: function(s) { return s.runTime >= 90; } },
-    { id: 'perfectionist', name: 'Perfectionist',      desc: 'Score 300 in one run',       icon: '💎', check: function(s) { return s.bestScore >= 300; } }
+    { id: 'perfectionist', name: 'Perfectionist',      desc: 'Score 300 in one run',       icon: '💎', check: function(s) { return s.bestScore >= 300; } },
+    { id: 'extreme_zone',  name: 'Into the Void',      desc: 'Reach EXTREME zone',         icon: '🌀', check: function(s) { return s.reachedExtreme >= 1; } },
+    { id: 'wall_rider',    name: 'Wall Rider',         desc: 'Bounce off walls 50 times',  icon: '🧱', check: function(s) { return s.totalWallBounces >= 50; } },
+    { id: 'double_trouble', name: 'Double Trouble',    desc: 'Use a score multiplier',     icon: '✖️', check: function(s) { return s.scoreMultUsed >= 1; } }
 ];
 
 SB.AchievementManager = function() {
@@ -38,7 +41,10 @@ SB.AchievementManager = function() {
         totalGames: 0,
         totalBounces: 0,
         totalNearMisses: 0,
-        totalCoinsEarned: 0
+        totalCoinsEarned: 0,
+        reachedExtreme: 0,
+        totalWallBounces: 0,
+        scoreMultUsed: 0
     };
     this.pendingNotifications = [];
     this._load();
@@ -122,6 +128,24 @@ SB.AchievementManager.prototype.onCoinEarn = function(amount) {
     this.stats.totalCoinsEarned += (amount || 1);
 };
 
+SB.AchievementManager.prototype.onReachExtreme = function() {
+    if (!this.stats.reachedExtreme) {
+        this.stats.reachedExtreme = 1;
+        this._save();
+    }
+};
+
+SB.AchievementManager.prototype.onWallBounce = function() {
+    this.stats.totalWallBounces++;
+};
+
+SB.AchievementManager.prototype.onScoreMultUse = function() {
+    if (!this.stats.scoreMultUsed) {
+        this.stats.scoreMultUsed = 1;
+        this._save();
+    }
+};
+
 SB.AchievementManager.prototype.updateRunTime = function(dt) {
     this.stats.runTime += dt;
 };
@@ -169,6 +193,9 @@ SB.AchievementManager.prototype.getProgress = function(ach) {
         case 'coin_hoard': return { current: Math.min(s.totalCoinsEarned, 100), target: 100 };
         case 'marathon': return { current: Math.floor(Math.min(s.runTime, 90)), target: 90 };
         case 'perfectionist': return { current: Math.min(s.bestScore, 300), target: 300 };
+        case 'extreme_zone': return { current: Math.min(s.reachedExtreme || 0, 1), target: 1 };
+        case 'wall_rider': return { current: Math.min(s.totalWallBounces || 0, 50), target: 50 };
+        case 'double_trouble': return { current: Math.min(s.scoreMultUsed || 0, 1), target: 1 };
         default: return null;
     }
 };
