@@ -575,12 +575,14 @@ SB.Game.prototype._transitionTo = function(newState) {
             this.progression._save();
         }
         if (this.xpResult.leveledUp) SB.audio.playLevelUp();
+        var streak = SB.Storage.updateStreak();
+        var recentRuns = SB.Storage.addRecentRun(this.score);
         this.ui.resetGameOver(this.score, this.xpResult, this.progression, dailyJustCompleted, {
             time: this.runSurviveTime,
             stars: this.runStars,
             maxCombo: this.runMaxCombo,
             coins: this.runCoins
-        });
+        }, streak, recentRuns);
         SB.audio.stopBGM();
         SB.audio.playGameOver();
     } else if (newState === SB.STATES.START) {

@@ -77,5 +77,48 @@ SB.Storage = {
             if (s >= board[i].score) return i + 1;
         }
         return board.length + 1;
+    },
+
+    getStreak: function() {
+        try {
+            var data = localStorage.getItem('skyBounce_streak');
+            return data ? JSON.parse(data) : { current: 0, best: 0, lastDay: '' };
+        } catch (e) { return { current: 0, best: 0, lastDay: '' }; }
+    },
+
+    updateStreak: function() {
+        var streak = this.getStreak();
+        var today = new Date().toISOString().slice(0, 10);
+        if (streak.lastDay === today) return streak; // Already played today
+
+        var yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+        if (streak.lastDay === yesterday) {
+            streak.current++;
+        } else {
+            streak.current = 1;
+        }
+        if (streak.current > streak.best) streak.best = streak.current;
+        streak.lastDay = today;
+        try {
+            localStorage.setItem('skyBounce_streak', JSON.stringify(streak));
+        } catch (e) {}
+        return streak;
+    },
+
+    getRecentRuns: function() {
+        try {
+            var data = localStorage.getItem('skyBounce_recentRuns');
+            return data ? JSON.parse(data) : [];
+        } catch (e) { return []; }
+    },
+
+    addRecentRun: function(score) {
+        var runs = this.getRecentRuns();
+        runs.push(Math.floor(score));
+        if (runs.length > 5) runs.shift();
+        try {
+            localStorage.setItem('skyBounce_recentRuns', JSON.stringify(runs));
+        } catch (e) {}
+        return runs;
     }
 };

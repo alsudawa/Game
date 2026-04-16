@@ -595,7 +595,7 @@ SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
     }
 };
 
-SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dailyJustCompleted, runStats) {
+SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dailyJustCompleted, runStats, streak, recentRuns) {
     this.gameOverAlpha = 0;
     this.scoreCountUp = 0;
     this._finalScore = finalScore;
@@ -605,6 +605,8 @@ SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dail
     this.dailyJustCompleted = dailyJustCompleted || false;
     this.rank = SB.Storage.getRank(finalScore);
     this.runStats = runStats || { time: 0, stars: 0, maxCombo: 0 };
+    this.streak = streak || { current: 0, best: 0 };
+    this.recentRuns = recentRuns || [];
 };
 
 SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh) {
@@ -669,9 +671,48 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillText('#' + this.rank + ' on leaderboard', cw / 2, ch * 0.41);
     }
 
+    // Streak display
+    if (this.streak && this.streak.current >= 2) {
+        ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,150,50,' + (alpha * 0.8) + ')';
+        var streakText = 'Day ' + this.streak.current + ' streak!';
+        if (this.streak.current >= this.streak.best && this.streak.current >= 3) {
+            streakText += ' (Best!)';
+        }
+        ctx.fillText(streakText, cw / 2, ch * 0.435);
+    }
+
+    // Recent runs mini chart
+    if (this.recentRuns && this.recentRuns.length >= 2) {
+        var chartY = ch * 0.465;
+        var chartW = Math.min(cw * 0.35, 130);
+        var chartH = 22;
+        var chartX = cw / 2 - chartW / 2;
+        var maxRun = 1;
+        for (var ri = 0; ri < this.recentRuns.length; ri++) {
+            if (this.recentRuns[ri] > maxRun) maxRun = this.recentRuns[ri];
+        }
+        var barGap = 3;
+        var barW = (chartW - (this.recentRuns.length - 1) * barGap) / this.recentRuns.length;
+
+        ctx.font = Math.min(cw * 0.02, 8) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.3) + ')';
+        ctx.fillText('Recent runs', cw / 2, chartY - 6);
+
+        for (var rj = 0; rj < this.recentRuns.length; rj++) {
+            var bx = chartX + rj * (barW + barGap);
+            var bh = Math.max(2, (this.recentRuns[rj] / maxRun) * chartH);
+            var by = chartY + chartH - bh;
+            var isLast = (rj === this.recentRuns.length - 1);
+            ctx.fillStyle = isLast ? 'rgba(255,215,0,' + (alpha * 0.7) + ')' : 'rgba(255,255,255,' + (alpha * 0.25) + ')';
+            this._roundRect(ctx, bx, by, barW, bh, 2);
+            ctx.fill();
+        }
+    }
+
     // XP earned + level
     if (this.xpResult && this.progressionRef) {
-        var xpY = ch * 0.46;
+        var xpY = ch * 0.50;
         var xpText = '+' + this.xpResult.xpEarned + ' XP';
         if (this.dailyJustCompleted) xpText += '  +25 Daily';
         ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
@@ -717,7 +758,7 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         var btnW = Math.min(cw * 0.45, 180);
         var btnH = 40;
         var btnX = cw / 2 - btnW / 2;
-        var btnY = ch * 0.58;
+        var btnY = ch * 0.64;
 
         ctx.fillStyle = 'rgba(52, 152, 219, ' + alpha * 0.9 + ')';
         this._roundRect(ctx, btnX, btnY, btnW, btnH, 10);
@@ -730,7 +771,7 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         SB._shareBtn = { x: btnX, y: btnY, w: btnW, h: btnH, score: displayScore };
 
         // Play Again button
-        var playBtnY = ch * 0.66;
+        var playBtnY = ch * 0.72;
         ctx.fillStyle = 'rgba(46, 204, 113, ' + alpha * 0.85 + ')';
         this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
         ctx.fill();
