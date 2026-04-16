@@ -414,6 +414,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                     this.nearMissStreak = 1;
                 }
                 this.nearMissStreakTimer = 3.0;
+                this.ui.nearMissStreak = this.nearMissStreak;
                 var nmBonus = 2 * this.nearMissStreak;
                 this.score += nmBonus;
                 if (this.nearMissStreak >= 2) {
@@ -495,6 +496,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             var isCoin = col.type === SB.COLLECTIBLE_TYPES.COIN;
             this.particles.emit(col.x, col.y, isCoin ? SB.FX.coinCollect : SB.FX.starCollect);
             this.ui.addPickupRing(col.x, col.y, isCoin ? '255,180,0' : '255,215,0');
+            this.ball.bounceSquash = 0.4;
             col.active = false;
             this.comboTimer = 2.0;
             this.comboCount++;

@@ -159,9 +159,10 @@ SB.Collectible.prototype._drawCoin = function(ctx) {
     var scaleX = 0.4 + Math.abs(spin) * 0.6;
 
     var edgeWarn = this._edgeProximity();
+    var magnetGlow = this._magnetPull || 0;
     ctx.save();
-    ctx.shadowColor = 'rgba(255, 180, 0, ' + (0.5 + edgeWarn * 0.5).toFixed(2) + ')';
-    ctx.shadowBlur = 10 + edgeWarn * 12;
+    ctx.shadowColor = magnetGlow > 0 ? 'rgba(155, 89, 182, ' + (0.5 + magnetGlow * 0.5).toFixed(2) + ')' : 'rgba(255, 180, 0, ' + (0.5 + edgeWarn * 0.5).toFixed(2) + ')';
+    ctx.shadowBlur = 10 + edgeWarn * 12 + magnetGlow * 8;
     ctx.translate(this.x, this.y);
     ctx.scale(scaleX, 1);
 

@@ -31,10 +31,25 @@ SB.UI = function() {
     this.milestoneMsg = '';
     this.milestoneMsgTimer = 0;
     this.nearMissTimer = 0;
+    this.nearMissStreak = 0;
     this.scorePopups = [];
     this.pickupRings = [];
     this.tapRipples = [];
     this.displayScore = 0;
+    this._tips = [
+        'Tap left or right to steer',
+        'Double-tap for a power bounce!',
+        'Collect stars for combo bonus',
+        'Near-misses give bonus points',
+        'Shield absorbs one hit',
+        'Magnet attracts nearby stars',
+        'Slow-mo slows all obstacles',
+        'Coins give 2x coin value',
+        'Higher zones = harder + more points',
+        'Revive costs 20 coins'
+    ];
+    this._tipIndex = Math.floor(Math.random() * this._tips.length);
+    this._tipTimer = 0;
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -44,6 +59,11 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
     if (state === 'start') {
         this.idleBallPhase += 3 * dt;
         this.idleBallY = Math.sin(this.idleBallPhase) * 20;
+        this._tipTimer += dt;
+        if (this._tipTimer >= 4.0) {
+            this._tipTimer = 0;
+            this._tipIndex = (this._tipIndex + 1) % this._tips.length;
+        }
     }
 
     // Combo popups (swap-and-pop to avoid splice in hot loop)
@@ -300,10 +320,16 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.fillStyle = 'rgba(255, 255, 255, ' + blinkAlpha + ')';
     ctx.fillText('TAP TO START', cw / 2, ch * 0.65);
 
+    // Rotating tips
+    var tipAlpha = this._tipTimer < 0.3 ? this._tipTimer / 0.3 : (this._tipTimer > 3.5 ? (4.0 - this._tipTimer) / 0.5 : 1);
+    ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,' + (tipAlpha * 0.4).toFixed(2) + ')';
+    ctx.fillText(this._tips[this._tipIndex], cw / 2, ch * 0.70);
+
     if (highScore > 0) {
         ctx.font = Math.min(cw * 0.045, 18) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
-        ctx.fillText('BEST: ' + SB.formatNum(highScore), cw / 2, ch * 0.72);
+        ctx.fillText('BEST: ' + SB.formatNum(highScore), cw / 2, ch * 0.74);
     }
 
     // Last run summary
@@ -311,7 +337,7 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     if (lastRun) {
         ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        ctx.fillText('Last: ' + lastRun.score + ' pts  |  ' + lastRun.stars + ' stars  |  ' + lastRun.time + 's', cw / 2, ch * 0.77);
+        ctx.fillText('Last: ' + lastRun.score + ' pts  |  ' + lastRun.stars + ' stars  |  ' + lastRun.time + 's', cw / 2, ch * 0.79);
     }
 
     // Lifetime stats
@@ -322,7 +348,7 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         ctx.fillStyle = 'rgba(255,255,255,0.2)';
         var ltText = lifetime.totalGames + ' games  |  ' + lifetime.totalScore + ' total pts';
         if (streak.best >= 2) ltText += '  |  ' + streak.best + ' day best streak';
-        ctx.fillText(ltText, cw / 2, ch * 0.82);
+        ctx.fillText(ltText, cw / 2, ch * 0.84);
     }
 
     // Mute button (top-right corner)
@@ -744,7 +770,7 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.restore();
     SB._pauseBtn = { x: 0, y: 0, w: 56, h: 56 };
 
-    // Near-miss feedback
+    // Near-miss feedback (shows streak if applicable)
     if (this.nearMissTimer > 0) {
         var nmAlpha = this.nearMissTimer / 0.6;
         var nmScale = 1 + (0.6 - this.nearMissTimer) * 0.5;
@@ -752,11 +778,14 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.globalAlpha = nmAlpha;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = 'bold ' + Math.floor(Math.min(cw * 0.04, 16) * nmScale) + 'px ' + this.font;
-        ctx.fillStyle = '#F39C12';
-        ctx.shadowColor = '#F39C12';
+        var nmFontSize = Math.min(cw * 0.04, 16);
+        if (this.nearMissStreak >= 2) nmFontSize *= 1.2;
+        ctx.font = 'bold ' + Math.floor(nmFontSize * nmScale) + 'px ' + this.font;
+        ctx.fillStyle = this.nearMissStreak >= 3 ? '#E74C3C' : '#F39C12';
+        ctx.shadowColor = ctx.fillStyle;
         ctx.shadowBlur = 8;
-        ctx.fillText('CLOSE! +2', cw / 2, ch * 0.22);
+        var nmText = this.nearMissStreak >= 2 ? 'DAREDEVIL x' + this.nearMissStreak : 'CLOSE!';
+        ctx.fillText(nmText, cw / 2, ch * 0.22);
         ctx.restore();
     }
 

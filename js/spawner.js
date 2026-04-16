@@ -111,6 +111,8 @@ SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedM
             this._spawnPincer(canvasWidth, canvasHeight, speedMult);
         } else if (roll < 0.74 && this.extraDifficulty > 0.05) {
             this._spawnCorridor(canvasWidth, canvasHeight, speedMult);
+        } else if (roll < 0.80 && this.extraDifficulty > 0.2) {
+            this._spawnSpiral(canvasWidth, canvasHeight, speedMult);
         } else {
             this._spawnPlatform(canvasWidth, canvasHeight, speedMult);
         }
@@ -389,6 +391,32 @@ SB.Spawner.prototype._spawnCorridor = function(cw, ch, speedMult) {
         sineAmp: 0,
         sineFreq: 0
     });
+};
+
+SB.Spawner.prototype._spawnSpiral = function(cw, ch, speedMult) {
+    var cx = SB.randRange(cw * 0.3, cw * 0.7);
+    var cy = SB.randRange(ch * 0.25, ch * 0.55);
+    var spikeCount = 4;
+    var spiralR = SB.randRange(50, 80);
+    var size = SB.randRange(18, 24) * (this.dailySizeMult || 1);
+
+    for (var i = 0; i < spikeCount; i++) {
+        var angle = (SB.TAU / spikeCount) * i;
+        var sx = cx + Math.cos(angle) * spiralR;
+        var sy = cy + Math.sin(angle) * spiralR;
+        this.obstaclePool.acquire({
+            type: SB.OBSTACLE_TYPES.SPIKE,
+            x: sx - size / 2,
+            y: sy - size / 2,
+            width: size,
+            height: size,
+            speed: 0,
+            direction: 0,
+            maxLifetime: 4.0
+        });
+    }
+    // Reward in center
+    this.collectiblePool.acquire({ x: cx, y: cy });
 };
 
 SB.Spawner.prototype._spawnCoin = function(cw, ch, speedMult) {
