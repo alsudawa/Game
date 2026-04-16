@@ -37,6 +37,7 @@ SB.Obstacle = function() {
     this.pullStrength = 0;
     this.wellPhase = 0;
     this.spawnAge = 0;
+    this.dangerGlow = 0;
 };
 
 SB.Obstacle.prototype.init = function(config) {
@@ -129,6 +130,31 @@ SB.Obstacle.prototype.draw = function(ctx) {
     if (fadeIn < 1) {
         ctx.save();
         ctx.globalAlpha = fadeIn;
+    }
+
+    // Danger proximity glow
+    if (this.dangerGlow > 0) {
+        var dgPulse = 0.5 + Math.sin((SB.frameTime || 0) * 0.012) * 0.3;
+        var dgAlpha = this.dangerGlow * dgPulse * 0.4;
+        var dgCx, dgCy, dgR;
+        if (this.radius && (this.type === SB.OBSTACLE_TYPES.BLADE || this.type === SB.OBSTACLE_TYPES.BOOMERANG)) {
+            dgCx = this.x + this.radius;
+            dgCy = this.y + this.radius;
+            dgR = this.radius + 12;
+        } else {
+            dgCx = this.x + (this.width || 0) / 2;
+            dgCy = this.y + (this.height || 0) / 2;
+            dgR = Math.max(this.width || 0, this.height || 0) / 2 + 12;
+        }
+        ctx.save();
+        var dgGrad = ctx.createRadialGradient(dgCx, dgCy, dgR * 0.5, dgCx, dgCy, dgR);
+        dgGrad.addColorStop(0, 'rgba(255,50,50,' + dgAlpha.toFixed(3) + ')');
+        dgGrad.addColorStop(1, 'rgba(255,50,50,0)');
+        ctx.fillStyle = dgGrad;
+        ctx.beginPath();
+        ctx.arc(dgCx, dgCy, dgR, 0, SB.TAU);
+        ctx.fill();
+        ctx.restore();
     }
 
     if (this.type === SB.OBSTACLE_TYPES.PLATFORM) {

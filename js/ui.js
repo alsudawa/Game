@@ -81,6 +81,7 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
         var sp = this.scorePopups[si];
         sp.timer += dt;
         sp.y -= 50 * dt;
+        sp.x += (sp.drift || 0) * dt;
         if (sp.timer <= 0.8) this.scorePopups[spWi++] = sp;
     }
     this.scorePopups.length = spWi;
@@ -114,7 +115,8 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
 
 SB.UI.prototype.addScorePopup = function(x, y, text, color) {
     if (this.scorePopups.length < 8) {
-        this.scorePopups.push({ x: x, y: y, text: text, color: color || '#FFD700', timer: 0 });
+        var drift = (x - SB.canvasWidth / 2) / SB.canvasWidth * 40;
+        this.scorePopups.push({ x: x, y: y, text: text, color: color || '#FFD700', timer: 0, drift: drift });
     }
 };
 

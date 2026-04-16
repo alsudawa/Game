@@ -65,6 +65,7 @@ SB.Game = function(canvas) {
     this.hudHighScore = 0;
     this.nearMissStreak = 0;
     this.nearMissStreakTimer = 0;
+    this.lastBounceTime = 0;
 
     SB.REVIVE_COST = 20;
 };
@@ -97,7 +98,8 @@ SB.Game.prototype.onResize = function(cw, ch) {
 
 SB.Game.prototype.update = function(dt) {
     this.ui.update(dt, this.state, this.powerupEffects, this.comboCount, this.comboTimer);
-    this.background.update(dt, this.state === SB.STATES.PLAYING ? this.spawner.difficulty : 0);
+    var bgDiff = this.state === SB.STATES.PLAYING ? this.spawner.difficulty : (this.state === SB.STATES.GAME_OVER ? this.spawner.difficulty * 0.3 : 0);
+    this.background.update(dt, bgDiff);
 
     if (this.screenShake > 0) this.screenShake -= dt;
     if (this.screenFlash > 0) this.screenFlash -= dt;
@@ -201,11 +203,21 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
     } else if (this.input.consumeTap()) {
         this.ui.addTapRipple(this.input.tapX, this.input.tapY);
+        // Double-tap power bounce (within 180ms)
+        var now = SB.frameTime || 0;
+        var isDoubleTap = (now - this.lastBounceTime) < 180;
+        this.lastBounceTime = now;
         // Perfect bounce: ball falling fast + near bottom half of screen
         var preBounceVy = this.ball.vy;
         var isPerfect = preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.65 && this.ball.y > SB.canvasHeight * 0.6;
         this.ball.bounce(this.input.tapX);
-        this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
+        if (isDoubleTap) {
+            this.ball.vy *= 1.25;
+            this.screenFlash = 0.04;
+            this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.powerBounce);
+        } else {
+            this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
+        }
         // Dust puff when bouncing while falling (heavier at higher speed)
         if (preBounceVy > 100) {
             this.particles.emit(this.ball.x - this.ball.radius, this.ball.y + this.ball.radius, SB.FX.bounceDust);
@@ -217,6 +229,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.ui.addScorePopup(this.ball.x, this.ball.y - 25, 'PERFECT +3', '#00FF88');
             SB.audio.playPerfectBounce();
             if (navigator.vibrate) navigator.vibrate(12);
+        } else if (isDoubleTap) {
+            this.score += 2;
+            this.ui.addScorePopup(this.ball.x, this.ball.y - 25, 'POWER +2', '#5DADE2');
+            SB.audio.playPerfectBounce();
+            if (navigator.vibrate) navigator.vibrate(15);
         } else {
             SB.audio.playBounce();
         }
@@ -302,6 +319,23 @@ SB.Game.prototype._updatePlaying = function(dt) {
         if (obs.isOffScreen(cw, ch)) {
             obs.active = false;
             continue;
+        }
+
+        // Danger proximity glow (within 60px)
+        if (obs.type !== SB.OBSTACLE_TYPES.GRAVITY_WELL && obs.type !== SB.OBSTACLE_TYPES.LASER) {
+            var dpCx, dpCy;
+            if (obs.radius) {
+                dpCx = obs.x + obs.radius;
+                dpCy = obs.y + obs.radius;
+            } else {
+                dpCx = obs.x + (obs.width || 0) / 2;
+                dpCy = obs.y + (obs.height || 0) / 2;
+            }
+            var dpDx = this.ball.x - dpCx;
+            var dpDy = this.ball.y - dpCy;
+            var dpDist = Math.sqrt(dpDx * dpDx + dpDy * dpDy);
+            var dangerThreshold = 60;
+            obs.dangerGlow = dpDist < dangerThreshold ? 1 - dpDist / dangerThreshold : 0;
         }
 
         // Gravity well: apply pull force, no collision
@@ -723,6 +757,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.deathPending = null;
         this.nearMissStreak = 0;
         this.nearMissStreakTimer = 0;
+        this.lastBounceTime = 0;
         this.currentZone = SB.ZONES.CALM;
         this.transitionAlpha = 1;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
@@ -1095,6 +1130,29 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             ctx.beginPath();
             ctx.arc(mx, my, 1.5, 0, SB.TAU);
             ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    // Powerup timer arcs around ball
+    var pe = this.powerupEffects;
+    var arcItems = [];
+    if (pe.shield) arcItems.push({ frac: pe.shieldTimer / pe.shieldDuration, color: '52,152,219' });
+    if (pe.magnet) arcItems.push({ frac: pe.magnetTimer / pe.magnetDuration, color: '155,89,182' });
+    if (pe.slow) arcItems.push({ frac: pe.slowTimer / pe.slowDuration, color: '46,204,113' });
+    if (pe.scoreMult) arcItems.push({ frac: pe.scoreMultTimer / pe.scoreMultDuration, color: '255,193,7' });
+    if (arcItems.length > 0) {
+        var arcR = this.ball.radius + 16;
+        var arcSeg = SB.TAU / arcItems.length;
+        ctx.save();
+        for (var ai = 0; ai < arcItems.length; ai++) {
+            var arcStart = -Math.PI / 2 + ai * arcSeg;
+            var arcEnd = arcStart + arcSeg * arcItems[ai].frac;
+            ctx.beginPath();
+            ctx.arc(this.ball.x, this.ball.y, arcR + ai * 3, arcStart, arcEnd);
+            ctx.strokeStyle = 'rgba(' + arcItems[ai].color + ',0.35)';
+            ctx.lineWidth = 2;
+            ctx.stroke();
         }
         ctx.restore();
     }

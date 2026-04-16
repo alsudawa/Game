@@ -262,6 +262,21 @@ SB.FX = {
         gravity: 100,
         friction: 0.97
     },
+    powerBounce: {
+        count: 8,
+        spread: 5,
+        speedMin: 50,
+        speedMax: 130,
+        lifeMin: 0.2,
+        lifeMax: 0.4,
+        sizeMin: 1.5,
+        sizeMax: 3,
+        color: '93,173,226',
+        angle: -Math.PI / 2,
+        angleSpread: Math.PI / 2.5,
+        gravity: -40,
+        friction: 0.95
+    },
     milestoneFireworkDown: {
         count: 10,
         spread: 4,
