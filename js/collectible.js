@@ -74,6 +74,18 @@ SB.Collectible.prototype.update = function(dt) {
     }
 };
 
+SB.Collectible.prototype._edgeProximity = function() {
+    // Returns 0-1 based on how close to screen edge (1 = about to despawn)
+    var margin = 80;
+    var cw = SB.canvasWidth;
+    var ch = SB.canvasHeight;
+    var dx = Math.min(this.x, cw - this.x);
+    var dy = Math.min(this.y, ch - this.y);
+    var closest = Math.min(dx, dy);
+    if (closest > margin) return 0;
+    return 1 - closest / margin;
+};
+
 SB.Collectible.prototype.draw = function(ctx) {
     if (!this.active) return;
 
@@ -85,9 +97,13 @@ SB.Collectible.prototype.draw = function(ctx) {
     var pulse = 1 + Math.sin(this.pulsePhase) * 0.15;
     var r = this.radius * pulse;
 
+    // Edge proximity warning glow
+    var edgeWarn = this._edgeProximity();
+    var extraGlow = edgeWarn > 0 ? edgeWarn * 15 : 0;
+
     ctx.save();
-    ctx.shadowColor = 'rgba(255, 215, 0, 0.6)';
-    ctx.shadowBlur = 15;
+    ctx.shadowColor = 'rgba(255, 215, 0, ' + (0.6 + edgeWarn * 0.4).toFixed(2) + ')';
+    ctx.shadowBlur = 15 + extraGlow;
 
     ctx.translate(this.x, this.y);
     ctx.rotate(this.rotation);
@@ -136,9 +152,10 @@ SB.Collectible.prototype._drawCoin = function(ctx) {
     var spin = Math.cos(this.lifetime * 3);
     var scaleX = 0.4 + Math.abs(spin) * 0.6;
 
+    var edgeWarn = this._edgeProximity();
     ctx.save();
-    ctx.shadowColor = 'rgba(255, 180, 0, 0.5)';
-    ctx.shadowBlur = 10;
+    ctx.shadowColor = 'rgba(255, 180, 0, ' + (0.5 + edgeWarn * 0.5).toFixed(2) + ')';
+    ctx.shadowBlur = 10 + edgeWarn * 12;
     ctx.translate(this.x, this.y);
     ctx.scale(scaleX, 1);
 

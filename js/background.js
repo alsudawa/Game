@@ -203,4 +203,25 @@ SB.Background.prototype.draw = function(ctx, cw, ch) {
         ctx.stroke();
         ctx.restore();
     }
+
+    // Aurora borealis effect in EXTREME zone (d > 0.8)
+    if (d > 0.8) {
+        var auroraAlpha = (d - 0.8) / 0.2 * 0.08;
+        var ft = (SB.frameTime || 0) * 0.001;
+        ctx.save();
+        for (var ai = 0; ai < 3; ai++) {
+            var aPhase = ft * 0.3 + ai * 2.1;
+            var ax = cw * (0.2 + ai * 0.3) + Math.sin(aPhase) * cw * 0.15;
+            var aH = ch * 0.3 + Math.sin(aPhase * 0.7) * ch * 0.1;
+            var aW = cw * 0.25 + Math.sin(aPhase * 0.5 + 1) * cw * 0.08;
+            var aColor = ai === 0 ? '100,200,255' : (ai === 1 ? '180,100,255' : '100,255,180');
+            var aGrad = ctx.createLinearGradient(ax, 0, ax, aH);
+            aGrad.addColorStop(0, 'rgba(' + aColor + ',' + auroraAlpha.toFixed(3) + ')');
+            aGrad.addColorStop(0.5, 'rgba(' + aColor + ',' + (auroraAlpha * 0.5).toFixed(3) + ')');
+            aGrad.addColorStop(1, 'rgba(' + aColor + ',0)');
+            ctx.fillStyle = aGrad;
+            ctx.fillRect(ax - aW / 2, 0, aW, aH);
+        }
+        ctx.restore();
+    }
 };

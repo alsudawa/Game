@@ -581,12 +581,16 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     for (var si = 0; si < this.scorePopups.length; si++) {
         var sp = this.scorePopups[si];
         var spAlpha = 1 - sp.timer / 0.8;
+        // Scale: burst up then settle (1.0 → 1.4 → 1.0)
+        var spScale = sp.timer < 0.1 ? 1 + (sp.timer / 0.1) * 0.4 : 1.4 - (sp.timer - 0.1) / 0.7 * 0.4;
         ctx.save();
         ctx.globalAlpha = spAlpha;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
+        ctx.font = 'bold ' + Math.floor(Math.min(cw * 0.035, 14) * spScale) + 'px ' + this.font;
         ctx.fillStyle = sp.color;
+        ctx.shadowColor = sp.color;
+        ctx.shadowBlur = 4;
         ctx.fillText(sp.text, sp.x, sp.y);
         ctx.restore();
     }

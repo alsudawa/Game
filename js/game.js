@@ -836,6 +836,15 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 };
 
 SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
+    // Subtle camera parallax: shift world objects opposite to ball's offset from center
+    var pxOff = 0, pyOff = 0;
+    if (this.state === SB.STATES.PLAYING) {
+        pxOff = (this.ball.x - cw / 2) / cw * -3;
+        pyOff = (this.ball.y - ch / 2) / ch * -2;
+    }
+
+    ctx.save();
+    ctx.translate(pxOff, pyOff);
     var obstacles = this.obstaclePool.getActive();
     for (var i = 0; i < obstacles.length; i++) {
         obstacles[i].draw(ctx);
@@ -850,6 +859,7 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
     for (var k = 0; k < powerups.length; k++) {
         powerups[k].draw(ctx);
     }
+    ctx.restore();
 
     // Speed lines when ball falls fast
     if (this.state === SB.STATES.PLAYING && this.ball.vy > SB.Physics.MAX_FALL_SPEED * 0.5) {
