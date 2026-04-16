@@ -58,6 +58,7 @@ SB.Game = function(canvas) {
     this.reviveCountdown = 0;
     this.invincibleTimer = 0;
     this.currentZone = SB.ZONES.CALM;
+    this.trailBlendTimer = 0;
     this.runCoins = 0;
     this.deathSlowMo = 0;
     this.deathPending = null; // stores death context during slow-mo
@@ -741,15 +742,15 @@ SB.Game.prototype._updateZone = function() {
         this.ui.zoneMsg = this.currentZone.name;
         this.ui.zoneMsgTimer = 2.0;
         this.screenFlash = 0.12;
-        // Zone-based trail color tinting
-        var zoneTrails = {
+        // Zone-based trail color tinting (smooth blend via timer)
+        this.trailBlendTimer = 1.0;
+        this._targetTrailColor = ({
             CALM: null,
             RISING: 'rgba(243,156,18,',
             INTENSE: 'rgba(231,76,60,',
             EXTREME: 'rgba(155,89,182,'
-        };
-        var zt = zoneTrails[this.currentZone.name];
-        this.ball.trailColor = zt || this.skinManager.getCurrentSkin().trail;
+        })[this.currentZone.name] || this.skinManager.getCurrentSkin().trail;
+        this.ball.trailColor = this._targetTrailColor;
         // Zone transition sound
         if (this.currentZone === SB.ZONES.EXTREME) {
             this.achievements.onReachExtreme();
@@ -765,6 +766,26 @@ SB.Game.prototype._updateZone = function() {
 SB.Game.prototype._updateGameOver = function(dt) {
     this.gameOverCooldown += dt;
     this.particles.update(dt);
+
+    // Gentle particle rain during game over
+    if (Math.random() < 0.15 && !SB.reducedMotion) {
+        this.particles.emit(SB.randRange(0, SB.canvasWidth), -5, {
+            count: 1,
+            spread: 0,
+            speedMin: 20,
+            speedMax: 50,
+            lifeMin: 2.0,
+            lifeMax: 3.5,
+            sizeMin: 1,
+            sizeMax: 2,
+            color: '255,215,0',
+            angle: Math.PI / 2,
+            angleSpread: Math.PI / 8,
+            gravity: 15,
+            friction: 0.99,
+            shrink: false
+        });
+    }
 
     // Process achievement notifications (spaced out)
     if (!this.ui.achievementToast) {
@@ -919,10 +940,9 @@ SB.Game.prototype._transitionTo = function(newState) {
 SB.Game.prototype.render = function(ctx, cw, ch) {
     ctx.save();
 
-    if (this.screenShake > 0) {
+    if (this.screenShake > 0 && !SB.reducedMotion) {
         var shakeT = this.screenShake / 0.3;
-        // Decaying shake with faster oscillation at start
-        var decay = shakeT * shakeT; // quadratic decay for punchier feel
+        var decay = shakeT * shakeT;
         var intensity = this.screenShakeIntensity * decay;
         var freq = (1 - shakeT) * 30 + 10; // faster vibration as shake ages
         var shakeX = Math.sin(freq * this.screenShake) * intensity * (Math.random() * 0.4 + 0.6);

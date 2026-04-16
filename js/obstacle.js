@@ -370,11 +370,14 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         var beamH = 18;
         ctx.save();
         if (hc) {
-            ctx.fillStyle = 'rgba(255, 0, 0, 0.9)';
+            ctx.fillStyle = 'rgba(255, 0, 0, 0.95)';
             ctx.fillRect(0, this.y - beamH / 2, cw, beamH);
             ctx.strokeStyle = '#FFFFFF';
-            ctx.lineWidth = 2;
+            ctx.lineWidth = 3;
             ctx.strokeRect(0, this.y - beamH / 2, cw, beamH);
+            // HC center stripe
+            ctx.fillStyle = '#FFFF00';
+            ctx.fillRect(0, this.y - 2, cw, 4);
         } else {
             ctx.shadowColor = 'rgba(255, 0, 0, 0.8)';
             ctx.shadowBlur = 25;

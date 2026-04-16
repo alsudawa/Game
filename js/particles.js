@@ -33,6 +33,7 @@ SB.ParticleSystem.prototype._acquire = function() {
 
 SB.ParticleSystem.prototype.emit = function(x, y, config) {
     var count = config.count || 10;
+    if (SB.reducedMotion) count = Math.max(2, Math.ceil(count * 0.3));
     for (var i = 0; i < count; i++) {
         var p = this._acquire();
         p.active = true;

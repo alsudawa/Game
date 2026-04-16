@@ -77,6 +77,7 @@ window.SB = window.SB || {};
         });
 
         SB.highContrast = SB.Storage.getHighContrast();
+        SB.reducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         game = new SB.Game(canvas);
         game.init();
