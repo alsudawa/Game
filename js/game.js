@@ -1256,6 +1256,12 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
         ctx.scale(zs, zs);
         ctx.translate(-cw / 2, -ch / 2);
     }
+    if (this.comboBreakFlash > 0 && !SB.reducedMotion) {
+        var tiltAngle = (this.comboBreakFlash / 0.15) * 0.01 * Math.sin(this.comboBreakFlash * 40);
+        ctx.translate(cw / 2, ch / 2);
+        ctx.rotate(tiltAngle);
+        ctx.translate(-cw / 2, -ch / 2);
+    }
 
     this.background.draw(ctx, cw, ch, this.ball.x, this.ball.y);
 

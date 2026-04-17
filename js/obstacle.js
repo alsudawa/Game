@@ -188,16 +188,19 @@ SB.Obstacle.prototype.draw = function(ctx) {
         ctx.restore();
     }
 
-    // Drop shadow (skip for laser and gravity well)
+    // Drop shadow (skip for laser and gravity well; deeper for faster objects)
     if (this.type !== SB.OBSTACLE_TYPES.LASER && this.type !== SB.OBSTACLE_TYPES.GRAVITY_WELL) {
+        var dsSpd = Math.abs(this.speed || this.speedX || 0);
+        var dsAlpha = 0.1 + Math.min(dsSpd / 8, 0.08);
+        var dsOff = 8 + Math.min(dsSpd / 4, 4);
         ctx.save();
-        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        ctx.fillStyle = 'rgba(0,0,0,' + dsAlpha.toFixed(2) + ')';
         if (this.radius && (this.type === SB.OBSTACLE_TYPES.BLADE || this.type === SB.OBSTACLE_TYPES.BOOMERANG)) {
             ctx.beginPath();
-            ctx.ellipse(this.x + this.radius, this.y + this.radius + 8, this.radius * 0.7, this.radius * 0.25, 0, 0, SB.TAU);
+            ctx.ellipse(this.x + this.radius, this.y + this.radius + dsOff, this.radius * 0.7, this.radius * 0.25, 0, 0, SB.TAU);
             ctx.fill();
         } else {
-            ctx.fillRect(this.x + 3, this.y + this.height + 2, this.width - 6, 4);
+            ctx.fillRect(this.x + 3, this.y + this.height + 2, this.width - 6, 2 + dsOff * 0.3);
         }
         ctx.restore();
     }
@@ -306,11 +309,13 @@ SB.Obstacle.prototype._drawSpike = function(ctx) {
         ctx.strokeStyle = '#c0392b';
         ctx.lineWidth = 1.5;
         ctx.stroke();
-        // Bright tip point
+        // Bright tip point (larger/brighter at higher speed = harder difficulty)
+        var tipSpd = Math.abs(this.speed || 0);
+        var tipScale = 1 + Math.min(tipSpd / 6, 0.8);
         var tipPulse = (Math.sin(this.spawnAge * 6) + 1) / 2;
         ctx.beginPath();
-        ctx.arc(cx, this.y + 1, 2, 0, SB.TAU);
-        ctx.fillStyle = 'rgba(255,200,150,' + (0.4 + tipPulse * 0.4).toFixed(2) + ')';
+        ctx.arc(cx, this.y + 1, 2 * tipScale, 0, SB.TAU);
+        ctx.fillStyle = 'rgba(255,200,150,' + (0.4 + tipPulse * 0.4 + tipScale * 0.1).toFixed(2) + ')';
         ctx.fill();
         // Base glow
         var basePulse = (Math.sin(this.spawnAge * 3) + 1) / 2 * 0.15;

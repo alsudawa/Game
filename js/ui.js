@@ -523,6 +523,19 @@ SB.UI.prototype._drawDailyChallenge = function(ctx, cw, y, daily) {
         ctx.fillText('Goal: ' + daily.challenge.target, boxX + boxW - 10, boxY + 20);
     }
 
+    // Progress bar at bottom of box
+    if (!daily.completed && daily.challenge && daily.challenge.target > 0) {
+        var pbW = boxW - 20;
+        var pbH = 3;
+        var pbX = boxX + 10;
+        var pbY = boxY + boxH - 7;
+        var pbFrac = Math.min((daily.bestAttempt || 0) / daily.challenge.target, 1);
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(pbX, pbY, pbW, pbH);
+        ctx.fillStyle = 'rgba(255,215,0,' + (0.4 + pbFrac * 0.3).toFixed(2) + ')';
+        ctx.fillRect(pbX, pbY, pbW * pbFrac, pbH);
+    }
+
     ctx.textAlign = 'center';
 };
 

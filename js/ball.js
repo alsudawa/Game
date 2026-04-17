@@ -100,8 +100,21 @@ SB.Ball.prototype.update = function(dt) {
 
 SB.Ball.prototype.draw = function(ctx) {
     // Invincibility blink effect - skip rendering every other 100ms
-    if (this.blinking && Math.floor((SB.frameTime || 0) / 100) % 2 === 0) {
-        return;
+    if (this.blinking) {
+        if (Math.floor((SB.frameTime || 0) / 100) % 2 === 0) return;
+        if (!SB.reducedMotion) {
+            var invR = this.radius + 6;
+            var invRot = ((SB.frameTime || 0) * 0.003) % SB.TAU;
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.arc(this.x, this.y, invR, invRot, invRot + SB.TAU);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.restore();
+        }
     }
 
     // Draw trail from ring buffer (oldest to newest)
