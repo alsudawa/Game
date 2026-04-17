@@ -160,7 +160,7 @@ SB.Ball.prototype.draw = function(ctx) {
     // Gravity well pull distortion
     if (this.gravityPullStrength > 0) {
         ctx.rotate(this.gravityPullAngle);
-        var gpStretch = 1 + this.gravityPullStrength * 0.15;
+        var gpStretch = 1 + this.gravityPullStrength * 0.25;
         ctx.scale(gpStretch, 1 / gpStretch);
         ctx.rotate(-this.gravityPullAngle);
     }

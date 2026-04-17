@@ -149,9 +149,9 @@ SB.UI.prototype.addScorePopup = function(x, y, text, color) {
     }
 };
 
-SB.UI.prototype.addTapRipple = function(x, y) {
+SB.UI.prototype.addTapRipple = function(x, y, color) {
     if (this.tapRipples.length < 4) {
-        this.tapRipples.push({ x: x, y: y, timer: 0, duration: 0.4 });
+        this.tapRipples.push({ x: x, y: y, timer: 0, duration: 0.4, color: color || '255,255,255' });
     }
 };
 
@@ -791,7 +791,7 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.save();
         ctx.beginPath();
         ctx.arc(tap.x, tap.y, tRadius, 0, SB.TAU);
-        ctx.strokeStyle = 'rgba(255,255,255,' + tAlpha.toFixed(2) + ')';
+        ctx.strokeStyle = 'rgba(' + (tap.color || '255,255,255') + ',' + tAlpha.toFixed(2) + ')';
         ctx.lineWidth = 1.5 * (1 - tProgress);
         ctx.stroke();
         if (tProgress < 0.15) {
@@ -929,8 +929,12 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     var displayScore = Math.floor(score);
 
     if (this.scoreCountUp < displayScore) {
+        var prevCount = this.scoreCountUp;
         this.scoreCountUp += Math.max(1, Math.floor(displayScore / 60));
         if (this.scoreCountUp > displayScore) this.scoreCountUp = displayScore;
+        if (Math.floor(this.scoreCountUp / 5) !== Math.floor(prevCount / 5)) {
+            SB.audio.playScoreTick();
+        }
     }
 
     ctx.fillStyle = 'rgba(0, 0, 0, ' + (this.gameOverAlpha * 0.7) + ')';

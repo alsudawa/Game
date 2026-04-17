@@ -226,7 +226,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
             }
         }
     } else if (this.input.consumeTap()) {
-        this.ui.addTapRipple(this.input.tapX, this.input.tapY);
+        var tapColor = ({ CALM: '93,173,226', RISING: '243,156,18', INTENSE: '231,76,60', EXTREME: '155,89,182' })[this.currentZone.name] || '255,255,255';
+        this.ui.addTapRipple(this.input.tapX, this.input.tapY, tapColor);
         // Double-tap power bounce (within 180ms)
         var now = SB.frameTime || 0;
         var isDoubleTap = (now - this.lastBounceTime) < 180;
@@ -821,6 +822,10 @@ SB.Game.prototype._updateRevive = function(dt) {
             this.state = SB.STATES.PLAYING;
             this.invincibleTimer = 3.0;
             this.ball.blinking = true;
+            this.screenFlash = 0.15;
+            this.ui.addPickupRing(SB.canvasWidth / 2, SB.canvasHeight * 0.4, '255,215,0');
+            this.ui.addPickupRing(SB.canvasWidth / 2, SB.canvasHeight * 0.4, '255,255,255');
+            this.particles.emit(SB.canvasWidth / 2, SB.canvasHeight * 0.4, SB.FX.starCollect);
             this.ball.y = SB.canvasHeight * 0.4;
             this.ball.vy = SB.Physics.BOUNCE_IMPULSE * 0.5;
             this.ball.vx = 0;
@@ -867,6 +872,8 @@ SB.Game.prototype._updateZone = function() {
         this.ui.zoneWipeTimer = 0.5;
         this.ui.zoneWipeColor = ({ CALM: '93,173,226', RISING: '243,156,18', INTENSE: '231,76,60', EXTREME: '155,89,182' })[this.currentZone.name] || '255,255,255';
         this.screenFlash = 0.12;
+        var zoneColor = this.ui.zoneWipeColor;
+        this.particles.emit(SB.canvasWidth / 2, SB.canvasHeight * 0.5, { count: 12, spread: SB.TAU, speedMin: 80, speedMax: 200, lifeMin: 0.4, lifeMax: 0.8, sizeMin: 1.5, sizeMax: 3, color: zoneColor, gravity: 0, friction: 0.9 });
         // Zone-based trail color tinting (smooth blend via timer)
         this.trailBlendTimer = 1.0;
         this._targetTrailColor = ({
