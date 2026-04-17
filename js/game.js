@@ -738,6 +738,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                     this.ui.addScorePopup(this.ball.x, this.ball.y - 30, 'DAREDEVIL x' + this.nearMissStreak + ' +' + nmBonus, '#F39C12');
                 }
                 this.achievements.onNearMiss();
+                if (navigator.vibrate) navigator.vibrate(15);
                 SB.audio.playNearMiss();
                 this.nearMissSparkTimer = 0.5;
                 if (this.nearMissStreak >= 2) {
@@ -1381,6 +1382,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         SB._reviveBtn = null;
         SB._reviveBtnTapped = null;
         SB.audio.startBGM();
+        SB.audio.playGameStart();
     } else if (newState === SB.STATES.GAME_OVER) {
         SB._reviveBtn = null;
         SB._reviveBtnTapped = null;
@@ -2042,6 +2044,23 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.restore();
     }
 
+    // Ball ground shadow
+    if (this.state === SB.STATES.PLAYING && !SB.reducedMotion) {
+        var gsDist = ch - this.ball.y;
+        var gsA = Math.max(0, 0.08 - gsDist / ch * 0.08);
+        if (gsA > 0.005) {
+            var gsScale = 0.3 + (1 - gsDist / ch) * 0.7;
+            ctx.save();
+            ctx.fillStyle = 'rgba(0,0,0,' + gsA.toFixed(3) + ')';
+            ctx.translate(this.ball.x, ch - 5);
+            ctx.scale(gsScale, 0.15);
+            ctx.beginPath();
+            ctx.arc(0, 0, this.ball.radius + 4, 0, SB.TAU);
+            ctx.fill();
+            ctx.restore();
+        }
+    }
+
     // Falling speed wind lines around ball
     var fallFrac = Math.abs(this.ball.vy) / SB.Physics.MAX_FALL_SPEED;
     if (fallFrac > 0.5 && this.deathSlowMo <= 0 && !SB.reducedMotion) {
@@ -2116,6 +2135,13 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             ctx.lineWidth = 1;
             ctx.stroke();
         }
+        ctx.save();
+        ctx.font = 'bold 9px ' + this.ui.font;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = 'rgba(46,204,113,0.3)';
+        ctx.fillText('SLOW', this.ball.x, this.ball.y + this.ball.radius + 40);
+        ctx.restore();
     }
 
     if (this.powerupEffects.magnet && !SB.reducedMotion) {

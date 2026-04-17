@@ -783,6 +783,22 @@ SB.Audio.prototype.playZoneTransition = function(threshold) {
     }
 };
 
+SB.Audio.prototype.playGameStart = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(330, now);
+    osc.frequency.linearRampToValueAtTime(660, now + 0.12);
+    gain.gain.setValueAtTime(0.12, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.15);
+};
+
 SB.Audio.prototype.playBoomerangReturn = function() {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;

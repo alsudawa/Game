@@ -907,6 +907,20 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         }
         ctx.textAlign = 'center';
         ctx.restore();
+    } else if (score >= 100 && !SB.reducedMotion) {
+        var rdColors = ['255,220,100', '255,200,150', '200,220,255', '220,255,200', '255,180,200'];
+        ctx.save();
+        ctx.textAlign = 'left';
+        var rdW = ctx.measureText(scoreText).width;
+        var rdX = cw / 2 + ssOx - rdW / 2;
+        for (var rdi = 0; rdi < scoreText.length; rdi++) {
+            var rdC = rdColors[rdi % rdColors.length];
+            ctx.fillStyle = 'rgba(' + rdC + ',' + (0.85 * hudAlpha).toFixed(2) + ')';
+            ctx.fillText(scoreText[rdi], rdX, 20 + ssOy);
+            rdX += ctx.measureText(scoreText[rdi]).width;
+        }
+        ctx.textAlign = 'center';
+        ctx.restore();
     } else {
         ctx.fillStyle = scoreColor;
         ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
