@@ -894,6 +894,36 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.restore();
     }
 
+    // Active powerup HUD icons (top-left corner)
+    if (this.powerupEffectsRef) {
+        var puIcons = [];
+        var ppe = this.powerupEffectsRef;
+        if (ppe.shield) puIcons.push({ frac: ppe.shieldTimer / (ppe.shieldDuration || 10), c: '52,152,219', label: 'S' });
+        if (ppe.magnet) puIcons.push({ frac: ppe.magnetTimer / (ppe.magnetDuration || 8), c: '155,89,182', label: 'M' });
+        if (ppe.slow) puIcons.push({ frac: ppe.slowTimer / (ppe.slowDuration || 6), c: '46,204,113', label: 'T' });
+        for (var pi = 0; pi < puIcons.length; pi++) {
+            var px = 22 + pi * 28;
+            var py = 22;
+            var pir = 10;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(px, py, pir, 0, SB.TAU);
+            ctx.fillStyle = 'rgba(' + puIcons[pi].c + ',' + (0.2 * hudAlpha).toFixed(2) + ')';
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(px, py, pir, -Math.PI / 2, -Math.PI / 2 + SB.TAU * puIcons[pi].frac);
+            ctx.strokeStyle = 'rgba(' + puIcons[pi].c + ',' + (0.6 * hudAlpha).toFixed(2) + ')';
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+            ctx.font = 'bold 9px ' + this.font;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'rgba(255,255,255,' + (0.7 * hudAlpha).toFixed(2) + ')';
+            ctx.fillText(puIcons[pi].label, px, py);
+            ctx.restore();
+        }
+    }
+
     // Zone message popup
     if (this.zoneMsgTimer > 0) {
         var zA = Math.min(this.zoneMsgTimer, 1);

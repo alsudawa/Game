@@ -61,7 +61,10 @@ SB.Game = function(canvas) {
     this.trailBlendTimer = 0;
     this.runCoins = 0;
     this.deathSlowMo = 0;
-    this.deathPending = null; // stores death context during slow-mo
+    this.deathPending = null;
+    this.deathRipple = 0;
+    this.deathRippleX = 0;
+    this.deathRippleY = 0;
     this.hudCoins = 0; // cached for HUD (avoid localStorage reads per frame)
     this.hudHighScore = 0;
     this.nearMissStreak = 0;
@@ -208,11 +211,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this._resolveDeathPending();
             return;
         }
-        // 15% time speed during slow-mo, only update visuals
         var smDt = dt * 0.15;
         this.ball.update(smDt);
         this.particles.update(smDt);
-        this.input.consumeTap(); // discard taps during slow-mo
+        if (this.deathRipple > 0) this.deathRipple -= dt * 1.2;
+        this.input.consumeTap();
         return;
     }
 
@@ -996,7 +999,9 @@ SB.Game.prototype._handleDeath = function() {
     this.screenShakeIntensity = 14;
     this.ui.addPickupRing(this.ball.x, this.ball.y, '231,76,60');
     this.ui.addPickupRing(this.ball.x, this.ball.y, '255,100,100');
-    // Trigger slow-mo death sequence
+    this.deathRipple = 1.0;
+    this.deathRippleX = this.ball.x;
+    this.deathRippleY = this.ball.y;
     this.deathSlowMo = 0.3;
     var coins = SB.Storage.getCoins();
     this.deathPending = (!this.revived && coins >= SB.REVIVE_COST) ? 'revive' : 'gameover';
@@ -1676,6 +1681,26 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.restore();
     }
 
+    if (this.deathRipple > 0 && !SB.reducedMotion) {
+        var drFrac = 1 - this.deathRipple;
+        var drR = drFrac * Math.max(cw, ch) * 0.8;
+        var drA = this.deathRipple * 0.35;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.deathRippleX, this.deathRippleY, drR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(231,76,60,' + drA.toFixed(3) + ')';
+        ctx.lineWidth = 3 * this.deathRipple;
+        ctx.stroke();
+        if (drR > 20) {
+            ctx.beginPath();
+            ctx.arc(this.deathRippleX, this.deathRippleY, drR * 0.6, 0, SB.TAU);
+            ctx.strokeStyle = 'rgba(255,100,80,' + (drA * 0.5).toFixed(3) + ')';
+            ctx.lineWidth = 2 * this.deathRipple;
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
     if (this.deathSlowMo > 0) {
         var deathProgress = (0.3 - this.deathSlowMo) / 0.3;
         var vigAlpha = deathProgress * 0.35;
@@ -1791,6 +1816,16 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         }
         ctx.fillStyle = wfGrad;
         ctx.fillRect(wfX, this.ball.y - wfH / 2, wfW, wfH);
+        if (wfStreak >= 2) {
+            ctx.save();
+            ctx.font = 'bold 14px sans-serif';
+            ctx.textAlign = this.wallFlashSide < 0 ? 'left' : 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = 'rgba(' + wfColor + ',' + (wfFrac * 0.7).toFixed(2) + ')';
+            var wsX = this.wallFlashSide < 0 ? 6 : cw - 6;
+            ctx.fillText('x' + wfStreak, wsX, this.ball.y - 20);
+            ctx.restore();
+        }
     }
 
     if (this.powerupEffects.shield) {

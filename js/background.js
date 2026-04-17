@@ -251,6 +251,33 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.fill();
     }
 
+    // Constellation lines at extreme difficulty
+    if (d > 0.75 && !SB.reducedMotion) {
+        var clAlpha = (d - 0.75) / 0.25 * 0.06;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(200,200,255,' + clAlpha.toFixed(3) + ')';
+        ctx.lineWidth = 0.5;
+        for (var ci = 0; ci < this.stars.length; ci += 3) {
+            var s1 = this.stars[ci];
+            var s1d = s1.depth || 1;
+            var s1x = s1.x + starPx * s1d;
+            var s1y = s1.y + starPy * s1d;
+            for (var cj = ci + 3; cj < this.stars.length; cj += 3) {
+                var s2 = this.stars[cj];
+                var dx = s1.x - s2.x;
+                var dy = s1.y - s2.y;
+                if (dx * dx + dy * dy < 3600) {
+                    var s2d = s2.depth || 1;
+                    ctx.beginPath();
+                    ctx.moveTo(s1x, s1y);
+                    ctx.lineTo(s2.x + starPx * s2d, s2.y + starPy * s2d);
+                    ctx.stroke();
+                }
+            }
+        }
+        ctx.restore();
+    }
+
     var cloudDiffMult = 1 + d * 0.8;
     for (var j = 0; j < this.clouds.length; j++) {
         var cloud = this.clouds[j];
