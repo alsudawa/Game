@@ -1231,11 +1231,22 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         }
     }
 
-    // Rank (inline, small)
+    // Rank (inline, with glow for top 3)
     if (this.rank && this.rank <= 10) {
+        ctx.save();
         ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.4) + ')';
+        if (this.rank <= 3) {
+            var rkColors = ['255,215,0', '192,192,192', '205,127,50'];
+            var rkColor = rkColors[this.rank - 1];
+            var rkPulse = (Math.sin(this.blinkPhase * 2) + 1) / 2;
+            ctx.shadowColor = 'rgba(' + rkColor + ',0.6)';
+            ctx.shadowBlur = 4 + rkPulse * 6;
+            ctx.fillStyle = 'rgba(' + rkColor + ',' + (alpha * 0.8).toFixed(2) + ')';
+        } else {
+            ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.4) + ')';
+        }
         ctx.fillText('#' + this.rank + ' on leaderboard', cw / 2, y);
+        ctx.restore();
         y += gap;
     }
 
@@ -1487,11 +1498,25 @@ SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost)
     ctx.stroke();
     ctx.restore();
 
+    // Expanding pulse ring on each second tick
+    var secFrac = countdown % 1;
+    if (!SB.reducedMotion) {
+        var rpR = countR + (1 - secFrac) * 30;
+        var rpA = secFrac * 0.2;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cw / 2, countY, rpR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(231,76,60,' + rpA.toFixed(2) + ')';
+        ctx.lineWidth = 2 * secFrac;
+        ctx.stroke();
+        ctx.restore();
+    }
+
     // Number with pulse
-    var cpulse = 1 + (1 - (countdown % 1)) * 0.15;
+    var cpulse = 1 + (1 - secFrac) * 0.15;
     ctx.save();
     ctx.shadowColor = '#E74C3C';
-    ctx.shadowBlur = 5 + (1 - (countdown % 1)) * 10;
+    ctx.shadowBlur = 5 + (1 - secFrac) * 10;
     ctx.font = 'bold ' + Math.min(cw * 0.1, 40) * cpulse + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(countNum, cw / 2, countY);

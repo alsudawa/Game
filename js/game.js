@@ -1322,6 +1322,13 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 var dangerAlpha = ((this.ball.y - ch * 0.75) / (ch * 0.25)) * 0.25;
                 ctx.fillStyle = 'rgba(231, 76, 60, ' + dangerAlpha.toFixed(2) + ')';
                 ctx.fillRect(0, ch * 0.6, cw, ch * 0.4);
+                if (!SB.reducedMotion) {
+                    var dbPulse = (Math.sin((SB.frameTime || 0) * 0.015) + 1) / 2;
+                    var dbBarH = 3 + dangerAlpha * 4;
+                    var dbBarA = dangerAlpha * (0.3 + dbPulse * 0.4);
+                    ctx.fillStyle = 'rgba(231,76,60,' + dbBarA.toFixed(3) + ')';
+                    ctx.fillRect(0, ch - dbBarH, cw, dbBarH);
+                }
             }
             // Slow-motion powerup tint (subtle green overlay + radial lines)
             if (this.powerupEffects.slow) {

@@ -158,6 +158,19 @@ SB.Collectible.prototype.draw = function(ctx) {
 
     ctx.restore();
 
+    // Proximity attract ring
+    if (proxBoost0 > 0.3 && !SB.reducedMotion) {
+        var prRing = (proxBoost0 - 0.3) / 0.7;
+        var prRadius = this.radius * (1.8 + Math.sin(this.lifetime * 6) * 0.3);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.x, this.y + bobY, prRadius, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(255,215,0,' + (prRing * 0.2).toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+    }
+
     for (var j = 0; j < this.sparkles.length; j++) {
         var s = this.sparkles[j];
         var alpha = (Math.sin(s.phase) + 1) / 2 * 0.8;
