@@ -1012,9 +1012,11 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     if (this.runStats) {
         // Death cause
         if (this.runStats.deathCause) {
+            var dcIcons = { Platform: '\u25AC', Spike: '\u25B2', Blade: '\u2699', Boomerang: '\u27A0', Laser: '\u26A1', Fell: '\u2193' };
+            var dcIcon = dcIcons[this.runStats.deathCause] || '\u2620';
             ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
             ctx.fillStyle = 'rgba(231,76,60,' + (alpha * 0.5) + ')';
-            ctx.fillText('Killed by: ' + this.runStats.deathCause, cw / 2, y);
+            ctx.fillText(dcIcon + ' Killed by: ' + this.runStats.deathCause, cw / 2, y);
             y += gap;
         }
 
@@ -1341,14 +1343,27 @@ SB.UI.prototype.drawAchievementViewer = function(ctx, cw, ch, achievements) {
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.fillText(count + ' / ' + SB.ACHIEVEMENTS.length + ' unlocked', cw / 2, ch * 0.10);
 
-    // Achievement list
+    // Achievement list — sort unlocked first
     var startY = ch * 0.14;
     var rowH = Math.min(ch * 0.05, 32);
     var listW = Math.min(cw * 0.85, 300);
     var listX = cw / 2 - listW / 2;
 
-    for (var i = 0; i < SB.ACHIEVEMENTS.length; i++) {
-        var ach = SB.ACHIEVEMENTS[i];
+    if (!this._achSorted || this._achSortedStamp !== count) {
+        this._achSortedList = [];
+        for (var si = 0; si < SB.ACHIEVEMENTS.length; si++) this._achSortedList.push(SB.ACHIEVEMENTS[si]);
+        var uRef = achievements.unlocked;
+        this._achSortedList.sort(function(a, b) {
+            var ua = uRef[a.id] ? 0 : 1;
+            var ub = uRef[b.id] ? 0 : 1;
+            return ua - ub;
+        });
+        this._achSorted = true;
+        this._achSortedStamp = count;
+    }
+
+    for (var i = 0; i < this._achSortedList.length; i++) {
+        var ach = this._achSortedList[i];
         var unlocked = achievements.unlocked[ach.id];
         var rowY = startY + i * rowH;
 

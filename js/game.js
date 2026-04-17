@@ -358,10 +358,18 @@ SB.Game.prototype._updatePlaying = function(dt) {
     if (pe.slow && pe.slowTimer <= 2.0 && pe.slowTimer + dt > 2.0) {
         SB.audio.playPowerupExpiring();
     }
-    // Flash when score multiplier expires
     if (pe.scoreMult && pe.scoreMultTimer <= dt) {
         this.screenFlash = 0.06;
         this.ui.addScorePopup(SB.canvasWidth / 2, 60, 'x2 ENDED', 'rgba(255,213,79,0.6)');
+    }
+    if (pe.shield && pe.shieldTimer <= dt) {
+        this.screenFlash = 0.04;
+    }
+    if (pe.magnet && pe.magnetTimer <= dt) {
+        this.screenFlash = 0.04;
+    }
+    if (pe.slow && pe.slowTimer <= dt) {
+        this.screenFlash = 0.04;
     }
 
     // Near-miss streak timer decay

@@ -175,7 +175,11 @@ SB.Ball.prototype.draw = function(ctx) {
     gradient.addColorStop(1, this.glowColor);
     ctx.fillStyle = gradient;
     ctx.fill();
-    // High contrast: thick white outline for ball
+    if (comboBoost > 0) {
+        var cbPulse = (Math.sin((SB.frameTime || 0) * 0.008) + 1) / 2 * comboBoost * 0.3;
+        ctx.fillStyle = 'rgba(255,255,255,' + cbPulse.toFixed(3) + ')';
+        ctx.fill();
+    }
     if (SB.highContrast) {
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 3;
