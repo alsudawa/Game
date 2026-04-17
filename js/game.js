@@ -97,6 +97,9 @@ SB.Game = function(canvas) {
     this._impactWaveY = 0;
     this._impactWaveTimer = 0;
     this._impactWaveStr = 0;
+    this._deathMarkerX = 0;
+    this._deathMarkerY = 0;
+    this._deathMarkerTimer = 0;
 
     SB.REVIVE_COST = 20;
 };
@@ -147,6 +150,7 @@ SB.Game.prototype.update = function(dt) {
     if (this.collectChainTimer > 0) this.collectChainTimer -= dt;
     if (this.comboBreakFlash > 0) this.comboBreakFlash -= dt;
     if (this._impactWaveTimer > 0) this._impactWaveTimer -= dt;
+    if (this._deathMarkerTimer > 0) this._deathMarkerTimer -= dt;
     if (this.transitionAlpha > 0) this.transitionAlpha -= dt * 3;
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
@@ -712,6 +716,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 this.achievements.onNearMiss();
                 SB.audio.playNearMiss();
                 this.nearMissSparkTimer = 0.5;
+                if (this.nearMissStreak >= 2) {
+                    this.ball.trailBoost = Math.min(this.ball.trailBoost + 0.4, 1.5);
+                }
                 if (navigator.vibrate) navigator.vibrate(15);
             }
         }
@@ -971,6 +978,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 this.screenFlash = 0.1;
                 this.ui.addScorePopup(pu.x, pu.y - 20, 'x2 SCORE!', '#FFD54F');
             }
+            var puLabels = { shield: 'SHIELD!', magnet: 'MAGNET!', slow: 'SLOW-MO!', score_mult: 'x2 SCORE!' };
+            var puLabelColors = { shield: '#5DADE2', magnet: '#AF7AC5', slow: '#58D68D', score_mult: '#FFD54F' };
+            if (pu.type !== SB.POWERUP_TYPES.SCORE_MULT) {
+                this.ui.addScorePopup(pu.x, pu.y - 20, puLabels[pu.type] || 'POWERUP!', puLabelColors[pu.type] || '#FFFFFF');
+            }
             // Type-specific pickup sounds
             if (pu.type === SB.POWERUP_TYPES.SHIELD) {
                 SB.audio.playPowerupShield();
@@ -1110,6 +1122,9 @@ SB.Game.prototype._handleDeath = function() {
     this.deathRippleX = this.ball.x;
     this.deathRippleY = this.ball.y;
     this.deathSlowMo = 0.3;
+    this._deathMarkerX = this.ball.x;
+    this._deathMarkerY = this.ball.y;
+    this._deathMarkerTimer = 2.0;
     var coins = SB.Storage.getCoins();
     this.deathPending = (!this.revived && coins >= SB.REVIVE_COST) ? 'revive' : 'gameover';
 };
@@ -1850,6 +1865,20 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             ctx.lineWidth = 2 * this.deathRipple;
             ctx.stroke();
         }
+        ctx.restore();
+    }
+
+    if (this._deathMarkerTimer > 0 && !SB.reducedMotion) {
+        var dmA = Math.min(this._deathMarkerTimer, 1) * 0.3;
+        var dmS = 6 + (2 - Math.min(this._deathMarkerTimer, 2)) * 3;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(231,76,60,' + dmA.toFixed(2) + ')';
+        ctx.lineWidth = 2;
+        ctx.translate(this._deathMarkerX, this._deathMarkerY);
+        ctx.beginPath();
+        ctx.moveTo(-dmS, -dmS); ctx.lineTo(dmS, dmS);
+        ctx.moveTo(dmS, -dmS); ctx.lineTo(-dmS, dmS);
+        ctx.stroke();
         ctx.restore();
     }
 

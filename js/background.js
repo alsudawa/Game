@@ -272,6 +272,20 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.fill();
     }
 
+    if (!SB.reducedMotion) {
+        for (var gi = 0; gi < this.stars.length; gi += 10) {
+            var gs = this.stars[gi];
+            var gsd = gs.depth || 1;
+            var ga = (Math.sin(gs.twinklePhase) + 1) / 2 * 0.03;
+            if (ga > 0.01) {
+                ctx.beginPath();
+                ctx.arc(gs.x + starPx * gsd, gs.y + starPy * gsd, gs.size * 5, 0, SB.TAU);
+                ctx.fillStyle = 'rgba(200,210,255,' + ga.toFixed(3) + ')';
+                ctx.fill();
+            }
+        }
+    }
+
     // Constellation lines at extreme difficulty
     if (d > 0.75 && !SB.reducedMotion) {
         var clAlpha = (d - 0.75) / 0.25 * 0.06;
