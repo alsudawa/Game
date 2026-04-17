@@ -376,20 +376,29 @@ SB.Game.prototype._updatePlaying = function(dt) {
         this.achievements.onBounce();
         this.runBounces++;
         if (isPerfect) {
-            this.score += 3;
-            this.ui.addScorePopup(this.ball.x, this.ball.y - 25, 'PERFECT +3', '#00FF88');
-            this.particles.emit(this.ball.x, this.ball.y, { count: 8, spread: SB.TAU, speedMin: 60, speedMax: 140, lifeMin: 0.3, lifeMax: 0.6, sizeMin: 1.5, sizeMax: 3, color: '0,255,136', gravity: 50, friction: 0.92 });
+            this._perfectStreak = (this._perfectStreak || 0) + 1;
+            var pfBonus = 3 + Math.min(this._perfectStreak - 1, 5);
+            this.score += pfBonus;
+            var pfLabel = this._perfectStreak >= 2 ? 'PERFECT x' + this._perfectStreak + ' +' + pfBonus : 'PERFECT +' + pfBonus;
+            this.ui.addScorePopup(this.ball.x, this.ball.y - 25, pfLabel, '#00FF88');
+            this.particles.emit(this.ball.x, this.ball.y, { count: 8 + this._perfectStreak * 2, spread: SB.TAU, speedMin: 60, speedMax: 140, lifeMin: 0.3, lifeMax: 0.6, sizeMin: 1.5, sizeMax: 3, color: '0,255,136', gravity: 50, friction: 0.92 });
             this.ui.addPickupRing(this.ball.x, this.ball.y, '0,255,136');
             this.ui.addPickupRing(this.ball.x, this.ball.y, '255,215,0');
-            this.cameraZoom = 0.1;
+            this.cameraZoom = 0.1 + Math.min(this._perfectStreak, 3) * 0.03;
             SB.audio.playPerfectBounce();
             if (navigator.vibrate) navigator.vibrate(12);
         } else if (isDoubleTap) {
-            this.score += 2;
-            this.ui.addScorePopup(this.ball.x, this.ball.y - 25, 'POWER +2', '#5DADE2');
+            this._perfectStreak = 0;
+            this._doubleTapStreak = (this._doubleTapStreak || 0) + 1;
+            var dtBonus = 2 + Math.min(this._doubleTapStreak - 1, 3);
+            this.score += dtBonus;
+            var dtLabel = this._doubleTapStreak >= 2 ? 'POWER x' + this._doubleTapStreak + ' +' + dtBonus : 'POWER +' + dtBonus;
+            this.ui.addScorePopup(this.ball.x, this.ball.y - 25, dtLabel, '#5DADE2');
             SB.audio.playPerfectBounce();
             if (navigator.vibrate) navigator.vibrate(15);
         } else {
+            this._perfectStreak = 0;
+            this._doubleTapStreak = 0;
             SB.audio.playBounce();
         }
         if (this.runBounces === 50 || this.runBounces === 100 || this.runBounces === 200) {

@@ -159,6 +159,9 @@ SB.Obstacle.prototype.draw = function(ctx) {
             var foScale = 0.8 + foAlpha * 0.2;
             var foCx = this.radius ? this.x + this.radius : this.x + (this.width || 0) / 2;
             var foCy = this.radius ? this.y + this.radius : this.y + (this.height || 0) / 2;
+            ctx.translate(foCx, foCy);
+            ctx.rotate((1 - foAlpha) * 0.3);
+            ctx.translate(-foCx, -foCy);
             ctx.translate(foCx * (1 - foScale), foCy * (1 - foScale));
             ctx.scale(foScale, foScale);
         }

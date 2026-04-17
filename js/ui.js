@@ -810,6 +810,21 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     }
     ctx.fillStyle = 'rgba(0, 0, 0, ' + (0.2 * hudAlpha).toFixed(2) + ')';
     ctx.fillText(scoreText, cw / 2 + 2 + ssOx, 22 + ssOy);
+    if (score >= 50 && !SB.reducedMotion) {
+        var crA = hudAlpha * 0.25;
+        var crSize = 5;
+        var crX2 = cw / 2 + ssOx;
+        var crY2 = 14 + ssOy;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,215,0,' + crA.toFixed(2) + ')';
+        ctx.beginPath();
+        ctx.moveTo(crX2 - crSize, crY2); ctx.lineTo(crX2 - crSize + 2, crY2 - 4);
+        ctx.lineTo(crX2, crY2 - 1); ctx.lineTo(crX2 + crSize - 2, crY2 - 4);
+        ctx.lineTo(crX2 + crSize, crY2);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+    }
     var zoneRGB = ({ CALM: '200,230,255', RISING: '255,200,100', INTENSE: '255,120,100', EXTREME: '200,130,255' })[this.currentZone] || '255,255,255';
     var scoreColor = 'rgba(' + zoneRGB + ',' + (0.85 * hudAlpha).toFixed(2) + ')';
     if (this.scoreFlash > 0) {
@@ -1134,6 +1149,18 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.fillText('DIFF', sgX + sgW + 3, dbY + sgH + 1);
     }
     ctx.restore();
+
+    var bp = (SB.audio && SB.audio.beatPulse) || 0;
+    if (bp > 0.1 && !SB.reducedMotion) {
+        var bpSize = 2 + bp * 3;
+        var bpA2 = bp * 0.4 * hudAlpha;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cw - 14, ch - 14, bpSize, 0, SB.TAU);
+        ctx.fillStyle = 'rgba(255,255,255,' + bpA2.toFixed(2) + ')';
+        ctx.fill();
+        ctx.restore();
+    }
 
     // Combo popups (escalating visual intensity)
     for (var i = 0; i < this.comboPopups.length; i++) {
