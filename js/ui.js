@@ -1514,6 +1514,9 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         var statLine = 0;
         var statDelay = 0.12;
         var slA0 = Math.max(0, (alpha - statLine * statDelay) / (1 - statLine * statDelay));
+        var slSlide0 = Math.max(0, 1 - slA0) * -30;
+        ctx.save();
+        ctx.translate(slSlide0, 0);
         ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + (slA0 * 0.45).toFixed(2) + ')';
         var runSec = Math.floor(this.runStats.time);
@@ -1521,12 +1524,15 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         var statsText = timeStr + '  |  ' + this.runStats.stars + ' stars';
         if (this.runStats.bounces) statsText += '  |  ' + this.runStats.bounces + ' bounces';
         ctx.fillText(statsText, cw / 2, y);
+        ctx.restore();
         if (this.runStats.maxCombo >= 2) {
             y += gap;
             statLine++;
             var slA1 = Math.max(0, (alpha - statLine * statDelay) / (1 - statLine * statDelay));
+            var slSlide1 = Math.max(0, 1 - slA1) * -30;
             var mcColor = this.runStats.maxCombo >= 7 ? '#FF0044' : (this.runStats.maxCombo >= 5 ? '#FF4444' : (this.runStats.maxCombo >= 3 ? '#FF8C42' : '#FFD700'));
             ctx.save();
+            ctx.translate(slSlide1, 0);
             ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
             ctx.fillStyle = mcColor;
             ctx.globalAlpha = slA1 * 0.7;

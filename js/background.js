@@ -242,13 +242,31 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
     var cloudPx = pxNorm * -5;
     var cloudPy = pyNorm * -3 - bShift * 1.5;
 
+    var zoneTintR = 255, zoneTintG = 255, zoneTintB = 255;
+    if (d > 0.5) {
+        var ztFrac = (d - 0.5) / 0.5;
+        if (d > 0.8) {
+            zoneTintR = Math.floor(SB.lerp(255, 200, ztFrac));
+            zoneTintG = Math.floor(SB.lerp(255, 180, ztFrac));
+            zoneTintB = 255;
+        } else {
+            zoneTintR = 255;
+            zoneTintG = Math.floor(SB.lerp(255, 200, ztFrac));
+            zoneTintB = Math.floor(SB.lerp(255, 200, ztFrac));
+        }
+    }
     for (var i = 0; i < this.stars.length; i++) {
         var star = this.stars[i];
         var alpha = (Math.sin(star.twinklePhase) + 1) / 2 * 0.7 + 0.1;
         ctx.beginPath();
         var sd = star.depth || 1;
         ctx.arc(star.x + starPx * sd, star.y + starPy * sd, star.size, 0, SB.TAU);
-        var sColor = (i % 5 === 0) ? '255,240,200' : (i % 7 === 0) ? '200,220,255' : '255,255,255';
+        var sColor;
+        if (d > 0.5) {
+            sColor = zoneTintR + ',' + zoneTintG + ',' + zoneTintB;
+        } else {
+            sColor = (i % 5 === 0) ? '255,240,200' : (i % 7 === 0) ? '200,220,255' : '255,255,255';
+        }
         ctx.fillStyle = 'rgba(' + sColor + ',' + alpha + ')';
         ctx.fill();
     }

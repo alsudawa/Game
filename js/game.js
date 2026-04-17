@@ -764,6 +764,18 @@ SB.Game.prototype._updatePlaying = function(dt) {
                             gravity: 0, friction: 0.85
                         });
                     }
+                    var stAngle = Math.atan2(this.ball.y - obsCy, this.ball.x - obsCx);
+                    for (var sti = 0; sti < 3; sti++) {
+                        var stFrac = (sti + 1) / 4;
+                        var stX = obsCx + (this.ball.x - obsCx) * stFrac;
+                        var stY = obsCy + (this.ball.y - obsCy) * stFrac;
+                        this.particles.emit(stX, stY, {
+                            count: 2, spread: 0.5, speedMin: 20, speedMax: 50,
+                            lifeMin: 0.15, lifeMax: 0.3, sizeMin: 0.5, sizeMax: 1.5,
+                            color: '52,152,219', angle: stAngle, angleSpread: 0.8,
+                            gravity: 0, friction: 0.9
+                        });
+                    }
                 }
                 continue;
             }
@@ -846,6 +858,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
             var zoneRingColor = isCoin ? '255,180,0' : (({ CALM: '255,215,0', RISING: '255,200,100', INTENSE: '255,150,100', EXTREME: '200,150,255' })[this.currentZone.name] || '255,215,0');
             this.ui.addPickupRing(col.x, col.y, zoneRingColor);
             if (!isCoin) this.ui.addPickupRing(col.x, col.y, '255,255,255');
+            if (!isCoin && this.comboCount >= 2) {
+                this.ui.addPickupRing(col.x, col.y, zoneRingColor);
+            }
             if (!isCoin && !SB.reducedMotion) {
                 this.particles.emit(col.x, col.y, {
                     count: 4, spread: SB.TAU, speedMin: 15, speedMax: 40,
@@ -1840,6 +1855,31 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.globalAlpha = 1 - deathProgress * 0.6;
     } else {
         this.ball.radius = this.ball.baseRadius;
+    }
+
+    // Velocity direction arrow
+    var velMag = Math.sqrt(this.ball.vx * this.ball.vx + this.ball.vy * this.ball.vy);
+    if (velMag > 3 && this.state === SB.STATES.PLAYING && !SB.reducedMotion && this.deathSlowMo <= 0) {
+        var vaFrac = Math.min(velMag / SB.Physics.MAX_FALL_SPEED, 1);
+        var vaAngle = Math.atan2(this.ball.vy, this.ball.vx);
+        var vaDist = this.ball.radius + 14 + vaFrac * 6;
+        var vaLen = 5 + vaFrac * 8;
+        var vaX = this.ball.x + Math.cos(vaAngle) * vaDist;
+        var vaY = this.ball.y + Math.sin(vaAngle) * vaDist;
+        var vaA = vaFrac * 0.12;
+        ctx.save();
+        ctx.translate(vaX, vaY);
+        ctx.rotate(vaAngle);
+        ctx.strokeStyle = 'rgba(255,255,255,' + vaA.toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-vaLen, 0);
+        ctx.lineTo(vaLen, 0);
+        ctx.lineTo(vaLen - 3, -3);
+        ctx.moveTo(vaLen, 0);
+        ctx.lineTo(vaLen - 3, 3);
+        ctx.stroke();
+        ctx.restore();
     }
 
     // Falling speed wind lines around ball
