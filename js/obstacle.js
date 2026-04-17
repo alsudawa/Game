@@ -307,6 +307,13 @@ SB.Obstacle.prototype._drawSpike = function(ctx) {
         ctx.arc(cx, this.y + 1, 2, 0, SB.TAU);
         ctx.fillStyle = 'rgba(255,200,150,' + (0.4 + tipPulse * 0.4).toFixed(2) + ')';
         ctx.fill();
+        // Base glow
+        var basePulse = (Math.sin(this.spawnAge * 3) + 1) / 2 * 0.15;
+        var baseGrad = ctx.createRadialGradient(cx, this.y + size, 0, cx, this.y + size, size * 0.6);
+        baseGrad.addColorStop(0, 'rgba(255,80,50,' + basePulse.toFixed(3) + ')');
+        baseGrad.addColorStop(1, 'rgba(255,80,50,0)');
+        ctx.fillStyle = baseGrad;
+        ctx.fillRect(cx - size * 0.6, this.y + size * 0.4, size * 1.2, size * 0.6);
     }
     ctx.restore();
 };

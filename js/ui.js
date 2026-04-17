@@ -717,6 +717,13 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.restore();
+        if (comboCount >= 2) {
+            ctx.save();
+            ctx.font = 'bold ' + Math.min(cw * 0.025, 10) + 'px ' + this.font;
+            ctx.fillStyle = 'rgba(' + ctColor + ',' + (0.6 * hudAlpha).toFixed(2) + ')';
+            ctx.fillText(comboCount + 'x', cw / 2, 55 + ssOy);
+            ctx.restore();
+        }
     }
 
     if (cachedHighScore > 0 && score < cachedHighScore && score > cachedHighScore * 0.5) {
@@ -1003,12 +1010,13 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         var dcY = ch - 16;
         ctx.fillStyle = 'rgba(255,255,255,0.1)';
         ctx.fillRect(dcX, dcY, dcW, dcH);
-        ctx.fillStyle = 'rgba(255,215,0,0.5)';
+        var dcDone = dcFrac >= 1;
+        ctx.fillStyle = dcDone ? 'rgba(46,204,113,0.7)' : 'rgba(255,215,0,0.5)';
         ctx.fillRect(dcX, dcY, dcW * dcFrac, dcH);
         ctx.textAlign = 'right';
         ctx.font = Math.min(cw * 0.02, 8) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,255,255,0.3)';
-        ctx.fillText('Daily ' + Math.floor(dcFrac * 100) + '%', cw - 8, dcY - 2);
+        ctx.fillStyle = dcDone ? 'rgba(46,204,113,0.6)' : 'rgba(255,255,255,0.3)';
+        ctx.fillText(dcDone ? 'Daily done!' : 'Daily ' + Math.floor(dcFrac * 100) + '%', cw - 8, dcY - 2);
     }
 
     // Difficulty progress bar (thin bar at very top of screen)
@@ -1073,6 +1081,7 @@ SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dail
     this.recentRuns = recentRuns || [];
     this.prevRun = prevRun || null;
     this.achCount = 0;
+    this._countUpDone = false;
 };
 
 SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh) {
@@ -1085,6 +1094,11 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         if (this.scoreCountUp > displayScore) this.scoreCountUp = displayScore;
         if (Math.floor(this.scoreCountUp / 5) !== Math.floor(prevCount / 5)) {
             SB.audio.playScoreTick();
+        }
+        if (this.scoreCountUp >= displayScore && !this._countUpDone) {
+            this._countUpDone = true;
+            this.addPickupRing(cw / 2, ch * 0.10, '255,215,0');
+            this.addPickupRing(cw / 2, ch * 0.10, '255,255,255');
         }
     }
 

@@ -257,6 +257,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.screenFlash = 0.04;
             this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.powerBounce);
             this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '93,173,226');
+            this.ui.addPickupRing(this.ball.x, this.ball.y, '150,200,255');
+            this.background.bounceShift = 0.7;
             if (!SB.reducedMotion) {
                 for (var pbi = 0; pbi < 6; pbi++) {
                     var pbAngle = SB.TAU * pbi / 6;
