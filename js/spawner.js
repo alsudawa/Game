@@ -13,6 +13,7 @@ SB.Spawner = function(obstaclePool, collectiblePool, powerupPool) {
     this.veteranBonus = 0;
     this.graceTimer = 0;
     this.gracePeriod = 2.0;
+    this.lastSpawnedPowerup = false;
 };
 
 SB.Spawner.prototype.reset = function(veteranBonus) {
@@ -75,6 +76,7 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
         if (this.powerupTimer >= puInterval) {
             this.powerupTimer = 0;
             this._spawnPowerup(canvasWidth, canvasHeight);
+            this.lastSpawnedPowerup = true;
         }
     }
 };

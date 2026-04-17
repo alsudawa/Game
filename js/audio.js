@@ -140,10 +140,17 @@ SB.Audio.prototype.playGameOver = function() {
     osc.stop(now + 0.5);
 };
 
-SB.Audio.prototype.playMilestone = function() {
+SB.Audio.prototype.playMilestone = function(tier) {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;
-    var notes = [523, 659, 784];
+    var chords = [
+        [523, 659, 784],
+        [587, 740, 880],
+        [659, 831, 988],
+        [784, 988, 1175]
+    ];
+    var idx = Math.min(tier || 0, chords.length - 1);
+    var notes = chords[idx];
     for (var i = 0; i < notes.length; i++) {
         var osc = this.ctx.createOscillator();
         var gain = this.ctx.createGain();

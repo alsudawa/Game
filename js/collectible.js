@@ -90,6 +90,12 @@ SB.Collectible.prototype._edgeProximity = function() {
 SB.Collectible.prototype.draw = function(ctx) {
     if (!this.active) return;
 
+    var edgeWarn = this._edgeProximity();
+    if (edgeWarn > 0.5) {
+        var blinkRate = 8 + edgeWarn * 12;
+        if (Math.sin(this.lifetime * blinkRate) < 0) return;
+    }
+
     if (this.type === SB.COLLECTIBLE_TYPES.COIN) {
         this._drawCoin(ctx);
         return;
@@ -99,8 +105,6 @@ SB.Collectible.prototype.draw = function(ctx) {
     var r = this.radius * pulse;
     var bobY = Math.sin(this.lifetime * 2.2) * 4;
 
-    // Edge proximity warning glow + ball proximity sparkle
-    var edgeWarn = this._edgeProximity();
     var proxBoost = this._proximity > 0 ? this._proximity : 0;
     var extraGlow = (edgeWarn > 0 ? edgeWarn * 15 : 0) + proxBoost * 20;
 

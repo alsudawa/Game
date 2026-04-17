@@ -979,6 +979,7 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.45) + ')';
         var statsText = Math.floor(this.runStats.time) + 's  |  ' + this.runStats.stars + ' stars  |  +' + (this.runStats.coins || 0) + ' coins';
+        if (this.runStats.bounces) statsText += '  |  ' + this.runStats.bounces + ' bounces';
         if (this.runStats.maxCombo >= 2) statsText += '  |  ' + this.runStats.maxCombo + 'x combo';
         ctx.fillText(statsText, cw / 2, y);
         y += gap;
@@ -1144,6 +1145,13 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
 SB.UI.prototype.drawPauseScreen = function(ctx, cw, ch) {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
     ctx.fillRect(0, 0, cw, ch);
+
+    if (!SB.reducedMotion) {
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
+        for (var sl = 0; sl < ch; sl += 4) {
+            ctx.fillRect(0, sl, cw, 2);
+        }
+    }
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

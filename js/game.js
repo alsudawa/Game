@@ -371,6 +371,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
 
     this.spawner.update(dt * slowMult, this.score, cw, ch);
 
+    if (this.spawner.lastSpawnedPowerup) {
+        this.spawner.lastSpawnedPowerup = false;
+        this.screenFlash = 0.06;
+    }
+
     // --- Obstacles ---
     this.ball.gravityPullStrength = 0;
     var obstacles = this.obstaclePool.getActive();
@@ -664,7 +669,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
     var currentMilestone = Math.floor(this.score / 10);
     if (currentMilestone > this.lastMilestone) {
         this.lastMilestone = currentMilestone;
-        SB.audio.playMilestone();
+        var msTier = currentMilestone >= 20 ? 3 : currentMilestone >= 10 ? 2 : currentMilestone >= 5 ? 1 : 0;
+        SB.audio.playMilestone(msTier);
         // Special celebrations at key milestones
         var milestoneScore = currentMilestone * 10;
         if (milestoneScore === 25 || milestoneScore === 50 || milestoneScore === 100 || milestoneScore === 200) {
@@ -998,7 +1004,8 @@ SB.Game.prototype._transitionTo = function(newState) {
             maxCombo: this.runMaxCombo,
             coins: this.runCoins,
             zone: this.currentZone.name,
-            deathCause: this.deathCause || 'Unknown'
+            deathCause: this.deathCause || 'Unknown',
+            bounces: this.runBounces
         }, streak, recentRuns);
         SB.audio.stopBGM();
         SB.audio.playGameOver();
