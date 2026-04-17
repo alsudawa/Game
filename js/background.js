@@ -185,6 +185,11 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
     }
     ctx.fillStyle = this._cachedGrad;
     ctx.fillRect(0, 0, cw, ch);
+    if (d > 0.3) {
+        var ambPulse = (Math.sin((SB.frameTime || 0) * 0.002) + 1) / 2 * (d - 0.3) * 0.03;
+        ctx.fillStyle = 'rgba(255,255,255,' + ambPulse.toFixed(4) + ')';
+        ctx.fillRect(0, 0, cw, ch);
+    }
 
     // Parallax offsets based on ball position (subtle depth)
     var pxNorm = typeof ballX === 'number' ? (ballX - cw / 2) / cw : 0;

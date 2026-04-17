@@ -76,6 +76,7 @@ SB.Game = function(canvas) {
     this.scoreShake = 0;
     this.powerupFlashTimer = 0;
     this.powerupFlashColor = '255,255,255';
+    this.cameraZoom = 0;
 
     SB.REVIVE_COST = 20;
 };
@@ -114,6 +115,7 @@ SB.Game.prototype.update = function(dt) {
     if (this.screenShake > 0) this.screenShake -= dt;
     if (this.screenFlash > 0) this.screenFlash -= dt;
     if (this.powerupFlashTimer > 0) this.powerupFlashTimer -= dt;
+    if (this.cameraZoom > 0) this.cameraZoom = Math.max(0, this.cameraZoom - dt * 5);
     if (this.wallFlashTimer > 0) this.wallFlashTimer -= dt;
     if (this.wallBounceStreakTimer > 0) {
         this.wallBounceStreakTimer -= dt;
@@ -239,6 +241,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         if (isDoubleTap) {
             this.ball.vy *= 1.25;
             this.ball.trailBoost = 1.0;
+            this.cameraZoom = 0.15;
             this.screenFlash = 0.04;
             this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.powerBounce);
             this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '93,173,226');
@@ -275,6 +278,10 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (navigator.vibrate) navigator.vibrate(15);
         } else {
             SB.audio.playBounce();
+        }
+        if (this.runBounces === 50 || this.runBounces === 100 || this.runBounces === 200) {
+            this.ui.addScorePopup(this.ball.x, this.ball.y - 40, this.runBounces + ' BOUNCES!', '#5DADE2');
+            SB.audio.playMilestone(this.runBounces >= 200 ? 3 : this.runBounces >= 100 ? 2 : 1);
         }
     }
 
@@ -1082,10 +1089,16 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
         var shakeT = this.screenShake / 0.3;
         var decay = shakeT * shakeT;
         var intensity = this.screenShakeIntensity * decay;
-        var freq = (1 - shakeT) * 30 + 10; // faster vibration as shake ages
+        var freq = (1 - shakeT) * 30 + 10;
         var shakeX = Math.sin(freq * this.screenShake) * intensity * (Math.random() * 0.4 + 0.6);
         var shakeY = Math.cos(freq * this.screenShake * 1.3) * intensity * (Math.random() * 0.4 + 0.6);
         ctx.translate(shakeX, shakeY);
+    }
+    if (this.cameraZoom > 0 && !SB.reducedMotion) {
+        var zs = 1 + this.cameraZoom * 0.04;
+        ctx.translate(cw / 2, ch / 2);
+        ctx.scale(zs, zs);
+        ctx.translate(-cw / 2, -ch / 2);
     }
 
     this.background.draw(ctx, cw, ch, this.ball.x, this.ball.y);

@@ -126,7 +126,8 @@ SB.Obstacle.prototype.update = function(dt) {
 SB.Obstacle.prototype.draw = function(ctx) {
     if (!this.active) return;
 
-    var fadeIn = Math.min(this.spawnAge / 0.3, 1);
+    var fadeSpeed = this.type === SB.OBSTACLE_TYPES.LASER ? 0.5 : (this.type === SB.OBSTACLE_TYPES.SPIKE ? 0.2 : 0.3);
+    var fadeIn = Math.min(this.spawnAge / fadeSpeed, 1);
     if (fadeIn < 1) {
         ctx.save();
         ctx.globalAlpha = fadeIn;

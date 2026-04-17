@@ -634,6 +634,13 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.fillStyle = 'rgba(255, 255, 255, ' + (0.85 * hudAlpha).toFixed(2) + ')';
     ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
 
+    if (cachedHighScore > 0 && score < cachedHighScore && score > cachedHighScore * 0.5) {
+        var pbDiff = Math.ceil(cachedHighScore - score);
+        ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,215,0,' + (0.4 * hudAlpha).toFixed(2) + ')';
+        ctx.fillText(pbDiff + ' to PB', cw / 2, 58);
+    }
+
     // Score multiplier badge with countdown
     if (this.powerupEffectsRef && this.powerupEffectsRef.scoreMult) {
         var smPulse = 0.8 + Math.sin((SB.frameTime || 0) * 0.006) * 0.2;
