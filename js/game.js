@@ -1909,45 +1909,93 @@ SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
 
 SB.Game.prototype._drawSpawnWarning = function(ctx, cw, ch, w) {
     var frac = w.timer / w.duration;
-    // Pulse frequency increases as spawn approaches (urgency)
-    var pulseRate = 4 + frac * 16;
+    var pulseRate = 6 + frac * 20;
     var pulse = (Math.sin(w.timer * pulseRate) + 1) / 2;
-    var alpha = (0.2 + frac * 0.5) * (0.5 + pulse * 0.5);
+    var alpha = (0.4 + frac * 0.6) * (0.6 + pulse * 0.4);
 
     var typeColors = { platform: '231,76,60', spike: '255,100,50', blade: '180,180,190', boomerang: '255,152,0', wave: '255,100,50', pincer: '231,76,60', squeeze: '231,76,60', corridor: '231,76,60', spiral: '255,100,50' };
     var col = typeColors[w.type] || '231,76,60';
 
-    var edgeX = w.side < 0 ? 0 : cw;
-    var barW = 4 + frac * 4;
-    var barH = 30 + frac * 20;
-
     ctx.save();
-    // Glowing edge bar
-    ctx.fillStyle = 'rgba(' + col + ',' + alpha.toFixed(2) + ')';
-    if (w.side < 0) {
-        ctx.fillRect(0, w.y - barH / 2, barW, barH);
-    } else {
-        ctx.fillRect(cw - barW, w.y - barH / 2, barW, barH);
-    }
-    // Arrow pointing inward
-    var arX = w.side < 0 ? barW + 4 : cw - barW - 4;
-    var arDir = w.side < 0 ? 1 : -1;
-    ctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.8).toFixed(2) + ')';
-    ctx.beginPath();
-    ctx.moveTo(arX + arDir * 8, w.y);
-    ctx.lineTo(arX, w.y - 6);
-    ctx.lineTo(arX, w.y + 6);
-    ctx.closePath();
-    ctx.fill();
-    // Expanding ring pulse (grows as spawn approaches)
-    if (!SB.reducedMotion) {
-        var ringR = 8 + frac * 15;
-        var ringA = pulse * alpha * 0.4;
+
+    if (w.side === 0) {
+        // In-place warning (squeeze, spiral): pulsing crosshair at spawn position
+        var cAlpha = alpha * 0.7;
+        var cR = 20 + (1 - frac) * 15;
+        ctx.strokeStyle = 'rgba(' + col + ',' + cAlpha.toFixed(2) + ')';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 4]);
         ctx.beginPath();
-        ctx.arc(edgeX, w.y, ringR, 0, SB.TAU);
-        ctx.strokeStyle = 'rgba(' + col + ',' + ringA.toFixed(2) + ')';
-        ctx.lineWidth = 1.5;
+        ctx.arc(w.x, w.y, cR, 0, SB.TAU);
         ctx.stroke();
+        ctx.setLineDash([]);
+        // Cross lines
+        var cLen = 8 + frac * 6;
+        ctx.beginPath();
+        ctx.moveTo(w.x - cLen, w.y); ctx.lineTo(w.x + cLen, w.y);
+        ctx.moveTo(w.x, w.y - cLen); ctx.lineTo(w.x, w.y + cLen);
+        ctx.stroke();
+        // Inner fill pulse
+        ctx.fillStyle = 'rgba(' + col + ',' + (cAlpha * 0.15).toFixed(2) + ')';
+        ctx.beginPath();
+        ctx.arc(w.x, w.y, cR, 0, SB.TAU);
+        ctx.fill();
+        // "!" icon
+        ctx.font = 'bold 16px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.9).toFixed(2) + ')';
+        ctx.fillText('!', w.x, w.y);
+    } else {
+        // Edge warning: thick glowing bar + large arrow
+        var edgeX = w.side < 0 ? 0 : cw;
+        var barW = 6 + frac * 8;
+        var barH = 50 + frac * 30;
+
+        // Glow behind bar
+        ctx.shadowColor = 'rgba(' + col + ',' + (alpha * 0.8).toFixed(2) + ')';
+        ctx.shadowBlur = 12 + frac * 15;
+        ctx.fillStyle = 'rgba(' + col + ',' + alpha.toFixed(2) + ')';
+        if (w.side < 0) {
+            ctx.fillRect(0, w.y - barH / 2, barW, barH);
+        } else {
+            ctx.fillRect(cw - barW, w.y - barH / 2, barW, barH);
+        }
+        ctx.shadowBlur = 0;
+
+        // Large arrow pointing inward
+        var arX = w.side < 0 ? barW + 6 : cw - barW - 6;
+        var arDir = w.side < 0 ? 1 : -1;
+        var arSize = 8 + frac * 5;
+        ctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.9).toFixed(2) + ')';
+        ctx.beginPath();
+        ctx.moveTo(arX + arDir * arSize, w.y);
+        ctx.lineTo(arX, w.y - arSize);
+        ctx.lineTo(arX, w.y + arSize);
+        ctx.closePath();
+        ctx.fill();
+
+        // Horizontal danger line across screen at spawn height
+        ctx.strokeStyle = 'rgba(' + col + ',' + (alpha * 0.12).toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([6, 10]);
+        ctx.beginPath();
+        ctx.moveTo(w.side < 0 ? barW + arSize + 10 : 0, w.y);
+        ctx.lineTo(w.side < 0 ? cw : cw - barW - arSize - 10, w.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Expanding ring bursts
+        if (!SB.reducedMotion) {
+            var ringPhase = (w.timer * 4) % 1;
+            var ringR = 10 + ringPhase * 25;
+            var ringA = (1 - ringPhase) * alpha * 0.5;
+            ctx.beginPath();
+            ctx.arc(edgeX, w.y, ringR, 0, SB.TAU);
+            ctx.strokeStyle = 'rgba(' + col + ',' + ringA.toFixed(2) + ')';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
     }
     ctx.restore();
 };

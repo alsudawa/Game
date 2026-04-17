@@ -19,7 +19,7 @@ SB.Spawner = function(obstaclePool, collectiblePool, powerupPool) {
     this._warnings = [];
     this._warningPool = [];
     for (var wi = 0; wi < 10; wi++) {
-        this._warningPool.push({ active: false, timer: 0, duration: 0, side: 0, y: 0, type: '', configs: null, cw: 0, ch: 0, speedMult: 0 });
+        this._warningPool.push({ active: false, timer: 0, duration: 0, side: 0, x: 0, y: 0, type: '', configs: null, cw: 0, ch: 0, speedMult: 0 });
     }
 };
 
@@ -133,6 +133,8 @@ SB.Spawner.prototype._queueObstacle = function(cw, ch, speedMult, d) {
         this._spawnByType(spawnType, cw, ch, speedMult);
         return;
     }
+    // In-place spawns (no edge entry) get position warnings instead of edge warnings
+    var inPlace = (spawnType === 'squeeze' || spawnType === 'spiral');
     // Queue warning
     var w = null;
     for (var i = 0; i < this._warningPool.length; i++) {
@@ -142,8 +144,9 @@ SB.Spawner.prototype._queueObstacle = function(cw, ch, speedMult, d) {
     w.active = true;
     w.timer = 0;
     w.duration = warnDur;
-    w.side = fromLeft ? -1 : 1;
+    w.side = inPlace ? 0 : (fromLeft ? -1 : 1);
     w.y = y;
+    w.x = inPlace ? SB.randRange(cw * 0.25, cw * 0.75) : 0;
     w.type = spawnType;
     w.cw = cw;
     w.ch = ch;
