@@ -215,6 +215,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
     if (SB._pauseBtnTapped) {
         SB._pauseBtnTapped = null;
         this.state = SB.STATES.PAUSED;
+        this.ui.pauseFade = 0;
         SB.audio.stopBGM();
         return;
     }
@@ -525,6 +526,16 @@ SB.Game.prototype._updatePlaying = function(dt) {
                     this.ball.gravityPullStrength = pullFactor;
                     this.ball.gravityPullAngle = Math.atan2(wdy, wdx);
                 }
+                // Purple attraction glow on ball
+                if (pullFactor > 0.3 && !SB.reducedMotion && Math.random() < pullFactor * 0.4) {
+                    var gwAngle = Math.atan2(wdy, wdx) + SB.randRange(-0.5, 0.5);
+                    this.particles.emit(this.ball.x + Math.cos(gwAngle) * this.ball.radius, this.ball.y + Math.sin(gwAngle) * this.ball.radius, {
+                        count: 1, spread: 0, speedMin: 15, speedMax: 40,
+                        lifeMin: 0.1, lifeMax: 0.25, sizeMin: 0.5, sizeMax: 1.5,
+                        color: '155,89,182', angle: gwAngle, angleSpread: 0.3,
+                        gravity: 0, friction: 0.85
+                    });
+                }
             }
             continue;
         }
@@ -554,6 +565,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (nearHit) {
                 obs._nearMissed = true;
                 this.ui.nearMissTimer = 0.6;
+                this.ui.addPickupRing(this.ball.x, this.ball.y, '243,156,18');
                 if (obs.type === SB.OBSTACLE_TYPES.PLATFORM && !SB.reducedMotion) {
                     this.particles.emit(this.ball.x, obs.y, { count: 3, spread: 1, speedMin: 10, speedMax: 30, lifeMin: 0.2, lifeMax: 0.4, sizeMin: 0.5, sizeMax: 1.5, color: '200,200,200', gravity: 30, friction: 0.9 });
                 }
@@ -709,6 +721,15 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 this.screenShake = 0.08;
                 this.screenShakeIntensity = 3;
                 this.ui.coinBump = 0.2;
+                if (!SB.reducedMotion) {
+                    var flyAngle = Math.atan2(10 - col.y, cw - 12 - col.x);
+                    this.particles.emit(col.x, col.y, {
+                        count: 3, spread: 0, speedMin: 200, speedMax: 350,
+                        lifeMin: 0.3, lifeMax: 0.5, sizeMin: 1, sizeMax: 2,
+                        color: '255,215,0', angle: flyAngle, angleSpread: 0.2,
+                        gravity: -50, friction: 0.96
+                    });
+                }
                 if (navigator.vibrate) navigator.vibrate(10);
                 SB.audio.playCoinCollect();
             } else if (this.comboCount >= 2) {
@@ -803,6 +824,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         SB.audio.playMilestone(msTier);
         this.ui.addPickupRing(this.ball.x, this.ball.y, '255,215,0');
         this.ui.scoreFlash = 0.4;
+        this.ui.scoreSizePulse = 0.4;
         // Special celebrations at key milestones
         var milestoneScore = currentMilestone * 10;
         if (milestoneScore === 25 || milestoneScore === 50 || milestoneScore === 100 || milestoneScore === 200) {

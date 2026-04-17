@@ -40,6 +40,8 @@ SB.UI = function() {
     this.displayScore = 0;
     this.coinBump = 0;
     this.scoreFlash = 0;
+    this.scoreSizePulse = 0;
+    this.pauseFade = 0;
     this._tips = [
         'Tap left or right to steer',
         'Double-tap for a power bounce!',
@@ -679,9 +681,12 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         hudAlpha = 0.3 + (ballY / (ch * 0.15)) * 0.7;
     }
 
+    if (this.scoreSizePulse > 0) this.scoreSizePulse = Math.max(0, this.scoreSizePulse - 0.016);
+    var scoreFontMult = 1 + this.scoreSizePulse * 0.15;
+
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
-    ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
+    ctx.font = 'bold ' + Math.min(cw * 0.1, 40) * scoreFontMult + 'px ' + this.font;
 
     var scoreText = SB.formatNum(Math.floor(this.displayScore));
     var ssOx = 0, ssOy = 0;
@@ -1333,7 +1338,9 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
 };
 
 SB.UI.prototype.drawPauseScreen = function(ctx, cw, ch) {
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    this.pauseFade = Math.min(this.pauseFade + 0.08, 1);
+    var pfA = this.pauseFade;
+    ctx.fillStyle = 'rgba(0, 0, 0, ' + (0.6 * pfA).toFixed(2) + ')';
     ctx.fillRect(0, 0, cw, ch);
 
     if (!SB.reducedMotion) {
