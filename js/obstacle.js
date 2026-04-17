@@ -218,6 +218,32 @@ SB.Obstacle.prototype.draw = function(ctx) {
         ctx.translate(-stCx, -stCy);
     }
 
+    if (!SB.reducedMotion && this.spawnAge > 0.3 && this.type !== SB.OBSTACLE_TYPES.LASER && this.type !== SB.OBSTACLE_TYPES.GRAVITY_WELL) {
+        var slSpd = Math.abs(this.speed) * (this.type === SB.OBSTACLE_TYPES.BOOMERANG ? 0.8 : 1);
+        if (slSpd > 3) {
+            var slFrac = Math.min((slSpd - 3) / 5, 1);
+            var slDir = this.speed * (this.direction || 1) > 0 ? -1 : 1;
+            var slCx = this.radius ? this.x + this.radius : this.x + (this.width || 0) / 2;
+            var slCy = this.radius ? this.y + this.radius : this.y + (this.height || 0) / 2;
+            var slH = this.radius ? this.radius * 1.2 : (this.height || 10) * 0.6;
+            ctx.save();
+            ctx.lineCap = 'round';
+            for (var sli = 0; sli < 3; sli++) {
+                var slOff = (10 + sli * 8) * slFrac;
+                var slLen = (6 + sli * 4) * slFrac;
+                var slA = (0.12 - sli * 0.03) * slFrac;
+                var slY = slCy + (sli - 1) * slH * 0.5;
+                ctx.strokeStyle = 'rgba(255,255,255,' + slA.toFixed(3) + ')';
+                ctx.lineWidth = 1 - sli * 0.2;
+                ctx.beginPath();
+                ctx.moveTo(slCx + slDir * slOff, slY);
+                ctx.lineTo(slCx + slDir * (slOff + slLen), slY);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+    }
+
     if (this.type === SB.OBSTACLE_TYPES.PLATFORM) {
         this._drawPlatform(ctx);
     } else if (this.type === SB.OBSTACLE_TYPES.SPIKE) {

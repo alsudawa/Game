@@ -802,7 +802,8 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     }
     ctx.fillStyle = 'rgba(0, 0, 0, ' + (0.2 * hudAlpha).toFixed(2) + ')';
     ctx.fillText(scoreText, cw / 2 + 2 + ssOx, 22 + ssOy);
-    var scoreColor = 'rgba(255, 255, 255, ' + (0.85 * hudAlpha).toFixed(2) + ')';
+    var zoneRGB = ({ CALM: '200,230,255', RISING: '255,200,100', INTENSE: '255,120,100', EXTREME: '200,130,255' })[this.currentZone] || '255,255,255';
+    var scoreColor = 'rgba(' + zoneRGB + ',' + (0.85 * hudAlpha).toFixed(2) + ')';
     if (this.scoreFlash > 0) {
         var sfBlend = this.scoreFlash / 0.4;
         scoreColor = 'rgba(255, 215, 0, ' + (sfBlend * hudAlpha).toFixed(2) + ')';

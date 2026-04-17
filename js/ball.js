@@ -28,6 +28,7 @@ SB.Ball = function() {
     this.gravityPullStrength = 0;
     this.trailBoost = 0;
     this.visualRotation = 0;
+    this.anticipation = 0;
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -73,6 +74,11 @@ SB.Ball.prototype.update = function(dt) {
     if (this.wallSquash > 0) this.wallSquash = Math.max(0, this.wallSquash - dt * 6);
     if (this.bounceSquash > 0) this.bounceSquash = Math.max(0, this.bounceSquash - dt * 8);
     if (this.trailBoost > 0) this.trailBoost = Math.max(0, this.trailBoost - dt * 1.5);
+    var ch = SB.canvasHeight || 600;
+    var bottomProx = SB.clamp((this.y - ch * 0.65) / (ch * 0.3), 0, 1);
+    var fallFrac = SB.clamp(this.vy / SB.Physics.MAX_FALL_SPEED, 0, 1);
+    var antTarget = bottomProx * fallFrac;
+    this.anticipation += (antTarget - this.anticipation) * Math.min(dt * 8, 1);
 
     this.wallHitSide = 0;
     if (this.x - this.radius < 0) {
@@ -174,6 +180,11 @@ SB.Ball.prototype.draw = function(ctx) {
         var bsEase = this.bounceSquash * this.bounceSquash;
         stretchX *= (1 + bsEase * 0.35);
         stretchY *= (1 - bsEase * 0.25);
+    }
+    if (this.anticipation > 0.1 && !SB.reducedMotion) {
+        var antWobble = Math.sin((SB.frameTime || 0) * 0.025) * this.anticipation * 0.08;
+        stretchX *= (1 + this.anticipation * 0.12 + antWobble);
+        stretchY *= (1 - this.anticipation * 0.08 - antWobble);
     }
 
     ctx.save();

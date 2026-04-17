@@ -79,6 +79,8 @@ SB.Game = function(canvas) {
     this.cameraZoom = 0;
     this.lastCollectX = 0;
     this.lastCollectY = 0;
+    this._prevCollectX = 0;
+    this._prevCollectY = 0;
     this.collectChainTimer = 0;
     this.comboBreakFlash = 0;
 
@@ -776,6 +778,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (this.collectChainTimer > 0 && this.comboCount >= 1) {
                 this.ui.addChainLine(this.lastCollectX, this.lastCollectY, col.x, col.y, this.comboCount);
             }
+            this._prevCollectX = this.lastCollectX;
+            this._prevCollectY = this.lastCollectY;
             this.lastCollectX = col.x;
             this.lastCollectY = col.y;
             this.collectChainTimer = 2.0;
@@ -1159,6 +1163,8 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.lastMilestone = 0;
         this.comboTimer = 0;
         this.comboCount = 0;
+        this._prevCollectX = 0;
+        this._prevCollectY = 0;
         this.runStars = 0;
         this.tutorialTimer = 0;
         this.tutorialStep = 0;
@@ -1606,6 +1612,22 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
     }
     for (var k = 0; k < powerups.length; k++) {
         powerups[k].draw(ctx);
+    }
+    // Collect chain line (fading arc between sequential pickups)
+    if (this.collectChainTimer > 0 && this.lastCollectX && this._prevCollectX) {
+        var ccA = this.collectChainTimer / 0.8 * 0.2;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,215,0,' + ccA.toFixed(3) + ')';
+        ctx.lineWidth = 1.5;
+        ctx.setLineDash([3, 5]);
+        var ccMidX = (this.lastCollectX + this._prevCollectX) / 2;
+        var ccMidY = Math.min(this.lastCollectY, this._prevCollectY) - 20;
+        ctx.beginPath();
+        ctx.moveTo(this._prevCollectX, this._prevCollectY);
+        ctx.quadraticCurveTo(ccMidX, ccMidY, this.lastCollectX, this.lastCollectY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
     }
     ctx.restore();
 
