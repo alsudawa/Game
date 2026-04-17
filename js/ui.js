@@ -265,6 +265,17 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     var currentSkin = skinManager ? skinManager.getCurrentSkin() : SB.SKINS[0];
     var ballY = ch * 0.34 + this.idleBallY;
     var breathe = Math.sin(this.blinkPhase * 0.8) * 0.5 + 0.5;
+    // Idle ball trail
+    var glowRGB = SB.hexToRGB(currentSkin.glow);
+    for (var bt = 3; bt >= 1; bt--) {
+        var btY = ch * 0.34 + (-Math.abs(Math.sin(this.idleBallPhase - bt * 0.4)) * 20);
+        var btAlpha = (1 - bt / 4) * 0.15;
+        var btSize = 18 - bt * 2;
+        ctx.beginPath();
+        ctx.arc(cw / 2, btY, btSize, 0, SB.TAU);
+        ctx.fillStyle = 'rgba(' + glowRGB + ',' + btAlpha.toFixed(2) + ')';
+        ctx.fill();
+    }
     ctx.save();
     ctx.shadowColor = currentSkin.glow;
     ctx.shadowBlur = 18 + breathe * 15;
@@ -714,9 +725,10 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 4;
     var coinScale = this.coinBump > 0 ? 1 + this.coinBump / 0.2 * 0.3 : 1;
+    var coinShakeX = this.coinBump > 0 ? Math.sin(this.coinBump * 50) * this.coinBump / 0.2 * 3 : 0;
     ctx.font = 'bold ' + Math.min(cw * 0.03 * coinScale, 12 * coinScale) + 'px ' + this.font;
     ctx.fillStyle = this.coinBump > 0 ? 'rgba(255,215,0,1)' : 'rgba(255,215,0,0.75)';
-    ctx.fillText((cachedCoins || 0) + ' coins', cw - 12, 10);
+    ctx.fillText((cachedCoins || 0) + ' coins', cw - 12 + coinShakeX, 10);
     if (cachedHighScore > 0) {
         ctx.fillStyle = score >= cachedHighScore ? 'rgba(46,204,113,0.6)' : 'rgba(255,255,255,0.3)';
         ctx.fillText('PB: ' + cachedHighScore, cw - 12, 26);
@@ -1230,6 +1242,12 @@ SB.UI.prototype.drawPauseScreen = function(ctx, cw, ch) {
     ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText('PAUSED', cw / 2, ch * 0.3);
+
+    // Current run stats
+    ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    var pauseStats = Math.floor(this.displayScore) + ' pts  |  ' + (this.runBounces || 0) + ' bounces';
+    ctx.fillText(pauseStats, cw / 2, ch * 0.38);
 
     // Resume button
     var btnW = Math.min(cw * 0.5, 180);

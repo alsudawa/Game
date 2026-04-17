@@ -27,6 +27,7 @@ SB.Ball = function() {
     this.gravityPullAngle = 0;
     this.gravityPullStrength = 0;
     this.trailBoost = 0;
+    this.visualRotation = 0;
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -64,6 +65,7 @@ SB.Ball.prototype.update = function(dt) {
 
     this.x += this.vx * dt;
     this.y += this.vy * dt;
+    this.visualRotation += this.vx * dt * 0.03;
 
     if (this.bounceGlow > 0) this.bounceGlow = Math.max(0, this.bounceGlow - dt * 5);
 
@@ -165,6 +167,7 @@ SB.Ball.prototype.draw = function(ctx) {
         ctx.rotate(-this.gravityPullAngle);
     }
     ctx.scale(stretchX, stretchY);
+    ctx.rotate(this.visualRotation);
     ctx.beginPath();
     ctx.arc(0, 0, this.radius, 0, SB.TAU);
     var gradient = ctx.createRadialGradient(

@@ -101,7 +101,8 @@ SB.Collectible.prototype.draw = function(ctx) {
         return;
     }
 
-    var pulse = 1 + Math.sin(this.pulsePhase) * 0.15;
+    var proxBoost0 = this._proximity > 0 ? this._proximity : 0;
+    var pulse = 1 + Math.sin(this.pulsePhase) * 0.15 + proxBoost0 * 0.15;
     var r = this.radius * pulse;
     var bobY = Math.sin(this.lifetime * 2.2) * 4;
 
