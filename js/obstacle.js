@@ -164,6 +164,21 @@ SB.Obstacle.prototype.draw = function(ctx) {
         }
     }
 
+    // Beat pulse glow (synced to BGM)
+    var bp = (SB.audio && SB.audio.beatPulse) || 0;
+    if (bp > 0.3 && !SB.reducedMotion && fadeIn >= 0.8) {
+        var bpCx = this.radius ? this.x + this.radius : this.x + (this.width || 0) / 2;
+        var bpCy = this.radius ? this.y + this.radius : this.y + (this.height || 0) / 2;
+        var bpR = (this.radius || Math.max(this.width || 0, this.height || 0) * 0.5) + 5;
+        var bpA = (bp - 0.3) * 0.08;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(bpCx, bpCy, bpR, 0, SB.TAU);
+        ctx.fillStyle = 'rgba(255,255,255,' + bpA.toFixed(3) + ')';
+        ctx.fill();
+        ctx.restore();
+    }
+
     // Entrance swoosh sparkles
     if (fadeIn < 0.8 && !SB.reducedMotion) {
         var swAlpha = (1 - fadeIn / 0.8) * 0.3;

@@ -999,6 +999,20 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.restore();
     }
 
+    // Difficulty meter (thin bar below zone pill)
+    if (difficulty > 0) {
+        var dmW = 40;
+        var dmH = 2;
+        var dmX = 8;
+        var dmY = zone && zone.name !== 'CALM' ? 28 : 12;
+        var dmFrac = Math.min(difficulty, 1);
+        var dmC = difficulty > 0.8 ? '155,89,182' : difficulty > 0.5 ? '231,76,60' : difficulty > 0.3 ? '243,156,18' : '93,173,226';
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.06 * hudAlpha).toFixed(2) + ')';
+        ctx.fillRect(dmX, dmY, dmW, dmH);
+        ctx.fillStyle = 'rgba(' + dmC + ',' + (0.4 * hudAlpha).toFixed(2) + ')';
+        ctx.fillRect(dmX, dmY, dmW * dmFrac, dmH);
+    }
+
     // Coin counter + PB in HUD (top-right)
     ctx.save();
     ctx.textAlign = 'right';

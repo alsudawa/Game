@@ -170,6 +170,15 @@ SB.Game.prototype.update = function(dt) {
 };
 
 SB.Game.prototype._updateStart = function(dt) {
+    if (!SB.reducedMotion && Math.random() < 0.12) {
+        this.particles.emit(Math.random() * SB.canvasWidth, -5, {
+            count: 1, spread: 0.3, speedMin: 10, speedMax: 30,
+            lifeMin: 1.5, lifeMax: 3.0, sizeMin: 0.5, sizeMax: 1.5,
+            color: '255,215,0', angle: Math.PI / 2, angleSpread: 0.3,
+            gravity: 15, friction: 0.99
+        });
+    }
+    this.particles.update(dt);
     // Achievement viewer toggle
     if (SB._achBtnTapped) {
         SB._achBtnTapped = null;
@@ -479,10 +488,18 @@ SB.Game.prototype._updatePlaying = function(dt) {
         });
     }
 
-    // Invincibility countdown
     if (this.invincibleTimer > 0) {
         this.invincibleTimer -= dt;
         this.ball.blinking = true;
+        if (!SB.reducedMotion && Math.random() < 0.3) {
+            var isAngle = Math.random() * SB.TAU;
+            this.particles.emit(this.ball.x + Math.cos(isAngle) * this.ball.radius, this.ball.y + Math.sin(isAngle) * this.ball.radius, {
+                count: 1, spread: 0.5, speedMin: 5, speedMax: 20,
+                lifeMin: 0.2, lifeMax: 0.5, sizeMin: 0.5, sizeMax: 1.5,
+                color: '255,215,0', angle: isAngle + Math.PI, angleSpread: 0.3,
+                gravity: -10, friction: 0.95
+            });
+        }
     } else {
         this.ball.blinking = false;
     }
