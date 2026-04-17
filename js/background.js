@@ -274,9 +274,10 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.save();
         ctx.lineWidth = 1;
         ctx.lineCap = 'round';
+        var slColor = d > 0.8 ? '200,150,255' : d > 0.5 ? '255,180,150' : '255,255,255';
         for (var sl = 0; sl < this.speedLines.length; sl++) {
             var line = this.speedLines[sl];
-            ctx.strokeStyle = 'rgba(255,255,255,' + line.alpha.toFixed(3) + ')';
+            ctx.strokeStyle = 'rgba(' + slColor + ',' + line.alpha.toFixed(3) + ')';
             ctx.beginPath();
             ctx.moveTo(line.x, line.y);
             ctx.lineTo(line.x, line.y - line.len);

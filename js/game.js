@@ -820,6 +820,14 @@ SB.Game.prototype._updatePlaying = function(dt) {
                          : SB.FX.powerupSlow;
             this.particles.emit(pu.x, pu.y, puPreset);
             this.ui.addPickupRing(pu.x, pu.y, puPreset.color);
+            this.ui.addPickupRing(pu.x, pu.y, '255,255,255');
+            if (!SB.reducedMotion) {
+                this.particles.emit(pu.x, pu.y, {
+                    count: 6, spread: SB.TAU, speedMin: 60, speedMax: 120,
+                    lifeMin: 0.2, lifeMax: 0.4, sizeMin: 1, sizeMax: 2.5,
+                    color: puPreset.color || '255,255,255', gravity: 0, friction: 0.9
+                });
+            }
             pu.active = false;
             this.powerupEffects.activate(pu.type);
             this.powerupFlashTimer = 0.15;
@@ -1277,6 +1285,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
             this._renderGameplay(ctx, cw, ch);
             this.ui.runBounces = this.runBounces;
             this.ui.ballSpeedFrac = Math.min(Math.abs(this.ball.vy) / SB.Physics.MAX_FALL_SPEED, 1);
+            this.ui.currentZone = this.currentZone.name;
             if (!this.daily.completed) {
                 this.ui.dailyTarget = this.daily.challenge.target;
                 this.ui.dailyProgress = this.score;

@@ -1226,10 +1226,16 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     if (this.prevRun && this.prevRun.score > 0 && this.scoreCountUp >= displayScore) {
         var diff = displayScore - this.prevRun.score;
         if (diff !== 0) {
+            ctx.save();
             ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
             var cmpArrow = diff > 0 ? '\u25B2 +' + diff : '\u25BC ' + diff;
+            if (diff > 0) {
+                ctx.shadowColor = 'rgba(46,204,113,0.4)';
+                ctx.shadowBlur = 4;
+            }
             ctx.fillStyle = diff > 0 ? 'rgba(46,204,113,' + (alpha * 0.6) + ')' : 'rgba(231,76,60,' + (alpha * 0.5) + ')';
             ctx.fillText(cmpArrow + ' vs last run', cw / 2, y);
+            ctx.restore();
         }
     }
     y += gap + 4;
@@ -1517,6 +1523,13 @@ SB.UI.prototype.drawPauseScreen = function(ctx, cw, ch) {
     ctx.fillStyle = 'rgba(255,255,255,0.4)';
     var pauseStats = Math.floor(this.displayScore) + ' pts  |  ' + (this.runBounces || 0) + ' bounces';
     ctx.fillText(pauseStats, cw / 2, ch * 0.38);
+    // Zone indicator
+    if (this.currentZone) {
+        var pzColors = { CALM: '#5DADE2', RISING: '#F39C12', INTENSE: '#E74C3C', EXTREME: '#9B59B6' };
+        ctx.font = 'bold ' + Math.min(cw * 0.02, 8) + 'px ' + this.font;
+        ctx.fillStyle = pzColors[this.currentZone] || 'rgba(255,255,255,0.3)';
+        ctx.fillText(this.currentZone + ' ZONE', cw / 2, ch * 0.42);
+    }
 
     // Resume button
     var btnW = Math.min(cw * 0.5, 180);
