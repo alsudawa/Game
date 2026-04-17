@@ -46,7 +46,7 @@ SB.Obstacle.prototype.init = function(config) {
     this.x = config.x || 0;
     this.y = config.y || 0;
     this.width = config.width || 80;
-    this.height = config.height || 14;
+    this.height = config.height || (14 + Math.min(Math.max(this.width - 80, 0) / 80, 1) * 3);
     this.speed = config.speed || 2;
     this.direction = config.direction || 1;
     this.type = config.type || SB.OBSTACLE_TYPES.PLATFORM;
@@ -384,6 +384,17 @@ SB.Obstacle.prototype._drawSpike = function(ctx) {
         ctx.arc(cx, this.y + 1, 2 * tipScale, 0, SB.TAU);
         ctx.fillStyle = 'rgba(255,200,150,' + (0.4 + tipPulse * 0.4 + tipScale * 0.1).toFixed(2) + ')';
         ctx.fill();
+        // Tip glint flash at oscillation extremes
+        if (this.oscillateAmplitude > 10) {
+            var oscSin = Math.sin(this.oscillatePhase);
+            if (Math.abs(oscSin) > 0.92) {
+                var glintA = (Math.abs(oscSin) - 0.92) / 0.08;
+                ctx.beginPath();
+                ctx.arc(cx, this.y, 3, 0, SB.TAU);
+                ctx.fillStyle = 'rgba(255,255,255,' + (glintA * 0.7).toFixed(2) + ')';
+                ctx.fill();
+            }
+        }
         // Base glow (stronger for oscillating spikes)
         var oscBoost = this.oscillateAmplitude > 0 ? Math.min(this.oscillateAmplitude / 40, 0.5) : 0;
         var basePulse = (Math.sin(this.spawnAge * 3) + 1) / 2 * (0.15 + oscBoost);
@@ -787,6 +798,21 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
     ctx.arc(cx, cy, 2, 0, SB.TAU);
     ctx.fillStyle = hcg ? '#FFFFFF' : 'rgba(255,220,255,0.9)';
     ctx.fill();
+
+    // Orbiting debris particles (count grows with lifetime)
+    if (!SB.reducedMotion) {
+        var orbCount = 2 + Math.min(Math.floor(this.lifetime / 1.2), 4);
+        for (var oi = 0; oi < orbCount; oi++) {
+            var oAngle = this.wellPhase * (1.2 + oi * 0.3) + oi * SB.TAU / orbCount;
+            var oDist = this.radius * (1.4 + oi * 0.3);
+            var ox = cx + Math.cos(oAngle) * oDist;
+            var oy = cy + Math.sin(oAngle) * oDist;
+            ctx.beginPath();
+            ctx.arc(ox, oy, 1.2, 0, SB.TAU);
+            ctx.fillStyle = hcg ? 'rgba(255,180,255,' + (wellAlpha * 0.5).toFixed(2) + ')' : 'rgba(180,120,255,' + (wellAlpha * 0.3).toFixed(2) + ')';
+            ctx.fill();
+        }
+    }
 
     // Distortion wave ring
     if (!SB.reducedMotion && !hcg) {
