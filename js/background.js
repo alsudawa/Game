@@ -43,13 +43,14 @@ SB.Background.prototype.init = function(cw, ch) {
 
     this.particles = [];
     for (var k = 0; k < 15; k++) {
+        var pDepth = 0.5 + Math.random() * 0.5;
         this.particles.push({
             x: Math.random() * cw,
             y: Math.random() * ch,
-            size: SB.randRange(1, 3),
-            speedX: SB.randRange(-5, 5),
-            speedY: SB.randRange(-8, -2),
-            alpha: SB.randRange(0.1, 0.3),
+            size: SB.randRange(1, 3) * pDepth,
+            speedX: SB.randRange(-5, 5) * pDepth,
+            speedY: SB.randRange(-8, -2) * pDepth,
+            alpha: SB.randRange(0.1, 0.3) * pDepth,
             phase: Math.random() * SB.TAU
         });
     }

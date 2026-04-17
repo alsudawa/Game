@@ -760,6 +760,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             }
             var zoneRingColor = isCoin ? '255,180,0' : (({ CALM: '255,215,0', RISING: '255,200,100', INTENSE: '255,150,100', EXTREME: '200,150,255' })[this.currentZone.name] || '255,215,0');
             this.ui.addPickupRing(col.x, col.y, zoneRingColor);
+            if (!isCoin) this.ui.addPickupRing(col.x, col.y, '255,255,255');
             if (!isCoin && !SB.reducedMotion) {
                 this.particles.emit(col.x, col.y, {
                     count: 4, spread: SB.TAU, speedMin: 15, speedMax: 40,

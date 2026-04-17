@@ -240,7 +240,7 @@ SB.Obstacle.prototype.draw = function(ctx) {
 };
 
 SB.Obstacle.prototype._drawPlatform = function(ctx) {
-    var r = 7;
+    var r = Math.min(7 + (this.width - 80) * 0.02, 10);
     // Motion blur ghost for fast platforms
     var platSpd = Math.abs(this.speed * this.direction);
     if (platSpd > 2.5 && !SB.reducedMotion) {
@@ -708,6 +708,11 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
             grad.addColorStop(1, 'rgba(255, 100, 100, 0.2)');
             ctx.fillStyle = grad;
             ctx.fillRect(0, this.y - beamH / 2, cw, beamH);
+            // Outer edge glow (soft orange fringe beyond beam)
+            var edgeGlowH = beamH * 0.3;
+            ctx.fillStyle = 'rgba(255,120,50,' + (0.08 * beamPulse).toFixed(3) + ')';
+            ctx.fillRect(0, this.y - beamH / 2 - edgeGlowH, cw, edgeGlowH);
+            ctx.fillRect(0, this.y + beamH / 2, cw, edgeGlowH);
             // Bright inner core line
             ctx.strokeStyle = 'rgba(255,255,255,' + (0.5 + beamPulse * 0.3).toFixed(2) + ')';
             ctx.lineWidth = 1.5;
