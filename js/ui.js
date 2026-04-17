@@ -1115,11 +1115,23 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
 
         ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.45) + ')';
-        var statsText = Math.floor(this.runStats.time) + 's  |  ' + this.runStats.stars + ' stars  |  +' + (this.runStats.coins || 0) + ' coins';
+        var statsText = Math.floor(this.runStats.time) + 's  |  ' + this.runStats.stars + ' stars';
         if (this.runStats.bounces) statsText += '  |  ' + this.runStats.bounces + ' bounces';
         if (this.runStats.maxCombo >= 2) statsText += '  |  ' + this.runStats.maxCombo + 'x combo';
         ctx.fillText(statsText, cw / 2, y);
         y += gap;
+        var earnedCoins = this.runStats.coins || 0;
+        if (earnedCoins > 0) {
+            var coinGlow = (Math.sin(this.blinkPhase * 2.5) + 1) / 2;
+            ctx.save();
+            ctx.shadowColor = 'rgba(255,215,0,' + (alpha * 0.5 + coinGlow * 0.3).toFixed(2) + ')';
+            ctx.shadowBlur = 4 + coinGlow * 6;
+            ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
+            ctx.fillStyle = 'rgba(255,215,0,' + (alpha * 0.7).toFixed(2) + ')';
+            ctx.fillText('+' + earnedCoins + ' coins earned', cw / 2, y);
+            ctx.restore();
+            y += gap;
+        }
 
         // Zone reached
         if (this.runStats.zone && this.runStats.zone !== 'CALM') {
@@ -1371,13 +1383,19 @@ SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost)
     ctx.lineWidth = 5;
     ctx.stroke();
 
-    // Countdown arc
+    // Countdown arc with outer glow
     var progress = countdown / 3.0;
+    var urgency = 1 - progress;
+    var glowPulse = (Math.sin((SB.frameTime || 0) * (0.006 + urgency * 0.012)) + 1) / 2;
+    ctx.save();
+    ctx.shadowColor = '#E74C3C';
+    ctx.shadowBlur = 8 + urgency * 20 + glowPulse * urgency * 15;
     ctx.beginPath();
     ctx.arc(cw / 2, countY, countR, -Math.PI / 2, -Math.PI / 2 + SB.TAU * progress);
     ctx.strokeStyle = '#E74C3C';
     ctx.lineWidth = 5;
     ctx.stroke();
+    ctx.restore();
 
     // Number with pulse
     var cpulse = 1 + (1 - (countdown % 1)) * 0.15;

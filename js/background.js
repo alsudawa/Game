@@ -240,8 +240,10 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
     for (var s = 0; s < this.shootingStars.length; s++) {
         var ss = this.shootingStars[s];
         var sa = (ss.life / ss.maxLife) * 0.8;
-        var tailX = ss.x - ss.vx * 0.06;
-        var tailY = ss.y - ss.vy * 0.06;
+        var ssSpeed = Math.sqrt(ss.vx * ss.vx + ss.vy * ss.vy);
+        var trailMult = 0.04 + (ssSpeed / 600) * 0.04;
+        var tailX = ss.x - ss.vx * trailMult;
+        var tailY = ss.y - ss.vy * trailMult;
         ctx.save();
         var ssGrad = ctx.createLinearGradient(ss.x, ss.y, tailX, tailY);
         ssGrad.addColorStop(0, 'rgba(255, 255, 255, ' + sa.toFixed(2) + ')');

@@ -255,6 +255,17 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.screenFlash = 0.04;
             this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.powerBounce);
             this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '93,173,226');
+            if (!SB.reducedMotion) {
+                for (var pbi = 0; pbi < 6; pbi++) {
+                    var pbAngle = SB.TAU * pbi / 6;
+                    this.particles.emit(this.ball.x + Math.cos(pbAngle) * this.ball.radius, this.ball.y + Math.sin(pbAngle) * this.ball.radius, {
+                        count: 1, spread: 0, speedMin: 80, speedMax: 150,
+                        lifeMin: 0.15, lifeMax: 0.3, sizeMin: 1, sizeMax: 2.5,
+                        color: '93,173,226', angle: pbAngle, angleSpread: 0.3,
+                        gravity: 0, friction: 0.88
+                    });
+                }
+            }
         } else {
             this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
             this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '255,255,255');
@@ -909,7 +920,7 @@ SB.Game.prototype._updateRevive = function(dt) {
             this.ball.y = SB.canvasHeight * 0.4;
             this.ball.vy = SB.Physics.BOUNCE_IMPULSE * 0.5;
             this.ball.vx = 0;
-            // Clear nearby obstacles (handle both rect and circular types)
+            // Clear nearby obstacles with fade-out (handle both rect and circular types)
             var obstacles = this.obstaclePool.getActive();
             for (var i = 0; i < obstacles.length; i++) {
                 var obs = obstacles[i];
@@ -918,7 +929,7 @@ SB.Game.prototype._updateRevive = function(dt) {
                 var dx = this.ball.x - ocx;
                 var dy = this.ball.y - ocy;
                 if (dx * dx + dy * dy < 22500) { // 150^2
-                    obs.active = false;
+                    obs.fadeOut = 1.0;
                 }
             }
             this.particles.emit(this.ball.x, this.ball.y, SB.FX.reviveBurst);

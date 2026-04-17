@@ -39,6 +39,7 @@ SB.Obstacle = function() {
     this.spawnAge = 0;
     this.dangerGlow = 0;
     this.returnFlash = 0;
+    this.fadeOut = 0;
 };
 
 SB.Obstacle.prototype.init = function(config) {
@@ -70,10 +71,16 @@ SB.Obstacle.prototype.init = function(config) {
     this.wellPhase = 0;
     this.spawnAge = 0;
     this.returnFlash = 0;
+    this.fadeOut = 0;
 };
 
 SB.Obstacle.prototype.update = function(dt) {
     if (!this.active) return;
+
+    if (this.fadeOut > 0) {
+        this.fadeOut -= dt * 3;
+        if (this.fadeOut <= 0) { this.active = false; return; }
+    }
 
     this.spawnAge += dt;
 
@@ -134,11 +141,21 @@ SB.Obstacle.prototype.draw = function(ctx) {
 
     var fadeSpeed = this.type === SB.OBSTACLE_TYPES.LASER ? 0.5 : (this.type === SB.OBSTACLE_TYPES.SPIKE ? 0.2 : 0.3);
     var fadeIn = Math.min(this.spawnAge / fadeSpeed, 1);
-    if (fadeIn < 1) {
+    var foAlpha = this.fadeOut > 0 ? this.fadeOut : 1;
+    if (fadeIn < 1 || foAlpha < 1) {
         ctx.save();
-        ctx.globalAlpha = fadeIn;
-        var swoosh = (1 - fadeIn) * (1 - fadeIn) * 20;
-        ctx.translate(0, -swoosh);
+        ctx.globalAlpha = Math.min(fadeIn, foAlpha);
+        if (fadeIn < 1) {
+            var swoosh = (1 - fadeIn) * (1 - fadeIn) * 20;
+            ctx.translate(0, -swoosh);
+        }
+        if (foAlpha < 1) {
+            var foScale = 0.8 + foAlpha * 0.2;
+            var foCx = this.radius ? this.x + this.radius : this.x + (this.width || 0) / 2;
+            var foCy = this.radius ? this.y + this.radius : this.y + (this.height || 0) / 2;
+            ctx.translate(foCx * (1 - foScale), foCy * (1 - foScale));
+            ctx.scale(foScale, foScale);
+        }
     }
 
     // Danger proximity glow
@@ -194,7 +211,7 @@ SB.Obstacle.prototype.draw = function(ctx) {
         this._drawGravityWell(ctx);
     }
 
-    if (fadeIn < 1) {
+    if (fadeIn < 1 || foAlpha < 1) {
         ctx.restore();
     }
 };
