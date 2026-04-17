@@ -241,6 +241,14 @@ SB.Obstacle.prototype.draw = function(ctx) {
 
 SB.Obstacle.prototype._drawPlatform = function(ctx) {
     var r = 7;
+    // Motion blur ghost for fast platforms
+    var platSpd = Math.abs(this.speed * this.direction);
+    if (platSpd > 2.5 && !SB.reducedMotion) {
+        var mbAlpha = Math.min((platSpd - 2.5) / 4, 0.12);
+        var mbOff = -this.speed * this.direction * 3;
+        ctx.fillStyle = 'rgba(231,76,60,' + mbAlpha.toFixed(3) + ')';
+        ctx.fillRect(this.x + mbOff, this.y + 1, this.width, this.height - 2);
+    }
     var edgeDist = Math.min(this.x, SB.canvasWidth - this.x - this.width);
     var edgeGlow = edgeDist < 30 ? (1 - edgeDist / 30) * 0.4 : 0;
     ctx.save();
@@ -328,6 +336,19 @@ SB.Obstacle.prototype._drawSpike = function(ctx) {
     var size = this.width;
     var cx = this.x + size / 2;
     var spikePulse = Math.sin(this.spawnAge * 4) * 3;
+
+    // Drop shadow (scales with height)
+    var shFrac = SB.canvasHeight > 0 ? SB.clamp(this.y / SB.canvasHeight, 0, 1) : 0.5;
+    var shAlpha = 0.03 + shFrac * 0.06;
+    var shScale = 0.5 + shFrac * 0.5;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,' + shAlpha.toFixed(3) + ')';
+    ctx.translate(cx, this.y + size + 3 + (1 - shFrac) * 3);
+    ctx.scale(shScale, 0.25);
+    ctx.beginPath();
+    ctx.arc(0, 0, size * 0.4, 0, SB.TAU);
+    ctx.fill();
+    ctx.restore();
 
     // Oscillation ghost trail
     if (this.oscillateAmplitude > 10 && !SB.reducedMotion) {

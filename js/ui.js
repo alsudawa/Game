@@ -1004,6 +1004,10 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     var sgColor = sgFrac > 0.7 ? '231,76,60' : (sgFrac > 0.4 ? '243,156,18' : '93,173,226');
     ctx.fillStyle = 'rgba(' + sgColor + ',' + (0.4 * hudAlpha).toFixed(2) + ')';
     ctx.fillRect(sgX, sgY, sgW * sgFrac, sgH);
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.08 * hudAlpha).toFixed(3) + ')';
+    for (var sgT = 1; sgT <= 3; sgT++) {
+        ctx.fillRect(sgX + sgW * sgT / 4, sgY - 1, 1, sgH + 2);
+    }
     // Difficulty bar
     if (difficulty > 0) {
         var dbY = sgY - 8;
@@ -1636,6 +1640,13 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.shadowColor = 'rgba(46,204,113,0.4)';
         ctx.shadowBlur = 6 + paPulse * 30;
         ctx.fillStyle = 'rgba(46, 204, 113, ' + (alpha * (0.85 + paPulse)).toFixed(2) + ')';
+        this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
+        ctx.fill();
+        var paGrad = ctx.createLinearGradient(cw / 2, playBtnY, cw / 2, playBtnY + btnH);
+        paGrad.addColorStop(0, 'rgba(255,255,255,' + (paPulse * 2).toFixed(2) + ')');
+        paGrad.addColorStop(0.5, 'rgba(255,255,255,0)');
+        paGrad.addColorStop(1, 'rgba(0,0,0,0.1)');
+        ctx.fillStyle = paGrad;
         this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
         ctx.fill();
         ctx.restore();
