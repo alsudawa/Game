@@ -100,6 +100,9 @@ SB.Game = function(canvas) {
     this._deathMarkerX = 0;
     this._deathMarkerY = 0;
     this._deathMarkerTimer = 0;
+    this._groundRippleX = 0;
+    this._groundRippleTimer = 0;
+    this._groundRippleStr = 0;
 
     SB.REVIVE_COST = 20;
 };
@@ -151,6 +154,7 @@ SB.Game.prototype.update = function(dt) {
     if (this.comboBreakFlash > 0) this.comboBreakFlash -= dt;
     if (this._impactWaveTimer > 0) this._impactWaveTimer -= dt;
     if (this._deathMarkerTimer > 0) this._deathMarkerTimer -= dt;
+    if (this._groundRippleTimer > 0) this._groundRippleTimer -= dt;
     if (this.transitionAlpha > 0) this.transitionAlpha -= dt * 3;
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
@@ -346,6 +350,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this._impactWaveY = this.ball.y + this.ball.radius;
             this._impactWaveTimer = 0.35;
             this._impactWaveStr = Math.min((preBounceVy - SB.Physics.MAX_FALL_SPEED * 0.4) / (SB.Physics.MAX_FALL_SPEED * 0.6), 1);
+        }
+        if (preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.3) {
+            this._groundRippleX = this.ball.x;
+            this._groundRippleTimer = 0.4;
+            this._groundRippleStr = Math.min((preBounceVy - SB.Physics.MAX_FALL_SPEED * 0.3) / (SB.Physics.MAX_FALL_SPEED * 0.7), 1);
         }
         // Ground impact crack lines (brief radial lines from bounce point)
         if (preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.5 && !SB.reducedMotion) {
@@ -1963,6 +1972,14 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.moveTo(-dmS, -dmS); ctx.lineTo(dmS, dmS);
         ctx.moveTo(dmS, -dmS); ctx.lineTo(-dmS, dmS);
         ctx.stroke();
+        var dmPulse = (Math.sin((SB.frameTime || 0) * 0.008) + 1) / 2;
+        var dmRingR = dmS + 4 + dmPulse * 6;
+        var dmRingA = dmA * (0.3 + dmPulse * 0.3);
+        ctx.beginPath();
+        ctx.arc(0, 0, dmRingR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(231,76,60,' + dmRingA.toFixed(3) + ')';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
         ctx.restore();
     }
 
@@ -2119,6 +2136,21 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             ctx.ellipse(this._impactWaveX, this._impactWaveY, iwR2, iwR2 * 0.3, 0, 0, SB.TAU);
             ctx.stroke();
         }
+        ctx.restore();
+    }
+
+    if (this._groundRippleTimer > 0 && !SB.reducedMotion) {
+        var grFrac = 1 - this._groundRippleTimer / 0.4;
+        var grW = grFrac * 80 * this._groundRippleStr;
+        var grA = (1 - grFrac) * 0.25 * this._groundRippleStr;
+        var grY = ch - 2;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(200,220,255,' + grA.toFixed(3) + ')';
+        ctx.lineWidth = 2 * (1 - grFrac);
+        ctx.beginPath();
+        ctx.moveTo(this._groundRippleX - grW, grY);
+        ctx.quadraticCurveTo(this._groundRippleX, grY - 6 * (1 - grFrac) * this._groundRippleStr, this._groundRippleX + grW, grY);
+        ctx.stroke();
         ctx.restore();
     }
 
@@ -2407,11 +2439,13 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
 
 SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
     var obstacles = this._renderObstacles || this.obstaclePool.getActive();
-    var margin = 40; // How close to edge before warning appears
+    var margin = 40;
+    var ewTypeColors = { platform: '231,76,60', spike: '255,100,50', blade: '180,190,210', boomerang: '255,152,0' };
     ctx.save();
     for (var i = 0; i < obstacles.length; i++) {
         var obs = obstacles[i];
         if (obs.type === SB.OBSTACLE_TYPES.LASER || obs.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) continue;
+        var ewCol = ewTypeColors[obs.type] || '231,76,60';
         var ocx, ocy;
         if (obs.radius) {
             ocx = obs.x + obs.radius;
@@ -2421,7 +2455,6 @@ SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
             ocy = obs.y + (obs.height || 0) / 2;
         }
 
-        // Left/right edge warnings (pulse faster for fast obstacles)
         var fromLeft = (ocx < 0 && ocx > -margin);
         var fromRight = (ocx > cw && ocx < cw + margin);
         if (fromLeft || fromRight) {
@@ -2431,7 +2464,7 @@ SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
                 var obsSpd = Math.abs(obs.speedX || 0) + Math.abs(obs.speedY || 0);
                 var ewPulse = obsSpd > 100 ? (Math.sin((SB.frameTime || 0) * 0.02) + 1) / 2 * 0.3 : 0;
                 var arrowAlpha = distFrac * (0.6 + ewPulse);
-                ctx.fillStyle = 'rgba(231,76,60,' + arrowAlpha.toFixed(2) + ')';
+                ctx.fillStyle = 'rgba(' + ewCol + ',' + arrowAlpha.toFixed(2) + ')';
                 ctx.beginPath();
                 if (fromLeft) {
                     ctx.moveTo(arrowX + 6, ocy - 5);
@@ -2447,13 +2480,12 @@ SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
             }
         }
 
-        // Top edge warnings (obstacle approaching from above)
         var fromTop = (ocy < 0 && ocy > -margin);
         if (fromTop && ocx >= 0 && ocx <= cw) {
             var arrowY = 8;
             var topFrac = (1 + ocy / margin);
             var topAlpha = topFrac * 0.5;
-            ctx.fillStyle = 'rgba(231,76,60,' + topAlpha.toFixed(2) + ')';
+            ctx.fillStyle = 'rgba(' + ewCol + ',' + topAlpha.toFixed(2) + ')';
             ctx.beginPath();
             ctx.moveTo(ocx - 5, arrowY + 6);
             ctx.lineTo(ocx, arrowY);
@@ -2462,13 +2494,12 @@ SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
             ctx.fill();
         }
 
-        // Bottom edge warnings (obstacle approaching from below - rare but possible)
         var fromBottom = (ocy > ch && ocy < ch + margin);
         if (fromBottom && ocx >= 0 && ocx <= cw) {
             var bArrowY = ch - 8;
             var botFrac = (1 - (ocy - ch) / margin);
             var botAlpha = botFrac * 0.5;
-            ctx.fillStyle = 'rgba(231,76,60,' + botAlpha.toFixed(2) + ')';
+            ctx.fillStyle = 'rgba(' + ewCol + ',' + botAlpha.toFixed(2) + ')';
             ctx.beginPath();
             ctx.moveTo(ocx - 5, bArrowY - 6);
             ctx.lineTo(ocx, bArrowY);

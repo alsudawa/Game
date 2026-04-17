@@ -72,11 +72,13 @@ SB.Audio.prototype.playBounce = function() {
 SB.Audio.prototype.playCollect = function() {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;
+    var detune = (Math.random() - 0.5) * 200;
 
     var osc1 = this.ctx.createOscillator();
     var gain1 = this.ctx.createGain();
     osc1.type = 'sine';
     osc1.frequency.value = 600;
+    osc1.detune.value = detune;
     gain1.gain.setValueAtTime(0.2, now);
     gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
     osc1.connect(gain1);
@@ -88,6 +90,7 @@ SB.Audio.prototype.playCollect = function() {
     var gain2 = this.ctx.createGain();
     osc2.type = 'sine';
     osc2.frequency.value = 900;
+    osc2.detune.value = detune;
     gain2.gain.setValueAtTime(0.2, now + 0.05);
     gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
     osc2.connect(gain2);
@@ -99,12 +102,13 @@ SB.Audio.prototype.playCollect = function() {
 SB.Audio.prototype.playCoinCollect = function() {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;
+    var detune = (Math.random() - 0.5) * 150;
 
-    // Metallic clink: two quick high tones
     var osc1 = this.ctx.createOscillator();
     var gain1 = this.ctx.createGain();
     osc1.type = 'triangle';
     osc1.frequency.value = 1200;
+    osc1.detune.value = detune;
     gain1.gain.setValueAtTime(0.15, now);
     gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
     osc1.connect(gain1);
@@ -116,6 +120,7 @@ SB.Audio.prototype.playCoinCollect = function() {
     var gain2 = this.ctx.createGain();
     osc2.type = 'triangle';
     osc2.frequency.value = 1600;
+    osc2.detune.value = detune;
     gain2.gain.setValueAtTime(0.12, now + 0.03);
     gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
     osc2.connect(gain2);

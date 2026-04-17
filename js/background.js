@@ -427,7 +427,20 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
             aGrad.addColorStop(0.5, 'rgba(' + aColor + ',' + (auroraAlpha * 0.5).toFixed(3) + ')');
             aGrad.addColorStop(1, 'rgba(' + aColor + ',0)');
             ctx.fillStyle = aGrad;
-            ctx.fillRect(ax - aW / 2, 0, aW, aH);
+            ctx.beginPath();
+            var aLeft = ax - aW / 2;
+            var aRight = ax + aW / 2;
+            ctx.moveTo(aLeft, aH);
+            ctx.lineTo(aLeft, 0);
+            var awSegs = 6;
+            for (var aw = 0; aw <= awSegs; aw++) {
+                var awX = aLeft + (aRight - aLeft) * (aw / awSegs);
+                var awY = Math.sin(ft * 0.8 + aw * 1.3 + ai * 2) * aH * 0.12;
+                ctx.lineTo(awX, awY);
+            }
+            ctx.lineTo(aRight, aH);
+            ctx.closePath();
+            ctx.fill();
         }
         ctx.restore();
     }
