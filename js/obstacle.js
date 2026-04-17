@@ -329,6 +329,21 @@ SB.Obstacle.prototype._drawSpike = function(ctx) {
     var cx = this.x + size / 2;
     var spikePulse = Math.sin(this.spawnAge * 4) * 3;
 
+    // Oscillation ghost trail
+    if (this.oscillateAmplitude > 10 && !SB.reducedMotion) {
+        var ghostY = this.baseY + Math.sin(this.oscillatePhase - 0.5) * this.oscillateAmplitude;
+        ctx.save();
+        ctx.globalAlpha = 0.08;
+        ctx.beginPath();
+        ctx.moveTo(cx, ghostY);
+        ctx.lineTo(this.x + size, ghostY + size);
+        ctx.lineTo(this.x, ghostY + size);
+        ctx.closePath();
+        ctx.fillStyle = '#ff6347';
+        ctx.fill();
+        ctx.restore();
+    }
+
     ctx.save();
     // Oscillating spikes wobble slightly
     if (this.oscillateAmplitude > 0 && !SB.reducedMotion) {

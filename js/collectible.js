@@ -147,7 +147,8 @@ SB.Collectible.prototype.draw = function(ctx) {
     ctx.closePath();
 
     var gradient = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
-    gradient.addColorStop(0, '#FFF8DC');
+    gradient.addColorStop(0, '#FFFDF0');
+    gradient.addColorStop(0.4, '#FFF8DC');
     gradient.addColorStop(1, '#FFD700');
     ctx.fillStyle = gradient;
     ctx.fill();

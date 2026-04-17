@@ -1575,9 +1575,13 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillText('SHARE SCORE', cw / 2 + 4, shareBtnY + btnH / 2);
         SB._shareBtn = { x: btnX, y: shareBtnY, w: btnW, h: btnH, score: displayScore };
 
-        // Play Again button (pulses gently with glow ring)
+        // Play Again button (pulses gently with glow ring + scale bounce)
         var paPulse = (Math.sin(this.blinkPhase * 1.5) + 1) / 2 * 0.1;
+        var paScale = 1 + paPulse * 0.3;
         ctx.save();
+        ctx.translate(cw / 2, playBtnY + btnH / 2);
+        ctx.scale(paScale, paScale);
+        ctx.translate(-(cw / 2), -(playBtnY + btnH / 2));
         ctx.shadowColor = 'rgba(46,204,113,0.4)';
         ctx.shadowBlur = 6 + paPulse * 30;
         ctx.fillStyle = 'rgba(46, 204, 113, ' + (alpha * (0.85 + paPulse)).toFixed(2) + ')';
@@ -1598,7 +1602,8 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
 SB.UI.prototype.drawPauseScreen = function(ctx, cw, ch) {
     this.pauseFade = Math.min(this.pauseFade + 0.08, 1);
     var pfA = this.pauseFade;
-    ctx.fillStyle = 'rgba(0, 0, 0, ' + (0.6 * pfA).toFixed(2) + ')';
+    var pauseOscBg = 0.6 + Math.sin(this.blinkPhase * 0.5) * 0.03;
+    ctx.fillStyle = 'rgba(0, 0, 0, ' + (pauseOscBg * pfA).toFixed(3) + ')';
     ctx.fillRect(0, 0, cw, ch);
 
     if (!SB.reducedMotion) {
