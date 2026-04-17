@@ -1526,6 +1526,15 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
 
     // Spawn warning indicators
     var warnings = this.spawner.getWarnings();
+    if (warnings.length > 0) {
+        // Debug: bright red circle to confirm warnings exist
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,0,0,0.5)';
+        ctx.font = 'bold 20px sans-serif';
+        ctx.textAlign = 'left';
+        ctx.fillText('WARNINGS: ' + warnings.length, 10, 50);
+        ctx.restore();
+    }
     for (var wi = 0; wi < warnings.length; wi++) {
         this._drawSpawnWarning(ctx, cw, ch, warnings[wi]);
     }
