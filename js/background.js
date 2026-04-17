@@ -224,7 +224,14 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.save();
         var cdepth = cloud.depth || 1;
         var cBright = Math.floor(200 + cdepth * 55);
-        ctx.fillStyle = 'rgba(' + cBright + ',' + cBright + ',' + cBright + ',' + (cloud.alpha * cloudDiffMult).toFixed(3) + ')';
+        var cR = cBright, cG = cBright, cB = cBright;
+        if (d > 0.5) {
+            var cTint = (d - 0.5) / 0.5;
+            cR = Math.floor(cBright + cTint * 40);
+            cG = Math.floor(cBright - cTint * 30);
+            cB = Math.floor(cBright - cTint * 20);
+        }
+        ctx.fillStyle = 'rgba(' + cR + ',' + cG + ',' + cB + ',' + (cloud.alpha * cloudDiffMult).toFixed(3) + ')';
         ctx.translate(cloud.x + cloudPx * cdepth, cloud.y + cloudPy * cdepth);
         ctx.scale(1, cloud.height / cloud.width);
         ctx.beginPath();

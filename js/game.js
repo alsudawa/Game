@@ -323,6 +323,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
 
     this.ball.comboIntensity = this.comboCount >= 5 ? 1.0 : (this.comboCount >= 3 ? 0.5 : 0);
     this.ball.update(dt);
+    SB._ballVx = this.ball.vx;
 
     // Fast-fall sparkle particles behind ball
     var fallFrac = Math.abs(this.ball.vy) / SB.Physics.MAX_FALL_SPEED;

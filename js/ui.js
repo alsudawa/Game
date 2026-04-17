@@ -158,7 +158,7 @@ SB.UI.prototype.addScorePopup = function(x, y, text, color) {
         for (var pi = 0; pi < this.scorePopups.length; pi++) {
             if (Math.abs(this.scorePopups[pi].y - y) < 18) y -= 18;
         }
-        var drift = (x - SB.canvasWidth / 2) / SB.canvasWidth * 40;
+        var drift = (x - SB.canvasWidth / 2) / SB.canvasWidth * 40 + (SB._ballVx || 0) * 0.3;
         var numMatch = text.match(/\d+/);
         var valScale = numMatch ? Math.min(parseInt(numMatch[0], 10) / 10, 1.5) : 1;
         var popScale = 1 + valScale * 0.2;
@@ -1299,8 +1299,17 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.45) + ')';
         var statsText = Math.floor(this.runStats.time) + 's  |  ' + this.runStats.stars + ' stars';
         if (this.runStats.bounces) statsText += '  |  ' + this.runStats.bounces + ' bounces';
-        if (this.runStats.maxCombo >= 2) statsText += '  |  ' + this.runStats.maxCombo + 'x combo';
         ctx.fillText(statsText, cw / 2, y);
+        if (this.runStats.maxCombo >= 2) {
+            y += gap;
+            var mcColor = this.runStats.maxCombo >= 7 ? '#FF0044' : (this.runStats.maxCombo >= 5 ? '#FF4444' : (this.runStats.maxCombo >= 3 ? '#FF8C42' : '#FFD700'));
+            ctx.save();
+            ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
+            ctx.fillStyle = mcColor;
+            ctx.globalAlpha = alpha * 0.7;
+            ctx.fillText(this.runStats.maxCombo + 'x MAX COMBO', cw / 2, y);
+            ctx.restore();
+        }
         y += gap;
         var earnedCoins = this.runStats.coins || 0;
         if (earnedCoins > 0) {

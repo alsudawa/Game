@@ -240,9 +240,11 @@ SB.Obstacle.prototype.draw = function(ctx) {
 
 SB.Obstacle.prototype._drawPlatform = function(ctx) {
     var r = 7;
+    var edgeDist = Math.min(this.x, SB.canvasWidth - this.x - this.width);
+    var edgeGlow = edgeDist < 30 ? (1 - edgeDist / 30) * 0.4 : 0;
     ctx.save();
-    ctx.shadowColor = 'rgba(231, 76, 60, 0.4)';
-    ctx.shadowBlur = 8;
+    ctx.shadowColor = edgeGlow > 0 ? 'rgba(255, 100, 80, ' + (0.4 + edgeGlow).toFixed(2) + ')' : 'rgba(231, 76, 60, 0.4)';
+    ctx.shadowBlur = 8 + edgeGlow * 12;
 
     ctx.beginPath();
     ctx.moveTo(this.x + r, this.y);
@@ -345,8 +347,9 @@ SB.Obstacle.prototype._drawSpike = function(ctx) {
         ctx.arc(cx, this.y + 1, 2 * tipScale, 0, SB.TAU);
         ctx.fillStyle = 'rgba(255,200,150,' + (0.4 + tipPulse * 0.4 + tipScale * 0.1).toFixed(2) + ')';
         ctx.fill();
-        // Base glow
-        var basePulse = (Math.sin(this.spawnAge * 3) + 1) / 2 * 0.15;
+        // Base glow (stronger for oscillating spikes)
+        var oscBoost = this.oscillateAmplitude > 0 ? Math.min(this.oscillateAmplitude / 40, 0.5) : 0;
+        var basePulse = (Math.sin(this.spawnAge * 3) + 1) / 2 * (0.15 + oscBoost);
         var baseGrad = ctx.createRadialGradient(cx, this.y + size, 0, cx, this.y + size, size * 0.6);
         baseGrad.addColorStop(0, 'rgba(255,80,50,' + basePulse.toFixed(3) + ')');
         baseGrad.addColorStop(1, 'rgba(255,80,50,0)');
