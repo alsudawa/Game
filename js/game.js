@@ -875,6 +875,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         var milestoneScore = currentMilestone * 10;
         if (milestoneScore === 25 || milestoneScore === 50 || milestoneScore === 100 || milestoneScore === 200) {
             this.screenFlash = 0.1;
+            this.cameraZoom = milestoneScore >= 100 ? 0.15 : 0.08;
             this.particles.emit(cw / 2, ch * 0.3, SB.FX.starCollect);
             this.particles.emit(cw / 2, ch * 0.3, SB.FX.starCollect);
             // Fireworks from screen edges
@@ -1604,18 +1605,23 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
 
     // Wall edge flash (brief glow on the edge the ball bounced off)
     if (this.wallFlashTimer > 0 && !SB.reducedMotion) {
-        var wfAlpha = (this.wallFlashTimer / 0.15) * 0.3;
-        var wfX = this.wallFlashSide < 0 ? 0 : cw - 30;
-        var wfGrad = ctx.createLinearGradient(wfX, 0, wfX + (this.wallFlashSide < 0 ? 30 : 30), 0);
+        var wfFrac = this.wallFlashTimer / 0.15;
+        var wfAlpha = wfFrac * 0.3;
+        var wfStreak = Math.min(this.wallBounceStreak, 5);
+        var wfColor = wfStreak >= 3 ? '93,173,226' : '255,255,255';
+        var wfW = 30 + wfStreak * 5;
+        var wfH = 120 + wfStreak * 20;
+        var wfX = this.wallFlashSide < 0 ? 0 : cw - wfW;
+        var wfGrad = ctx.createLinearGradient(wfX, 0, wfX + wfW, 0);
         if (this.wallFlashSide < 0) {
-            wfGrad.addColorStop(0, 'rgba(255,255,255,' + wfAlpha.toFixed(3) + ')');
-            wfGrad.addColorStop(1, 'rgba(255,255,255,0)');
+            wfGrad.addColorStop(0, 'rgba(' + wfColor + ',' + wfAlpha.toFixed(3) + ')');
+            wfGrad.addColorStop(1, 'rgba(' + wfColor + ',0)');
         } else {
-            wfGrad.addColorStop(0, 'rgba(255,255,255,0)');
-            wfGrad.addColorStop(1, 'rgba(255,255,255,' + wfAlpha.toFixed(3) + ')');
+            wfGrad.addColorStop(0, 'rgba(' + wfColor + ',0)');
+            wfGrad.addColorStop(1, 'rgba(' + wfColor + ',' + wfAlpha.toFixed(3) + ')');
         }
         ctx.fillStyle = wfGrad;
-        ctx.fillRect(wfX, this.ball.y - 60, 30, 120);
+        ctx.fillRect(wfX, this.ball.y - wfH / 2, wfW, wfH);
     }
 
     if (this.powerupEffects.shield) {

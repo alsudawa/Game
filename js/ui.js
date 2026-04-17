@@ -412,9 +412,15 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.fillText(this._tips[this._tipIndex], cw / 2, ch * 0.70);
 
     if (highScore > 0) {
+        ctx.save();
         ctx.font = Math.min(cw * 0.045, 18) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
+        if (highScore >= 50) {
+            ctx.shadowColor = 'rgba(255,215,0,0.5)';
+            ctx.shadowBlur = 8 + (Math.sin(this.blinkPhase * 1.5) + 1) / 2 * 8;
+        }
+        ctx.fillStyle = highScore >= 50 ? 'rgba(255, 215, 0, 0.85)' : 'rgba(255, 215, 0, 0.7)';
         ctx.fillText('BEST: ' + SB.formatNum(highScore), cw / 2, ch * 0.74);
+        ctx.restore();
         // Sparkle dots flanking the score
         var hsSparkle = (Math.sin(this.blinkPhase * 2.5) + 1) / 2;
         var hsW = ctx.measureText('BEST: ' + SB.formatNum(highScore)).width / 2 + 8;

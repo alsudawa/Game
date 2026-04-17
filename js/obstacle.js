@@ -364,14 +364,16 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
     ctx.fillStyle = SB.highContrast ? '#FF0000' : '#2c3e50';
     ctx.fill();
 
-    // Spin motion blur arcs + sparks
+    // Spin motion blur arcs + sparks (wider arcs at higher speed)
     if (!SB.reducedMotion) {
+        var bladeSpd = Math.abs(this.speedX || 0) + Math.abs(this.speedY || 0);
+        var arcLen = 0.5 + Math.min(bladeSpd / 200, 0.6);
+        var arcAlpha = 0.08 + Math.min(bladeSpd / 300, 0.08);
         for (var si = 0; si < 3; si++) {
             var sAngle = (SB.TAU / 3) * si;
-            var sAlpha = 0.08;
             ctx.beginPath();
-            ctx.arc(0, 0, this.radius + 2, sAngle, sAngle + 0.5);
-            ctx.strokeStyle = 'rgba(180,180,190,' + sAlpha.toFixed(2) + ')';
+            ctx.arc(0, 0, this.radius + 2, sAngle, sAngle + arcLen);
+            ctx.strokeStyle = 'rgba(180,180,190,' + arcAlpha.toFixed(2) + ')';
             ctx.lineWidth = 2;
             ctx.stroke();
         }
@@ -622,10 +624,21 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
         ctx.restore();
     }
 
-    // Inner dot
+    // Inner eye (dark center + pulsing iris)
+    if (!hcg) {
+        var irisR = 5 + Math.sin(this.wellPhase * 2) * 1.5;
+        var irisGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, irisR);
+        irisGrad.addColorStop(0, 'rgba(20,0,30,0.9)');
+        irisGrad.addColorStop(0.6, 'rgba(100,50,150,0.6)');
+        irisGrad.addColorStop(1, 'rgba(200,150,255,0)');
+        ctx.beginPath();
+        ctx.arc(cx, cy, irisR, 0, SB.TAU);
+        ctx.fillStyle = irisGrad;
+        ctx.fill();
+    }
     ctx.beginPath();
-    ctx.arc(cx, cy, 3, 0, SB.TAU);
-    ctx.fillStyle = hcg ? '#FFFFFF' : 'rgba(200,150,255,0.9)';
+    ctx.arc(cx, cy, 2, 0, SB.TAU);
+    ctx.fillStyle = hcg ? '#FFFFFF' : 'rgba(255,220,255,0.9)';
     ctx.fill();
 
     // Outer pull boundary ring (dashed)
