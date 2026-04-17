@@ -129,6 +129,11 @@ SB.Ball.prototype.draw = function(ctx) {
     this._activeTrailLen = targetLen;
     var drawLen = Math.min(this._trailLen, this._activeTrailLen);
     var start = (this._trailHead - drawLen + this.maxTrail) % this.maxTrail;
+    var trailC = this.trailColor;
+    if (comboBoost >= 0.5) {
+        var cShift = Math.min((comboBoost - 0.5) / 0.5, 1);
+        trailC = 'rgba(' + Math.floor(255) + ',' + Math.floor(215 - cShift * 147) + ',' + Math.floor(cShift * 68) + ',';
+    }
     for (var i = 0; i < drawLen; i++) {
         var idx = (start + i) % this.maxTrail;
         var t = this._trailBuf[idx];
@@ -137,7 +142,7 @@ SB.Ball.prototype.draw = function(ctx) {
         var size = this.radius * (0.4 + 0.6 * frac) * trailSizeMult;
         ctx.beginPath();
         ctx.arc(t.x, t.y, size, 0, SB.TAU);
-        ctx.fillStyle = this.trailColor + alpha.toFixed(2) + ')';
+        ctx.fillStyle = trailC + alpha.toFixed(2) + ')';
         ctx.fill();
     }
 

@@ -171,13 +171,14 @@ SB.Collectible.prototype.draw = function(ctx) {
         ctx.restore();
     }
 
+    var spkScale = 1 + (proxBoost0 > 0 ? proxBoost0 * 0.8 : 0);
     for (var j = 0; j < this.sparkles.length; j++) {
         var s = this.sparkles[j];
         var alpha = (Math.sin(s.phase) + 1) / 2 * 0.8;
         var sx = this.x + Math.cos(s.angle + s.phase * 0.3) * s.dist;
         var sy = this.y + bobY + Math.sin(s.angle + s.phase * 0.3) * s.dist;
         ctx.beginPath();
-        ctx.arc(sx, sy, s.size, 0, SB.TAU);
+        ctx.arc(sx, sy, s.size * spkScale, 0, SB.TAU);
         ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
         ctx.fill();
     }

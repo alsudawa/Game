@@ -433,14 +433,16 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
     var cx = this.x + this.radius;
     var cy = this.y + this.radius;
 
+    var bmRet = this.returning ? 1 : 0;
     if (!SB.reducedMotion) {
         var tDir = this.direction;
+        var trR = bmRet ? '255,80,60' : '255,152,0';
         for (var ti = 1; ti <= 4; ti++) {
             var tAlpha = (1 - ti / 5) * 0.12;
             var tx = cx - tDir * this.speed * 0.3 * ti;
             ctx.beginPath();
             ctx.arc(tx, cy, 2 - ti * 0.3, 0, SB.TAU);
-            ctx.fillStyle = 'rgba(255,152,0,' + tAlpha.toFixed(2) + ')';
+            ctx.fillStyle = 'rgba(' + trR + ',' + tAlpha.toFixed(2) + ')';
             ctx.fill();
         }
     }
@@ -448,7 +450,7 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(this.rotation);
-    ctx.shadowColor = 'rgba(255, 152, 0, 0.5)';
+    ctx.shadowColor = bmRet ? 'rgba(255, 80, 60, 0.5)' : 'rgba(255, 152, 0, 0.5)';
     ctx.shadowBlur = 10;
 
     // Boomerang shape: curved V
@@ -542,6 +544,15 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         ctx.beginPath();
         ctx.arc(cw - 8, this.y, dotR, 0, SB.TAU);
         ctx.fill();
+        // Expanding pulse rings at emitters
+        if (!SB.reducedMotion) {
+            var lpR = 6 + (this.laserTimer % 0.5) / 0.5 * 14;
+            var lpA = (1 - (this.laserTimer % 0.5) / 0.5) * 0.3;
+            ctx.strokeStyle = 'rgba(255,50,50,' + lpA.toFixed(2) + ')';
+            ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.arc(8, this.y, lpR, 0, SB.TAU); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cw - 8, this.y, lpR, 0, SB.TAU); ctx.stroke();
+        }
         ctx.restore();
     } else if (this.laserPhase === 'charge') {
         var pulse = 0.5 + Math.sin(this.laserTimer * 35) * 0.4;

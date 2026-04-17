@@ -1397,9 +1397,21 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
             var bh = Math.max(2, (this.recentRuns[rj] / maxRun) * chartH);
             var by = y + chartH - bh;
             var isLast = (rj === this.recentRuns.length - 1);
+            if (isLast) {
+                ctx.save();
+                ctx.shadowColor = 'rgba(255,215,0,0.4)';
+                ctx.shadowBlur = 4;
+            }
             ctx.fillStyle = isLast ? 'rgba(255,215,0,0.7)' : 'rgba(255,255,255,0.25)';
             this._roundRect(ctx, bx, by, barW2, bh, 2);
             ctx.fill();
+            if (isLast) {
+                ctx.font = Math.min(cw * 0.015, 6) + 'px ' + this.font;
+                ctx.fillStyle = 'rgba(255,215,0,0.8)';
+                ctx.textAlign = 'center';
+                ctx.fillText('' + this.recentRuns[rj], bx + barW2 / 2, by - 3);
+                ctx.restore();
+            }
         }
         ctx.restore();
         y += chartH + gap;
