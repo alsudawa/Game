@@ -949,7 +949,14 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     var coinShakeX = this.coinBump > 0 ? Math.sin(this.coinBump * 50) * this.coinBump / 0.2 * 3 : 0;
     ctx.font = 'bold ' + Math.min(cw * 0.03 * coinScale, 12 * coinScale) + 'px ' + this.font;
     ctx.fillStyle = this.coinBump > 0 ? 'rgba(255,215,0,1)' : 'rgba(255,215,0,0.75)';
-    ctx.fillText((cachedCoins || 0) + ' coins', cw - 12 + coinShakeX, 10);
+    var coinText = (cachedCoins || 0) + ' coins';
+    ctx.fillText(coinText, cw - 12 + coinShakeX, 10);
+    // Coin icon
+    var ciX = cw - 12 - ctx.measureText(coinText).width - 8 + coinShakeX;
+    ctx.beginPath();
+    ctx.arc(ciX, 14, 4 * coinScale, 0, SB.TAU);
+    ctx.fillStyle = 'rgba(255,200,0,' + (0.6 * hudAlpha).toFixed(2) + ')';
+    ctx.fill();
     if (cachedHighScore > 0) {
         ctx.fillStyle = score >= cachedHighScore ? 'rgba(46,204,113,0.6)' : 'rgba(255,255,255,0.3)';
         ctx.fillText('PB: ' + cachedHighScore, cw - 12, 26);
@@ -1044,6 +1051,8 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
             var cln = this._chainLines[cli];
             var clAlpha = (1 - cln.timer / cln.duration) * 0.3;
             ctx.save();
+            ctx.shadowColor = 'rgba(255,215,0,' + (clAlpha * 0.5).toFixed(2) + ')';
+            ctx.shadowBlur = 4;
             ctx.beginPath();
             ctx.moveTo(cln.x1, cln.y1);
             ctx.lineTo(cln.x2, cln.y2);

@@ -219,14 +219,15 @@ SB.Ball.prototype.draw = function(ctx) {
     }
     ctx.restore();
 
-    // Drop shadow (scales with height: larger/darker near bottom)
+    // Drop shadow (scales with height: larger/softer higher up, smaller/darker near bottom)
     var heightFrac = SB.canvasHeight > 0 ? SB.clamp(this.y / SB.canvasHeight, 0, 1) : 0.5;
     var shadowScale = 0.4 + heightFrac * 0.6;
     var shadowAlpha = 0.05 + heightFrac * 0.15;
+    var shadowSpread = 1 + (1 - heightFrac) * 0.3;
     ctx.save();
     ctx.fillStyle = 'rgba(0, 0, 0, ' + shadowAlpha.toFixed(2) + ')';
     ctx.translate(this.x, this.y + this.radius + 6 + (1 - heightFrac) * 4);
-    ctx.scale(shadowScale, 0.35 * shadowScale);
+    ctx.scale(shadowScale * shadowSpread, 0.35 * shadowScale * shadowSpread);
     ctx.beginPath();
     ctx.arc(0, 0, this.radius * 0.7, 0, SB.TAU);
     ctx.fill();

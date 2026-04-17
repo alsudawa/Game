@@ -489,8 +489,9 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
         for (var ti = 1; ti <= 4; ti++) {
             var tAlpha = (1 - ti / 5) * 0.12;
             var tx = cx - tDir * this.speed * 0.3 * ti;
+            var tyCurve = cy + Math.sin(ti * 0.8 + this.rotation) * 3;
             ctx.beginPath();
-            ctx.arc(tx, cy, 2 - ti * 0.3, 0, SB.TAU);
+            ctx.arc(tx, tyCurve, 2 - ti * 0.3, 0, SB.TAU);
             ctx.fillStyle = 'rgba(' + trR + ',' + tAlpha.toFixed(2) + ')';
             ctx.fill();
         }
@@ -785,13 +786,14 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
         ctx.stroke();
     }
 
-    // Outer pull boundary ring (dashed)
+    // Outer pull boundary ring (dashed, pulsing width)
     var bdAlpha = pulse * 0.08;
+    var bdPulse = 1 + Math.sin(this.wellPhase * 2) * 0.5;
     ctx.beginPath();
     ctx.arc(cx, cy, this.pullRadius, 0, SB.TAU);
     ctx.strokeStyle = 'rgba(155,89,182,' + bdAlpha.toFixed(3) + ')';
     ctx.setLineDash([4, 6]);
-    ctx.lineWidth = 1;
+    ctx.lineWidth = bdPulse;
     ctx.stroke();
     ctx.setLineDash([]);
 
