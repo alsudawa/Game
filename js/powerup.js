@@ -105,6 +105,17 @@ SB.Powerup.prototype.draw = function(ctx) {
         ctx.fillText('x2', 0, 1);
     }
 
+    // Shimmer highlight
+    if (!SB.reducedMotion) {
+        var shAngle = this.phase * 1.5;
+        var shA = (Math.sin(this.phase * 2) + 1) / 2 * 0.4;
+        ctx.beginPath();
+        ctx.arc(0, 0, r + 3, shAngle, shAngle + 0.8);
+        ctx.strokeStyle = 'rgba(255,255,255,' + shA.toFixed(2) + ')';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
     ctx.restore();
 };
 

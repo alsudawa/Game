@@ -832,6 +832,14 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.restore();
+        var cbW = Math.min(cw * 0.3, 100);
+        var cbH = 3;
+        var cbX = (cw - cbW) / 2;
+        var cbY = 38;
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.08 * hudAlpha).toFixed(2) + ')';
+        ctx.fillRect(cbX, cbY, cbW, cbH);
+        ctx.fillStyle = 'rgba(' + ctColor + ',' + (0.5 * hudAlpha * ctFrac).toFixed(2) + ')';
+        ctx.fillRect(cbX, cbY, cbW * ctFrac, cbH);
         if (comboCount >= 2) {
             ctx.save();
             ctx.font = 'bold ' + Math.min(cw * 0.025, 10) + 'px ' + this.font;

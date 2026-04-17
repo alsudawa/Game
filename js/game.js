@@ -66,6 +66,7 @@ SB.Game = function(canvas) {
     this.hudHighScore = 0;
     this.nearMissStreak = 0;
     this.nearMissStreakTimer = 0;
+    this.nearMissSparkTimer = 0;
     this.lastBounceTime = 0;
     this.deathCause = '';
     this.runBounces = 0;
@@ -456,6 +457,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         this.nearMissStreakTimer -= dt;
         if (this.nearMissStreakTimer <= 0) this.nearMissStreak = 0;
     }
+    if (this.nearMissSparkTimer > 0) this.nearMissSparkTimer -= dt;
 
     this.powerupEffects.update(dt);
     this.particles.update(dt);
@@ -634,6 +636,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 }
                 this.achievements.onNearMiss();
                 SB.audio.playNearMiss();
+                this.nearMissSparkTimer = 0.5;
                 if (navigator.vibrate) navigator.vibrate(15);
             }
         }
@@ -1179,6 +1182,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.deathPending = null;
         this.nearMissStreak = 0;
         this.nearMissStreakTimer = 0;
+        this.nearMissSparkTimer = 0;
         this.lastBounceTime = 0;
         this.isNewHigh = false;
         this.deathCause = '';
@@ -1719,6 +1723,13 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.lineWidth = 2;
         ctx.stroke();
         ctx.restore();
+        var bzH = ch * 0.12 * dgFrac;
+        var bzAlpha = dgFrac * (0.15 + dgPulse * 0.08);
+        var bzGrad = ctx.createLinearGradient(0, ch, 0, ch - bzH);
+        bzGrad.addColorStop(0, 'rgba(231,50,40,' + bzAlpha.toFixed(3) + ')');
+        bzGrad.addColorStop(1, 'rgba(231,50,40,0)');
+        ctx.fillStyle = bzGrad;
+        ctx.fillRect(0, ch - bzH, cw, bzH);
     }
 
     if (this.invincibleTimer > 0 && !SB.reducedMotion) {
@@ -1736,6 +1747,23 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.globalAlpha = 0.5 + Math.abs(Math.sin(this.invincibleTimer * 12)) * 0.5;
     }
     this.ball.draw(ctx);
+    if (this.nearMissSparkTimer > 0 && !SB.reducedMotion) {
+        var nmsFrac = this.nearMissSparkTimer / 0.5;
+        var nmsA = nmsFrac * 0.6;
+        ctx.save();
+        for (var nmi = 0; nmi < 3; nmi++) {
+            var nmsAngle = ((SB.frameTime || 0) * 0.015 + nmi * 2.1) % SB.TAU;
+            var nmsDist = this.ball.radius + 4 + (1 - nmsFrac) * 8;
+            var nmsX = this.ball.x + Math.cos(nmsAngle) * nmsDist;
+            var nmsY = this.ball.y + Math.sin(nmsAngle) * nmsDist;
+            var nmsSize = 1.5 * nmsFrac;
+            ctx.beginPath();
+            ctx.arc(nmsX, nmsY, nmsSize, 0, SB.TAU);
+            ctx.fillStyle = 'rgba(243,156,18,' + nmsA.toFixed(2) + ')';
+            ctx.fill();
+        }
+        ctx.restore();
+    }
     if (this.invincibleTimer > 0 && !SB.reducedMotion) {
         ctx.restore();
     }

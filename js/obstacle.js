@@ -164,6 +164,25 @@ SB.Obstacle.prototype.draw = function(ctx) {
         }
     }
 
+    // Entrance swoosh sparkles
+    if (fadeIn < 0.8 && !SB.reducedMotion) {
+        var swAlpha = (1 - fadeIn / 0.8) * 0.3;
+        var swCx = this.radius ? this.x + this.radius : this.x + (this.width || 0) / 2;
+        var swCy = this.radius ? this.y + this.radius : this.y + (this.height || 0) / 2;
+        var swR = (this.radius || this.width * 0.4 || 20) + (1 - fadeIn) * 15;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,' + swAlpha.toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        for (var swi = 0; swi < 4; swi++) {
+            var swA = swi * (SB.TAU / 4) + fadeIn * 2;
+            ctx.beginPath();
+            ctx.moveTo(swCx + Math.cos(swA) * swR * 0.6, swCy + Math.sin(swA) * swR * 0.6);
+            ctx.lineTo(swCx + Math.cos(swA) * swR, swCy + Math.sin(swA) * swR);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
     // Danger proximity glow
     if (this.dangerGlow > 0) {
         var dgPulse = 0.5 + Math.sin((SB.frameTime || 0) * 0.012) * 0.3;
