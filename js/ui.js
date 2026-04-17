@@ -966,6 +966,7 @@ SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dail
     this.streak = streak || { current: 0, best: 0 };
     this.recentRuns = recentRuns || [];
     this.prevRun = prevRun || null;
+    this.achCount = 0;
 };
 
 SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh) {
@@ -1195,6 +1196,17 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillRect(xpBarX, y, xpBarW * progress, xpBarH);
         ctx.restore();
         y += xpBarH + gap;
+    }
+
+    // Achievement count (staggered)
+    if (this.achCount !== undefined && detailAlpha > 0) {
+        ctx.save();
+        ctx.globalAlpha = detailAlpha * 0.5;
+        ctx.font = Math.min(cw * 0.022, 9) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,215,0,0.5)';
+        ctx.fillText(this.achCount + '/' + SB.ACHIEVEMENTS.length + ' achievements', cw / 2, y);
+        ctx.restore();
+        y += gap;
     }
 
     if (this.gameOverAlpha >= 0.8) {

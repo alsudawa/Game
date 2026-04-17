@@ -38,6 +38,7 @@ SB.Obstacle = function() {
     this.wellPhase = 0;
     this.spawnAge = 0;
     this.dangerGlow = 0;
+    this.returnFlash = 0;
 };
 
 SB.Obstacle.prototype.init = function(config) {
@@ -68,6 +69,7 @@ SB.Obstacle.prototype.init = function(config) {
     this.pullStrength = config.pullStrength || 200;
     this.wellPhase = 0;
     this.spawnAge = 0;
+    this.returnFlash = 0;
 };
 
 SB.Obstacle.prototype.update = function(dt) {
@@ -102,7 +104,9 @@ SB.Obstacle.prototype.update = function(dt) {
         if (!this.returning && this.traveled >= this.travelDist) {
             this.returning = true;
             this.direction *= -1;
+            this.returnFlash = 0.3;
         }
+        if (this.returnFlash > 0) this.returnFlash -= dt;
     } else if (this.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) {
         this.wellPhase += dt * 2;
         this.lifetime += dt;
@@ -343,6 +347,17 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
         ctx.stroke();
     }
 
+    // Return flash warning
+    if (this.returnFlash > 0) {
+        var rfAlpha = this.returnFlash / 0.3 * 0.5;
+        var rfR = this.radius + 8 + (0.3 - this.returnFlash) / 0.3 * 12;
+        ctx.beginPath();
+        ctx.arc(cx, cy, rfR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(255,152,0,' + rfAlpha.toFixed(2) + ')';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
+
     ctx.restore();
 };
 
@@ -387,7 +402,8 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         ctx.stroke();
         ctx.restore();
     } else if (this.laserPhase === 'active') {
-        var beamH = 18;
+        var beamPulse = 1 + Math.sin(this.laserTimer * 20) * 0.15;
+        var beamH = 18 * beamPulse;
         ctx.save();
         if (hc) {
             ctx.fillStyle = 'rgba(255, 0, 0, 0.95)';

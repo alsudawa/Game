@@ -734,6 +734,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.achievements.onPowerupCollect();
             if (pu.type === SB.POWERUP_TYPES.SCORE_MULT) {
                 this.achievements.onScoreMultUse();
+                this.screenFlash = 0.1;
+                this.ui.addScorePopup(pu.x, pu.y - 20, 'x2 SCORE!', '#FFD54F');
             }
             // Type-specific pickup sounds
             if (pu.type === SB.POWERUP_TYPES.SHIELD) {
@@ -1117,6 +1119,7 @@ SB.Game.prototype._transitionTo = function(newState) {
             deathCause: this.deathCause || 'Unknown',
             bounces: this.runBounces
         }, streak, recentRuns, prevRun);
+        this.ui.achCount = this.achievements.getUnlockedCount();
         SB.audio.stopBGM();
         SB.audio.playGameOver();
     } else if (newState === SB.STATES.START) {
@@ -1396,6 +1399,8 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0, vigAlpha).toFixed(3) + ')';
         ctx.fillRect(0, 0, cw, ch);
         this.ball.radius = this.ball.baseRadius * (1 + deathProgress * 0.4);
+        ctx.save();
+        ctx.globalAlpha = 1 - deathProgress * 0.6;
     } else {
         this.ball.radius = this.ball.baseRadius;
     }
@@ -1420,6 +1425,9 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
     }
     this.ball.draw(ctx);
     if (this.invincibleTimer > 0 && !SB.reducedMotion) {
+        ctx.restore();
+    }
+    if (this.deathSlowMo > 0) {
         ctx.restore();
     }
     this.particles.draw(ctx);
