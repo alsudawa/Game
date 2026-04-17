@@ -459,10 +459,15 @@ SB.Audio.prototype.startBGM = function() {
     var ctx = this.ctx;
     var now = ctx.currentTime;
 
+    this._bgmFilter = ctx.createBiquadFilter();
+    this._bgmFilter.type = 'lowpass';
+    this._bgmFilter.frequency.value = 20000;
+    this._bgmFilter.Q.value = 0.5;
+    this._bgmFilter.connect(this.masterGain);
     this._bgmGain = ctx.createGain();
     this._bgmGain.gain.setValueAtTime(0, now);
     this._bgmGain.gain.linearRampToValueAtTime(0.07, now + 2.0);
-    this._bgmGain.connect(this.masterGain);
+    this._bgmGain.connect(this._bgmFilter);
 
     // Pad layer: 3 triangle oscillators for sustained chord
     this._bgmPadOscs = [];
@@ -612,6 +617,12 @@ SB.Audio.prototype.updateBGMIntensity = function(difficulty) {
     var vol = SB.lerp(0.06, 0.09, difficulty);
     this._bgmGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.5);
     if (this.beatPulse > 0) this.beatPulse = Math.max(0, this.beatPulse - 0.08);
+};
+
+SB.Audio.prototype.setBGMDanger = function(danger) {
+    if (!this._bgmFilter || !this.ctx) return;
+    var freq = SB.lerp(20000, 800, SB.clamp(danger, 0, 1));
+    this._bgmFilter.frequency.setTargetAtTime(freq, this.ctx.currentTime, 0.1);
 };
 
 SB.Audio.prototype.stopBGM = function() {

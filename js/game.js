@@ -563,6 +563,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
     }
 
     // --- Obstacles ---
+    this._maxDangerGlow = 0;
     this.ball.gravityPullStrength = 0;
     var obstacles = this.obstaclePool.getActive();
     var ballBounds = this.ball.getBounds();
@@ -611,6 +612,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             var dpDist = Math.sqrt(dpDx * dpDx + dpDy * dpDy);
             var dangerThreshold = 60;
             obs.dangerGlow = dpDist < dangerThreshold ? 1 - dpDist / dangerThreshold : 0;
+            if (obs.dangerGlow > (this._maxDangerGlow || 0)) this._maxDangerGlow = obs.dangerGlow;
         }
 
         // Gravity well: apply pull force, no collision
@@ -999,6 +1001,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
     // Update BGM intensity with difficulty
     SB.audio.updateBGMIntensity(this.spawner.difficulty);
 
+    var ballDanger = SB.clamp((this.ball.y - ch * 0.7) / (ch * 0.3), 0, 1);
+    SB.audio.setBGMDanger(ballDanger);
+
     var preAchCount = this.achievements.pendingNotifications.length;
     this.achievements.checkAll();
     if (this.achievements.pendingNotifications.length > preAchCount) {
@@ -1095,9 +1100,16 @@ SB.Game.prototype._updateRevive = function(dt) {
             this.state = SB.STATES.PLAYING;
             this.invincibleTimer = 3.0;
             this.ball.blinking = true;
-            this.screenFlash = 0.15;
+            this.screenFlash = 0.2;
+            this.cameraZoom = 0.15;
             this.ui.addPickupRing(SB.canvasWidth / 2, SB.canvasHeight * 0.4, '255,215,0');
             this.ui.addPickupRing(SB.canvasWidth / 2, SB.canvasHeight * 0.4, '255,255,255');
+            this.ui.addPickupRing(SB.canvasWidth / 2, SB.canvasHeight * 0.4, '200,200,255');
+            this.particles.emit(SB.canvasWidth / 2, SB.canvasHeight * 0.4, {
+                count: 16, spread: SB.TAU, speedMin: 60, speedMax: 150,
+                lifeMin: 0.5, lifeMax: 1.0, sizeMin: 1.5, sizeMax: 3,
+                color: '255,215,0', gravity: 40, friction: 0.92
+            });
             this.particles.emit(SB.canvasWidth / 2, SB.canvasHeight * 0.4, SB.FX.starCollect);
             this.ball.y = SB.canvasHeight * 0.4;
             this.ball.vy = SB.Physics.BOUNCE_IMPULSE * 0.5;
@@ -1401,6 +1413,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
         case SB.STATES.PLAYING:
             this._renderGameplay(ctx, cw, ch);
             this.ui.runBounces = this.runBounces;
+            this.ui.runSurviveTime = this.runSurviveTime;
             this.ui.ballSpeedFrac = Math.min(Math.abs(this.ball.vy) / SB.Physics.MAX_FALL_SPEED, 1);
             this.ui.currentZone = this.currentZone.name;
             if (!this.daily.completed) {
@@ -1543,6 +1556,14 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                     ctx.stroke();
                 }
                 ctx.restore();
+            }
+            // Proximity heartbeat pulse
+            if (this._maxDangerGlow > 0.5 && !SB.reducedMotion) {
+                var hbFrac = (this._maxDangerGlow - 0.5) / 0.5;
+                var hbPulse = (Math.sin((SB.frameTime || 0) * 0.012) + 1) / 2;
+                var hbA = hbFrac * hbPulse * 0.04;
+                ctx.fillStyle = 'rgba(231,50,50,' + hbA.toFixed(3) + ')';
+                ctx.fillRect(0, 0, cw, ch);
             }
             // Edge danger indicators for off-screen obstacles
             this._drawEdgeWarnings(ctx, cw, ch);

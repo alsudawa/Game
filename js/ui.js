@@ -1061,6 +1061,11 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.textBaseline = 'bottom';
     ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255,255,255,' + (0.25 * hudAlpha).toFixed(2) + ')';
+    var survTime = Math.floor(this.runSurviveTime || 0);
+    var survMin = Math.floor(survTime / 60);
+    var survSec = survTime % 60;
+    var timeStr = survMin > 0 ? survMin + ':' + (survSec < 10 ? '0' : '') + survSec : survSec + 's';
+    ctx.fillText(timeStr, 22, ch - 22);
     var bcText = (this.runBounces || 0) + ' bounces';
     ctx.fillText(bcText, 22, ch - 10);
     var shY = ch - 16, shX = 14;
