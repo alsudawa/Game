@@ -231,10 +231,11 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
 SB.Obstacle.prototype._drawSpike = function(ctx) {
     var size = this.width;
     var cx = this.x + size / 2;
+    var spikePulse = Math.sin(this.spawnAge * 4) * 3;
 
     ctx.save();
     ctx.shadowColor = 'rgba(255, 100, 50, 0.5)';
-    ctx.shadowBlur = 10;
+    ctx.shadowBlur = 10 + spikePulse;
 
     ctx.beginPath();
     ctx.moveTo(cx, this.y);

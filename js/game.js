@@ -224,6 +224,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (this.tutorialTimer > 0.4) {
                 this.tutorialStep++;
                 this.tutorialTimer = 0;
+                var tutMsgs = ['Nice!', 'Great!', 'Let\'s go!'];
+                this.ui.addScorePopup(this.ball.x, this.ball.y - 20, tutMsgs[this.tutorialStep - 1] || 'Go!', '#5DADE2');
                 if (this.tutorialStep >= 3) this.showTutorial = false;
             }
         }
@@ -578,6 +580,12 @@ SB.Game.prototype._updatePlaying = function(dt) {
         var cpDy = this.ball.y - col.y;
         var cpDist = Math.sqrt(cpDx * cpDx + cpDy * cpDy);
         col._proximity = cpDist < 80 ? 1 - cpDist / 80 : 0;
+
+        if (col._proximity > 0.5 && col.type === SB.COLLECTIBLE_TYPES.STAR && Math.random() < col._proximity * 0.3 && !SB.reducedMotion) {
+            this.particles.emit(col.x + SB.randRange(-8, 8), col.y + SB.randRange(-8, 8), {
+                count: 1, spread: 0, speedMin: 10, speedMax: 25, lifeMin: 0.15, lifeMax: 0.3, sizeMin: 0.5, sizeMax: 1.5, color: '255,215,0', gravity: -15, friction: 0.9
+            });
+        }
 
         if (col.x < -50 || col.x > cw + 50 || col.y < -50 || col.y > ch + 50) {
             col.active = false;
@@ -1460,7 +1468,6 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.restore();
     }
 
-    // Combo timer bar (small bar below ball when combo active)
     if (this.comboTimer > 0 && this.comboCount >= 2) {
         var cbW = 30;
         var cbH = 3;
@@ -1473,6 +1480,12 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.fillRect(cbX, cbY, cbW, cbH);
         ctx.fillStyle = 'rgba(' + cbColor + ',0.6)';
         ctx.fillRect(cbX, cbY, cbW * cbFrac, cbH);
+        var cmMult = this.comboCount >= 5 ? 'x4' : (this.comboCount >= 3 ? 'x3' : 'x2');
+        ctx.font = 'bold 10px ' + this.ui.font;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillStyle = 'rgba(' + cbColor + ',0.7)';
+        ctx.fillText(cmMult, this.ball.x, cbY - 1);
         ctx.restore();
     }
 };

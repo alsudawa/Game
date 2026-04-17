@@ -14,13 +14,15 @@ SB.Background = function() {
 
 SB.Background.prototype.init = function(cw, ch) {
     this.stars = [];
-    for (var i = 0; i < 40; i++) {
+    for (var i = 0; i < 45; i++) {
+        var sDepth = i < 15 ? 0.4 : (i < 30 ? 0.7 : 1.0);
         this.stars.push({
             x: Math.random() * cw,
             y: Math.random() * ch * 0.7,
-            size: SB.randRange(0.5, 2),
-            twinkleSpeed: SB.randRange(1, 3),
-            twinklePhase: Math.random() * SB.TAU
+            size: SB.randRange(0.5, 2) * sDepth,
+            twinkleSpeed: SB.randRange(1, 3) * sDepth,
+            twinklePhase: Math.random() * SB.TAU,
+            depth: sDepth
         });
     }
 
@@ -204,7 +206,8 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         var star = this.stars[i];
         var alpha = (Math.sin(star.twinklePhase) + 1) / 2 * 0.7 + 0.1;
         ctx.beginPath();
-        ctx.arc(star.x + starPx, star.y + starPy, star.size, 0, SB.TAU);
+        var sd = star.depth || 1;
+        ctx.arc(star.x + starPx * sd, star.y + starPy * sd, star.size, 0, SB.TAU);
         ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
         ctx.fill();
     }
