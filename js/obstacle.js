@@ -499,6 +499,14 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
     var cx = this.x + this.radius;
     var cy = this.y + this.radius;
 
+    // Drop shadow
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,0.08)';
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + this.radius + 4, this.radius * 0.6, 2, 0, 0, SB.TAU);
+    ctx.fill();
+    ctx.restore();
+
     var bmRet = this.returning ? 1 : 0;
     if (!SB.reducedMotion) {
         var tDir = this.direction;
@@ -650,6 +658,10 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         ctx.fillStyle = 'rgba(255,80,80,' + (pulse * 0.6).toFixed(2) + ')';
         ctx.fillRect(0, this.y - barW / 2, 3, barW);
         ctx.fillRect(cw - 3, this.y - barW / 2, 3, barW);
+        var cdR = 3 + chargeFrac * 2;
+        ctx.fillStyle = 'rgba(255,200,200,' + (pulse * 0.8).toFixed(2) + ')';
+        ctx.beginPath(); ctx.arc(1.5, this.y, cdR, 0, SB.TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(cw - 1.5, this.y, cdR, 0, SB.TAU); ctx.fill();
         ctx.restore();
     } else if (this.laserPhase === 'active') {
         var beamPulse = 1 + Math.sin(this.laserTimer * 20) * 0.15;

@@ -449,6 +449,16 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         }
         ctx.fillStyle = highScore >= 50 ? 'rgba(255, 215, 0, 0.85)' : 'rgba(255, 215, 0, 0.7)';
         ctx.fillText('BEST: ' + SB.formatNum(highScore), cw / 2, ch * 0.74);
+        // Procedural crown icon above best score
+        var crY = ch * 0.74 - 14;
+        var crW = ctx.measureText('BEST: ' + SB.formatNum(highScore)).width / 2 + 14;
+        ctx.fillStyle = 'rgba(255,215,0,' + (0.3 + (Math.sin(this.blinkPhase * 1.5) + 1) / 2 * 0.2).toFixed(2) + ')';
+        ctx.beginPath();
+        var crX = cw / 2 - crW;
+        ctx.moveTo(crX, crY); ctx.lineTo(crX + 3, crY - 6); ctx.lineTo(crX + 6, crY - 2);
+        ctx.lineTo(crX + 9, crY - 7); ctx.lineTo(crX + 12, crY);
+        ctx.closePath();
+        ctx.fill();
         ctx.restore();
         // Sparkle dots flanking the score
         var hsSparkle = (Math.sin(this.blinkPhase * 2.5) + 1) / 2;
@@ -1021,6 +1031,14 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.shadowBlur = 8 + (p.sizeScale || 1) * 4;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
+        if ((p.sizeScale || 1) >= 1.4 && !SB.reducedMotion) {
+            var cpRingR = baseSize * scale * 0.8 + (1 - alpha) * 10;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, cpRingR, 0, SB.TAU);
+            ctx.strokeStyle = p.color || '#FFD700';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
         ctx.fillText(p.text, p.x, p.y);
         ctx.restore();
     }
