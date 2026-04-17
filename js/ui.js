@@ -352,12 +352,18 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.fillStyle = gradient;
     ctx.fill();
     ctx.restore();
-    // Outer glow ring
+    // Outer glow rings
     ctx.save();
+    var glowStr = SB.hexToRGB(currentSkin.glow);
     ctx.beginPath();
     ctx.arc(cw / 2, ballY, 22 + breathe * 4, 0, SB.TAU);
-    ctx.strokeStyle = 'rgba(' + SB.hexToRGB(currentSkin.glow) + ',' + (breathe * 0.2).toFixed(2) + ')';
+    ctx.strokeStyle = 'rgba(' + glowStr + ',' + (breathe * 0.2).toFixed(2) + ')';
     ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(cw / 2, ballY, 30 + breathe * 6, 0, SB.TAU);
+    ctx.strokeStyle = 'rgba(' + glowStr + ',' + (breathe * 0.08).toFixed(2) + ')';
+    ctx.lineWidth = 1;
     ctx.stroke();
     ctx.restore();
 
@@ -764,7 +770,8 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     }
 
     if (this.scoreSizePulse > 0) this.scoreSizePulse = Math.max(0, this.scoreSizePulse - 0.016);
-    var scoreFontMult = 1 + this.scoreSizePulse * 0.15;
+    var multActive = this.powerupEffectsRef && this.powerupEffectsRef.scoreMult ? 0.08 : 0;
+    var scoreFontMult = 1 + this.scoreSizePulse * 0.15 + multActive;
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
@@ -819,9 +826,17 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
 
     if (cachedHighScore > 0 && score < cachedHighScore && score > cachedHighScore * 0.5) {
         var pbDiff = Math.ceil(cachedHighScore - score);
-        ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,215,0,' + (0.4 * hudAlpha).toFixed(2) + ')';
+        var pbClose = pbDiff <= 5;
+        ctx.save();
+        ctx.font = (pbClose ? 'bold ' : '') + Math.min(cw * 0.025, 10) + 'px ' + this.font;
+        if (pbClose) {
+            var pbGlow = (Math.sin(this.blinkPhase * 4) + 1) / 2;
+            ctx.shadowColor = 'rgba(255,215,0,0.6)';
+            ctx.shadowBlur = 4 + pbGlow * 8;
+        }
+        ctx.fillStyle = 'rgba(255,215,0,' + ((pbClose ? 0.7 : 0.4) * hudAlpha).toFixed(2) + ')';
         ctx.fillText(pbDiff + ' to PB', cw / 2, 58);
+        ctx.restore();
     } else if (score >= 5) {
         var nextMs = (Math.floor(score / 10) + 1) * 10;
         var msDiff = Math.ceil(nextMs - score);

@@ -1716,6 +1716,18 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             ctx.stroke();
             ctx.setLineDash([]);
         }
+        // Radial pull lines
+        if (!SB.reducedMotion) {
+            ctx.strokeStyle = 'rgba(155,89,182,0.06)';
+            ctx.lineWidth = 0.8;
+            for (var rli = 0; rli < 6; rli++) {
+                var rlA = mft * 0.5 + rli * SB.TAU / 6;
+                ctx.beginPath();
+                ctx.moveTo(this.ball.x + Math.cos(rlA) * magnetR, this.ball.y + Math.sin(rlA) * magnetR);
+                ctx.lineTo(this.ball.x + Math.cos(rlA) * 20, this.ball.y + Math.sin(rlA) * 20);
+                ctx.stroke();
+            }
+        }
         // Converging dots (4 rotating dots spiraling inward)
         ctx.fillStyle = 'rgba(155, 89, 182, 0.4)';
         for (var mi = 0; mi < 4; mi++) {

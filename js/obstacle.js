@@ -148,7 +148,8 @@ SB.Obstacle.prototype.draw = function(ctx) {
         if (fadeIn < 1) {
             var swoosh = (1 - fadeIn) * (1 - fadeIn) * 20;
             ctx.translate(0, -swoosh);
-            var fiScale = 0.6 + fadeIn * 0.4;
+            var fiEased = fadeIn < 0.7 ? fadeIn / 0.7 * 1.1 : 1.1 - (fadeIn - 0.7) / 0.3 * 0.1;
+            var fiScale = 0.6 + fiEased * 0.4;
             var fiCx = this.radius ? this.x + this.radius : this.x + (this.width || 0) / 2;
             var fiCy = this.radius ? this.y + this.radius : this.y + (this.height || 0) / 2;
             ctx.translate(fiCx * (1 - fiScale), fiCy * (1 - fiScale));
