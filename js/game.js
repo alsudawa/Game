@@ -614,6 +614,16 @@ SB.Game.prototype._updatePlaying = function(dt) {
             SB.audio.playBoomerangReturn();
         }
 
+        if (obs.type === SB.OBSTACLE_TYPES.LASER && obs.laserPhase === 'charge' && !SB.reducedMotion && Math.random() < 0.5) {
+            var lcX = SB.randRange(0, cw);
+            this.particles.emit(lcX, obs.y + SB.randRange(-3, 3), {
+                count: 1, spread: 0, speedMin: 30, speedMax: 80,
+                lifeMin: 0.1, lifeMax: 0.2, sizeMin: 0.5, sizeMax: 1.5,
+                color: '100,200,255', angle: lcX < cw / 2 ? 0 : Math.PI, angleSpread: 0.3,
+                gravity: 0, friction: 0.9
+            });
+        }
+
         if (!SB.reducedMotion && Math.random() < 0.2) {
             if (obs.type === SB.OBSTACLE_TYPES.BOOMERANG) {
                 var brCx = obs.x + (obs.radius || 10);
@@ -1717,6 +1727,22 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
         var cbfA = (this.comboBreakFlash / 0.15) * 0.12;
         ctx.fillStyle = 'rgba(100,50,0,' + cbfA.toFixed(3) + ')';
         ctx.fillRect(0, 0, cw, ch);
+        if (!SB.reducedMotion) {
+            var crFrac = this.comboBreakFlash / 0.15;
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255,140,66,' + (crFrac * 0.2).toFixed(3) + ')';
+            ctx.lineWidth = 1;
+            var crCx = this.ball.x, crCy = this.ball.y;
+            for (var cri = 0; cri < 4; cri++) {
+                var crAngle = cri * 1.3 + 0.5;
+                var crLen = 20 + (1 - crFrac) * 30;
+                ctx.beginPath();
+                ctx.moveTo(crCx + Math.cos(crAngle) * 10, crCy + Math.sin(crAngle) * 10);
+                ctx.lineTo(crCx + Math.cos(crAngle + 0.2) * crLen, crCy + Math.sin(crAngle + 0.2) * crLen);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
     }
 
     if (this.transitionAlpha > 0) {
@@ -1991,6 +2017,27 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.moveTo(vaLen, 0);
         ctx.lineTo(vaLen - 3, 3);
         ctx.stroke();
+        ctx.restore();
+    }
+
+    // Horizontal speed wake lines
+    var hSpeed = Math.abs(this.ball.vx);
+    if (hSpeed > 3 && this.state === SB.STATES.PLAYING && !SB.reducedMotion && this.deathSlowMo <= 0) {
+        var hwFrac = Math.min(hSpeed / 8, 1);
+        var hwDir = this.ball.vx > 0 ? -1 : 1;
+        var hwA = hwFrac * 0.1;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,' + hwA.toFixed(3) + ')';
+        ctx.lineWidth = 0.8;
+        for (var hwi = 0; hwi < 3; hwi++) {
+            var hwY = this.ball.y + (hwi - 1) * (this.ball.radius * 0.7);
+            var hwX = this.ball.x + hwDir * (this.ball.radius + 3);
+            var hwLen = 6 + hwFrac * 10;
+            ctx.beginPath();
+            ctx.moveTo(hwX, hwY);
+            ctx.lineTo(hwX + hwDir * hwLen, hwY);
+            ctx.stroke();
+        }
         ctx.restore();
     }
 

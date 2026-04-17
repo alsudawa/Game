@@ -527,8 +527,11 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     var lastRun = SB.Storage.getLastRun();
     if (lastRun) {
         ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
-        ctx.fillStyle = 'rgba(255,255,255,0.35)';
-        ctx.fillText('Last: ' + lastRun.score + ' pts  |  ' + lastRun.stars + ' stars  |  ' + lastRun.time + 's', cw / 2, ch * 0.79);
+        var lrDiff = highScore > 0 ? lastRun.score - highScore : 0;
+        var lrArrow = lrDiff >= 0 ? '\u2191' : '\u2193';
+        var lrColor = lrDiff >= 0 ? 'rgba(46,204,113,0.4)' : 'rgba(255,255,255,0.35)';
+        ctx.fillStyle = lrColor;
+        ctx.fillText('Last: ' + lastRun.score + ' pts ' + (lrDiff !== 0 ? lrArrow : '') + '  |  ' + lastRun.stars + ' stars  |  ' + lastRun.time + 's', cw / 2, ch * 0.79);
     }
 
     // Lifetime stats
@@ -1609,7 +1612,9 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
             var dcPulse = (Math.sin(this.blinkPhase * 3) + 1) / 2;
             ctx.save();
             ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
-            ctx.fillStyle = 'rgba(231,76,60,' + (alpha * (0.5 + dcPulse * 0.3)).toFixed(2) + ')';
+            var dcColors = { Platform: '231,76,60', Spike: '241,196,15', Blade: '180,180,190', Boomerang: '231,130,60', Laser: '100,200,255', Fell: '150,150,150' };
+            var dcCol = dcColors[this.runStats.deathCause] || '231,76,60';
+            ctx.fillStyle = 'rgba(' + dcCol + ',' + (alpha * (0.5 + dcPulse * 0.3)).toFixed(2) + ')';
             ctx.shadowColor = 'rgba(231,76,60,0.4)';
             ctx.shadowBlur = dcPulse * 6;
             ctx.fillText(dcIcon + ' Killed by: ' + this.runStats.deathCause, cw / 2, y);
