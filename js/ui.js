@@ -912,6 +912,23 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.restore();
     }
 
+    // Zone name pill (top-left)
+    if (zone && zone.name && zone.name !== 'CALM') {
+        var znColors = { RISING: '243,156,18', INTENSE: '231,76,60', EXTREME: '155,89,182' };
+        var znC = znColors[zone.name] || '255,255,255';
+        ctx.save();
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.font = Math.min(cw * 0.02, 8) + 'px ' + this.font;
+        var znW = ctx.measureText(zone.name).width + 10;
+        ctx.fillStyle = 'rgba(' + znC + ',' + (0.1 * hudAlpha).toFixed(2) + ')';
+        this._roundRect(ctx, 8, 10, znW, 14, 4);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(' + znC + ',' + (0.6 * hudAlpha).toFixed(2) + ')';
+        ctx.fillText(zone.name, 13, 12);
+        ctx.restore();
+    }
+
     // Coin counter + PB in HUD (top-right)
     ctx.save();
     ctx.textAlign = 'right';

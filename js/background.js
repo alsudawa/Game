@@ -234,8 +234,9 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.fillStyle = 'rgba(' + cR + ',' + cG + ',' + cB + ',' + (cloud.alpha * cloudDiffMult).toFixed(3) + ')';
         ctx.translate(cloud.x + cloudPx * cdepth, cloud.y + cloudPy * cdepth);
         ctx.scale(1, cloud.height / cloud.width);
+        var cloudScale = 1 + d * 0.15;
         ctx.beginPath();
-        ctx.arc(0, 0, cloud.width / 2, 0, SB.TAU);
+        ctx.arc(0, 0, cloud.width / 2 * cloudScale, 0, SB.TAU);
         ctx.fill();
         ctx.restore();
     }

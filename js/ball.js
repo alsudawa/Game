@@ -146,9 +146,9 @@ SB.Ball.prototype.draw = function(ctx) {
         ctx.fill();
     }
 
-    // Afterimages when falling fast
+    // Afterimages when falling fast (more with combo)
     if (speedFrac > 0.6 && !SB.reducedMotion) {
-        var aiCount = speedFrac > 0.85 ? 3 : 2;
+        var aiCount = (speedFrac > 0.85 ? 3 : 2) + (comboBoost >= 0.5 ? 1 : 0);
         var aiAlphaBase = (speedFrac - 0.6) / 0.4 * 0.15;
         for (var ai = 1; ai <= aiCount; ai++) {
             var aiY = this.y - this.vy * 0.012 * ai;

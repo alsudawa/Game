@@ -528,6 +528,18 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
         }
     }
 
+    // Return "!" indicator when returning
+    if (this.returning && !SB.reducedMotion) {
+        var retBlink = (Math.sin((SB.frameTime || 0) * 0.012) + 1) / 2;
+        ctx.save();
+        ctx.font = 'bold 12px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillStyle = 'rgba(255,100,50,' + (0.4 + retBlink * 0.4).toFixed(2) + ')';
+        ctx.fillText('!', cx, cy - this.radius - 4);
+        ctx.restore();
+    }
+
     // Return flash warning (double ring + glow)
     if (this.returnFlash > 0) {
         var rfFrac = this.returnFlash / 0.3;
@@ -691,6 +703,7 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
     }
 
     // Core
+    var psInt = Math.min(this.pullStrength / 300, 1);
     ctx.beginPath();
     ctx.arc(cx, cy, this.radius * pulse, 0, SB.TAU);
     if (hcg) {
@@ -700,7 +713,6 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
         ctx.lineWidth = 2;
         ctx.stroke();
     } else {
-        var psInt = Math.min(this.pullStrength / 300, 1);
         var coreA = 0.7 + psInt * 0.3;
         var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, this.radius * pulse);
         grad.addColorStop(0, 'rgba(142,68,173,' + coreA.toFixed(2) + ')');
@@ -719,7 +731,7 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
         ctx.arc(0, 0, this.radius * pulse * 0.55, 0, Math.PI * 1.2);
         ctx.strokeStyle = 'rgba(200,150,255,' + (wellAlpha * 0.25).toFixed(3) + ')';
         ctx.setLineDash([3, 4]);
-        ctx.lineWidth = 1;
+        ctx.lineWidth = 1 + psInt * 1;
         ctx.stroke();
         ctx.setLineDash([]);
         ctx.restore();
