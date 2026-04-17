@@ -1479,8 +1479,9 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.save();
         ctx.shadowColor = 'rgba(255,215,0,0.6)';
         ctx.shadowBlur = 6 + (Math.sin(this.blinkPhase * 2) + 1) / 2 * 4;
+        var xpFillFrac = Math.min(detailAlpha * 2, 1);
         ctx.fillStyle = 'rgba(255,215,0,0.7)';
-        ctx.fillRect(xpBarX, y, xpBarW * progress, xpBarH);
+        ctx.fillRect(xpBarX, y, xpBarW * progress * xpFillFrac, xpBarH);
         ctx.restore();
         ctx.restore();
         y += xpBarH + gap;

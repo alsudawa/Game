@@ -1332,6 +1332,13 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                     ctx.shadowColor = '#2ECC71';
                     ctx.fillText('GO!', cw / 2, ch * 0.28);
                 }
+                // Safe zone border glow during grace
+                if (graceLeft > 0 && !SB.reducedMotion) {
+                    var gzA = graceAlpha * 0.08;
+                    ctx.strokeStyle = 'rgba(93,173,226,' + gzA.toFixed(3) + ')';
+                    ctx.lineWidth = 3;
+                    ctx.strokeRect(1, 1, cw - 2, ch - 2);
+                }
                 ctx.restore();
             }
             if (this.showTutorial) {
@@ -1369,6 +1376,9 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                     }
                     ctx.restore();
                 }
+                // Subtle desaturation wash
+                ctx.fillStyle = 'rgba(200,220,200,0.02)';
+                ctx.fillRect(0, 0, cw, ch);
             }
             // Powerup active border pulse (flashes faster when expiring)
             var pe = this.powerupEffects;
@@ -1670,6 +1680,15 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.beginPath();
         ctx.arc(0, 0, shieldR - 3, 0, SB.TAU);
         ctx.stroke();
+        // Shimmer sweep highlight
+        if (!SB.reducedMotion) {
+            var sweepA = (ft * 2) % SB.TAU;
+            ctx.beginPath();
+            ctx.arc(0, 0, shieldR, sweepA, sweepA + 0.8);
+            ctx.strokeStyle = 'rgba(180,220,255,' + (shimmer * 0.5).toFixed(2) + ')';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+        }
         ctx.restore();
     }
 
