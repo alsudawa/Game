@@ -268,11 +268,18 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
         gradient.addColorStop(1, '#c0392b');
         ctx.fillStyle = gradient;
         ctx.fill();
-        // Top edge highlight
+        // Top edge highlight (3D bevel effect)
         ctx.beginPath();
         ctx.moveTo(this.x + r, this.y + 1);
         ctx.lineTo(this.x + this.width - r, this.y + 1);
-        ctx.strokeStyle = 'rgba(255,150,150,0.3)';
+        ctx.strokeStyle = 'rgba(255,180,170,0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // Bottom edge shadow
+        ctx.beginPath();
+        ctx.moveTo(this.x + r, this.y + this.height - 1);
+        ctx.lineTo(this.x + this.width - r, this.y + this.height - 1);
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
         ctx.lineWidth = 1;
         ctx.stroke();
     }

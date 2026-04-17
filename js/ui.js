@@ -1435,7 +1435,22 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fill();
         ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
-        ctx.fillText('SHARE SCORE', cw / 2, shareBtnY + btnH / 2);
+        // Share arrow icon
+        var siX = cw / 2 - ctx.measureText('SHARE SCORE').width / 2 - 14;
+        var siY = shareBtnY + btnH / 2;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,' + alpha + ')';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(siX, siY);
+        ctx.lineTo(siX + 6, siY - 5);
+        ctx.moveTo(siX, siY);
+        ctx.lineTo(siX + 6, siY + 5);
+        ctx.moveTo(siX, siY);
+        ctx.lineTo(siX + 10, siY);
+        ctx.stroke();
+        ctx.restore();
+        ctx.fillText('SHARE SCORE', cw / 2 + 4, shareBtnY + btnH / 2);
         SB._shareBtn = { x: btnX, y: shareBtnY, w: btnW, h: btnH, score: displayScore };
 
         // Play Again button (pulses gently with glow ring)

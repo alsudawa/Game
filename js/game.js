@@ -1732,10 +1732,15 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         var cbY = this.ball.y + this.ball.radius + 22;
         var cbFrac = this.comboTimer / 2.0;
         var cbColor = this.comboCount >= 5 ? '255,68,68' : (this.comboCount >= 3 ? '255,140,66' : '255,215,0');
+        var cbBarAlpha = 0.6;
+        if (cbFrac < 0.3) {
+            cbColor = '255,50,50';
+            cbBarAlpha = 0.4 + (Math.sin((SB.frameTime || 0) * 0.02) + 1) / 2 * 0.5;
+        }
         ctx.save();
         ctx.fillStyle = 'rgba(255,255,255,0.1)';
         ctx.fillRect(cbX, cbY, cbW, cbH);
-        ctx.fillStyle = 'rgba(' + cbColor + ',0.6)';
+        ctx.fillStyle = 'rgba(' + cbColor + ',' + cbBarAlpha.toFixed(2) + ')';
         ctx.fillRect(cbX, cbY, cbW * cbFrac, cbH);
         var cmMult = this.comboCount >= 5 ? 'x4' : (this.comboCount >= 3 ? 'x3' : 'x2');
         ctx.font = 'bold 10px ' + this.ui.font;

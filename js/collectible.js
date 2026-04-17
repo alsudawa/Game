@@ -220,6 +220,17 @@ SB.Collectible.prototype._drawCoin = function(ctx) {
     ctx.lineWidth = SB.highContrast ? 1.5 : 1;
     ctx.stroke();
 
+    // 3D edge highlight when coin is near edge-on
+    if (scaleX < 0.55 && !SB.highContrast) {
+        var edgeAlpha = (0.55 - scaleX) / 0.15 * 0.6;
+        ctx.strokeStyle = 'rgba(255,240,180,' + Math.min(edgeAlpha, 0.6).toFixed(2) + ')';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(0, -r);
+        ctx.lineTo(0, r);
+        ctx.stroke();
+    }
+
     // Dollar sign (only visible when not edge-on)
     if (scaleX > 0.5) {
         ctx.font = 'bold ' + Math.floor(r * 1.1) + 'px sans-serif';

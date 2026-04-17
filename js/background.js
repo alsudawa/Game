@@ -212,7 +212,8 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.beginPath();
         var sd = star.depth || 1;
         ctx.arc(star.x + starPx * sd, star.y + starPy * sd, star.size, 0, SB.TAU);
-        ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
+        var sColor = (i % 5 === 0) ? '255,240,200' : (i % 7 === 0) ? '200,220,255' : '255,255,255';
+        ctx.fillStyle = 'rgba(' + sColor + ',' + alpha + ')';
         ctx.fill();
     }
 
