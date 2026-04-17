@@ -573,6 +573,11 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
         ctx.strokeStyle = '#E65100';
         ctx.lineWidth = 1;
         ctx.stroke();
+        // Wing tip glow dots
+        var tipGlow = (Math.sin(this.rotation * 3) + 1) / 2 * 0.6;
+        ctx.fillStyle = 'rgba(255,240,180,' + (0.3 + tipGlow).toFixed(2) + ')';
+        ctx.beginPath(); ctx.arc(-this.radius, -2, 2, 0, SB.TAU); ctx.fill();
+        ctx.beginPath(); ctx.arc(this.radius, -2, 2, 0, SB.TAU); ctx.fill();
     }
 
     // Spin blur lines (scale with speed)
@@ -636,6 +641,7 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         ctx.strokeStyle = hc ? 'rgba(255, 255, 0, 0.6)' : 'rgba(255, 50, 50, ' + warnPulse.toFixed(2) + ')';
         ctx.lineWidth = hc ? 2 : 1;
         ctx.setLineDash([8, 8]);
+        ctx.lineDashOffset = -this.laserTimer * 40;
         ctx.beginPath();
         ctx.moveTo(0, this.y);
         ctx.lineTo(cw, this.y);

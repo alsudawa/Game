@@ -139,7 +139,8 @@ SB.Ball.prototype.draw = function(ctx) {
         var t = this._trailBuf[idx];
         var frac = i / drawLen;
         var alpha = Math.min(frac * 0.3 * trailAlphaMult, 0.6);
-        var size = this.radius * (0.4 + 0.6 * frac) * trailSizeMult;
+        var trailWobble = 1 + Math.sin(i * 0.9 + (SB.frameTime || 0) * 0.005) * 0.08 * speedFrac;
+        var size = this.radius * (0.4 + 0.6 * frac) * trailSizeMult * trailWobble;
         ctx.beginPath();
         ctx.arc(t.x, t.y, size, 0, SB.TAU);
         ctx.fillStyle = trailC + alpha.toFixed(2) + ')';

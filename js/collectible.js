@@ -152,6 +152,11 @@ SB.Collectible.prototype.draw = function(ctx) {
     gradient.addColorStop(1, '#FFD700');
     ctx.fillStyle = gradient;
     ctx.fill();
+    // Center bright dot
+    ctx.beginPath();
+    ctx.arc(0, 0, r * 0.18, 0, SB.TAU);
+    ctx.fillStyle = 'rgba(255,255,255,0.7)';
+    ctx.fill();
     if (SB.highContrast) {
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 2;
