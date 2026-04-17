@@ -155,7 +155,7 @@ SB.Ball.prototype.draw = function(ctx) {
 
     ctx.save();
     ctx.shadowColor = this.glowColor;
-    ctx.shadowBlur = 20 + speedFrac * 15 + this.bounceGlow * 20;
+    ctx.shadowBlur = 20 + speedFrac * 15 + this.bounceGlow * 20 + comboBoost * 15;
     ctx.translate(this.x, this.y);
     // Gravity well pull distortion
     if (this.gravityPullStrength > 0) {

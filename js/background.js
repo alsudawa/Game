@@ -25,14 +25,16 @@ SB.Background.prototype.init = function(cw, ch) {
     }
 
     this.clouds = [];
-    for (var j = 0; j < 7; j++) {
+    for (var j = 0; j < 9; j++) {
+        var depth = j < 3 ? 0.5 : (j < 6 ? 0.75 : 1.0);
         this.clouds.push({
             x: Math.random() * cw,
             y: SB.randRange(-50, ch),
-            width: SB.randRange(60, 150),
-            height: SB.randRange(20, 50),
-            speed: SB.randRange(5, 15),
-            alpha: SB.randRange(0.04, 0.12)
+            width: SB.randRange(60, 150) * depth,
+            height: SB.randRange(20, 50) * depth,
+            speed: SB.randRange(5, 15) * depth,
+            alpha: SB.randRange(0.03, 0.08) * depth,
+            depth: depth
         });
     }
 

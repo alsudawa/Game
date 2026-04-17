@@ -804,10 +804,11 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     var pauseR = 18;
     var pauseCx = 28;
     var pauseCy = 28;
+    var pausePulse = (Math.sin(this.blinkPhase * 1.5) + 1) / 2 * 0.06;
     ctx.save();
     ctx.beginPath();
     ctx.arc(pauseCx, pauseCy, pauseR, 0, SB.TAU);
-    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.1 + pausePulse).toFixed(3) + ')';
     ctx.fill();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
