@@ -136,7 +136,10 @@ SB.Ball.prototype.draw = function(ctx) {
     var drawLen = Math.min(this._trailLen, this._activeTrailLen);
     var start = (this._trailHead - drawLen + this.maxTrail) % this.maxTrail;
     var trailC = this.trailColor;
-    if (comboBoost >= 0.5) {
+    if (speedFrac > 0.7 && comboBoost < 0.5) {
+        var sFrac = (speedFrac - 0.7) / 0.3;
+        trailC = 'rgba(' + Math.floor(255) + ',' + Math.floor(215 + sFrac * 40) + ',' + Math.floor(255 * sFrac) + ',';
+    } else if (comboBoost >= 0.5) {
         var cShift = Math.min((comboBoost - 0.5) / 0.5, 1);
         trailC = 'rgba(' + Math.floor(255) + ',' + Math.floor(215 - cShift * 147) + ',' + Math.floor(cShift * 68) + ',';
     }

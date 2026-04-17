@@ -98,9 +98,10 @@ SB.Background.prototype.update = function(dt, difficulty) {
     }
 
     var pSpeedMult = 1 + (difficulty || 0) * 0.8;
+    var pDriftX = (difficulty || 0) > 0.5 ? ((difficulty - 0.5) / 0.5) * 15 : 0;
     for (var k = 0; k < this.particles.length; k++) {
         var p = this.particles[k];
-        p.x += p.speedX * dt * pSpeedMult;
+        p.x += (p.speedX + pDriftX * Math.sin(p.phase * 0.5)) * dt * pSpeedMult;
         p.y += p.speedY * dt * pSpeedMult;
         p.phase += 2 * dt;
         if (p.y < -10) {
@@ -299,6 +300,7 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
     }
 
     var cloudDiffMult = 1 + d * 0.8;
+    var cloudFade = d > 0.6 ? 1 - (d - 0.6) / 0.4 * 0.4 : 1;
     for (var j = 0; j < this.clouds.length; j++) {
         var cloud = this.clouds[j];
         ctx.save();
@@ -311,7 +313,7 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
             cG = Math.floor(cBright - cTint * 30);
             cB = Math.floor(cBright - cTint * 20);
         }
-        ctx.fillStyle = 'rgba(' + cR + ',' + cG + ',' + cB + ',' + (cloud.alpha * cloudDiffMult).toFixed(3) + ')';
+        ctx.fillStyle = 'rgba(' + cR + ',' + cG + ',' + cB + ',' + (cloud.alpha * cloudDiffMult * cloudFade).toFixed(3) + ')';
         ctx.translate(cloud.x + cloudPx * cdepth, cloud.y + cloudPy * cdepth);
         ctx.scale(1, cloud.height / cloud.width);
         var cloudScale = 1 + d * 0.15;

@@ -860,6 +860,14 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.restore();
     }
 
+    if (zone && zone.name !== 'CALM') {
+        var ulRGB = ({ RISING: '243,156,18', INTENSE: '231,76,60', EXTREME: '155,89,182' })[zone.name] || '255,255,255';
+        var ulW = Math.min(ctx.measureText(scoreText).width + 10, cw * 0.3);
+        var ulA = 0.25 * hudAlpha;
+        ctx.fillStyle = 'rgba(' + ulRGB + ',' + ulA.toFixed(2) + ')';
+        ctx.fillRect(cw / 2 - ulW / 2, 38 + ssOy, ulW, 1.5);
+    }
+
     if (comboTimer > 0 && comboCount >= 1) {
         var ctFrac = comboTimer / 2.0;
         var ctR = Math.min(cw * 0.05, 20) + 20;
@@ -1895,6 +1903,13 @@ SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost)
     // Darken background
     ctx.fillStyle = 'rgba(0, 0, 0, 0.65)';
     ctx.fillRect(0, 0, cw, ch);
+    var rvUrgency = 1 - countdown / 3.0;
+    var rvPulse = (Math.sin((SB.frameTime || 0) * (0.008 + rvUrgency * 0.01)) + 1) / 2;
+    var rvTint = rvUrgency * rvPulse * 0.06;
+    if (rvTint > 0.005) {
+        ctx.fillStyle = 'rgba(180,30,30,' + rvTint.toFixed(3) + ')';
+        ctx.fillRect(0, 0, cw, ch);
+    }
 
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
