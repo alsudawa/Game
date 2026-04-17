@@ -1264,7 +1264,20 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.shadowBlur = 10;
         ctx.font = 'bold ' + Math.min(cw * 0.055, 22) * pulse + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, ' + alpha + ')';
+        var nbW = ctx.measureText('NEW BEST!').width;
         ctx.fillText('NEW BEST!', cw / 2, y);
+        // Procedural trophy icon
+        var trX = cw / 2 - nbW / 2 - 14;
+        var trS = 6 * pulse;
+        ctx.fillStyle = 'rgba(255,215,0,' + alpha + ')';
+        ctx.beginPath();
+        ctx.moveTo(trX - trS, y - trS); ctx.lineTo(trX + trS, y - trS);
+        ctx.lineTo(trX + trS * 0.6, y + trS * 0.3);
+        ctx.lineTo(trX - trS * 0.6, y + trS * 0.3);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillRect(trX - 2, y + trS * 0.3, 4, trS * 0.4);
+        ctx.fillRect(trX - trS * 0.5, y + trS * 0.7, trS, 2);
         ctx.restore();
     } else {
         ctx.font = Math.min(cw * 0.04, 16) + 'px ' + this.font;

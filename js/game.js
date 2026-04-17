@@ -114,6 +114,7 @@ SB.Game.prototype.onResize = function(cw, ch) {
 SB.Game.prototype.update = function(dt) {
     this.ui.update(dt, this.state, this.powerupEffects, this.comboCount, this.comboTimer);
     var bgDiff = this.state === SB.STATES.PLAYING ? this.spawner.difficulty : (this.state === SB.STATES.GAME_OVER ? this.spawner.difficulty * 0.3 : 0);
+    SB._difficulty = this.spawner.difficulty;
     this.background.comboBoost = this.comboCount >= 3 ? Math.min(this.comboCount / 7, 1) : 0;
     this.background.update(dt, bgDiff);
 

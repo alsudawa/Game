@@ -63,7 +63,7 @@ SB.Collectible.prototype.update = function(dt) {
     if (!this.active) return;
     var rotMag = this._magnetPull > 0 ? 1 + this._magnetPull * 3 : 1;
     this.rotation += 1.5 * dt * rotMag;
-    this.pulsePhase += 3 * dt;
+    this.pulsePhase += (3 + (SB._difficulty || 0) * 2) * dt;
     this.lifetime += dt;
 
     if (this.type === SB.COLLECTIBLE_TYPES.COIN) {

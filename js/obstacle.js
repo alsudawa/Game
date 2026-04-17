@@ -286,6 +286,16 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
         ctx.lineWidth = 1;
         ctx.stroke();
     }
+    // Corner accent marks
+    if (!SB.highContrast) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 1;
+        var cm = 4;
+        ctx.beginPath();
+        ctx.moveTo(this.x + cm, this.y + 2); ctx.lineTo(this.x + 2, this.y + 2); ctx.lineTo(this.x + 2, this.y + cm);
+        ctx.moveTo(this.x + this.width - cm, this.y + 2); ctx.lineTo(this.x + this.width - 2, this.y + 2); ctx.lineTo(this.x + this.width - 2, this.y + cm);
+        ctx.stroke();
+    }
     // Surface dot pattern
     if (!SB.highContrast && !SB.reducedMotion) {
         var dotCount = Math.floor(this.width / 18);
@@ -627,10 +637,11 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
             ctx.moveTo(0, this.y);
             ctx.lineTo(cw, this.y);
             ctx.stroke();
-            // Edge spark emitters
+            // Edge spark emitters (more at higher difficulty)
             var sparkT = this.laserTimer * 40;
+            var sparkCount = 3 + Math.floor((SB._difficulty || 0) * 3);
             ctx.fillStyle = 'rgba(255,200,100,0.7)';
-            for (var ei = 0; ei < 3; ei++) {
+            for (var ei = 0; ei < sparkCount; ei++) {
                 var sy = this.y + Math.sin(sparkT + ei * 2.1) * (beamH * 0.4);
                 ctx.beginPath();
                 ctx.arc(3 + ei * 2, sy, 2, 0, SB.TAU);

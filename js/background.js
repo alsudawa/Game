@@ -241,9 +241,10 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
     }
 
     var pColor = d > 0.8 ? '200,180,255' : d > 0.5 ? '255,200,180' : d > 0.3 ? '255,230,200' : '255,255,255';
+    var pAlphaMult = 1 + d * 0.6;
     for (var k = 0; k < this.particles.length; k++) {
         var p = this.particles[k];
-        var pa = p.alpha * ((Math.sin(p.phase) + 1) / 2);
+        var pa = p.alpha * ((Math.sin(p.phase) + 1) / 2) * pAlphaMult;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, SB.TAU);
         ctx.fillStyle = 'rgba(' + pColor + ',' + pa + ')';
