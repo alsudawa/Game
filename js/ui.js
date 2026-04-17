@@ -370,6 +370,14 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.strokeStyle = 'rgba(' + glowStr + ',' + (breathe * 0.08).toFixed(2) + ')';
     ctx.lineWidth = 1;
     ctx.stroke();
+    if (!SB.reducedMotion) {
+        var ssAngle = this.blinkPhase * 0.6;
+        ctx.beginPath();
+        ctx.arc(cw / 2, ballY, 25 + breathe * 5, ssAngle, ssAngle + 0.6);
+        ctx.strokeStyle = 'rgba(255,255,255,' + (breathe * 0.25).toFixed(2) + ')';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+    }
     ctx.restore();
 
     // Skin selector

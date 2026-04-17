@@ -71,6 +71,8 @@ SB.Game = function(canvas) {
     this.nearMissStreakTimer = 0;
     this.nearMissSparkTimer = 0;
     this.lastBounceTime = 0;
+    this._prevBounceInterval = 0;
+    this._rhythmCount = 0;
     this.deathCause = '';
     this.runBounces = 0;
     this.wallFlashSide = 0;
@@ -261,6 +263,22 @@ SB.Game.prototype._updatePlaying = function(dt) {
         // Double-tap power bounce (within 180ms)
         var now = SB.frameTime || 0;
         var isDoubleTap = (now - this.lastBounceTime) < 180;
+        var bounceInterval = now - this.lastBounceTime;
+        if (this._prevBounceInterval && bounceInterval > 200 && bounceInterval < 1500) {
+            var ratio = Math.min(this._prevBounceInterval, bounceInterval) / Math.max(this._prevBounceInterval, bounceInterval);
+            if (ratio > 0.8) {
+                this._rhythmCount = (this._rhythmCount || 0) + 1;
+                if (this._rhythmCount >= 3) {
+                    var rbBonus = this._rhythmCount;
+                    this.score += rbBonus;
+                    this.ui.addScorePopup(this.ball.x, this.ball.y - 40, 'RHYTHM x' + this._rhythmCount + ' +' + rbBonus, '#5DADE2');
+                    this.ball.trailBoost = Math.min(this.ball.trailBoost + 0.3, 1.5);
+                }
+            } else {
+                this._rhythmCount = 0;
+            }
+        }
+        this._prevBounceInterval = bounceInterval;
         this.lastBounceTime = now;
         // Perfect bounce: ball falling fast + near bottom half of screen
         var preBounceVy = this.ball.vy;
@@ -1213,6 +1231,8 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.nearMissStreakTimer = 0;
         this.nearMissSparkTimer = 0;
         this.lastBounceTime = 0;
+        this._prevBounceInterval = 0;
+        this._rhythmCount = 0;
         this.isNewHigh = false;
         this.deathCause = '';
         this.runBounces = 0;

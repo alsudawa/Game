@@ -334,9 +334,14 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
         ctx.lineWidth = 2;
         ctx.stroke();
     } else {
+        var spdTint = Math.min(Math.abs(this.speed) / 8, 1);
+        var ptR1 = Math.floor(231 - spdTint * 50);
+        var ptG1 = Math.floor(76 - spdTint * 30);
+        var ptR2 = Math.floor(192 - spdTint * 60);
+        var ptG2 = Math.floor(57 - spdTint * 25);
         var gradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
-        gradient.addColorStop(0, '#e74c3c');
-        gradient.addColorStop(1, '#c0392b');
+        gradient.addColorStop(0, 'rgb(' + ptR1 + ',' + ptG1 + ',60)');
+        gradient.addColorStop(1, 'rgb(' + ptR2 + ',' + ptG2 + ',43)');
         ctx.fillStyle = gradient;
         ctx.fill();
         // Top edge highlight (3D bevel effect)
