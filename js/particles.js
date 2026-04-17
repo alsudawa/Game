@@ -321,6 +321,36 @@ SB.FX = {
         gravity: 120,
         friction: 0.93
     },
+    milestoneConfettiL: {
+        count: 14,
+        spread: 5,
+        speedMin: 80,
+        speedMax: 220,
+        lifeMin: 0.6,
+        lifeMax: 1.2,
+        sizeMin: 2,
+        sizeMax: 5,
+        color: '255,100,200',
+        angle: -Math.PI / 3,
+        angleSpread: Math.PI / 4,
+        gravity: 150,
+        friction: 0.97
+    },
+    milestoneConfettiR: {
+        count: 14,
+        spread: 5,
+        speedMin: 80,
+        speedMax: 220,
+        lifeMin: 0.6,
+        lifeMax: 1.2,
+        sizeMin: 2,
+        sizeMax: 5,
+        color: '100,200,255',
+        angle: Math.PI + Math.PI / 3,
+        angleSpread: Math.PI / 4,
+        gravity: 150,
+        friction: 0.97
+    },
     wallSparkRight: {
         count: 6,
         spread: 3,

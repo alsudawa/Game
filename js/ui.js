@@ -345,6 +345,16 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         ctx.fillStyle = 'rgba(' + glowRGB + ',' + btAlpha.toFixed(2) + ')';
         ctx.fill();
     }
+    if (!SB.reducedMotion) {
+        var auraPhase = (Math.sin(this.blinkPhase * 0.5) + 1) / 2;
+        var auraR = 50 + auraPhase * 20;
+        var auraGrad = ctx.createRadialGradient(cw / 2, ballY, 10, cw / 2, ballY, auraR);
+        auraGrad.addColorStop(0, 'rgba(' + glowRGB + ',' + (0.12 + auraPhase * 0.08).toFixed(2) + ')');
+        auraGrad.addColorStop(0.6, 'rgba(' + glowRGB + ',' + (0.04 + auraPhase * 0.03).toFixed(2) + ')');
+        auraGrad.addColorStop(1, 'rgba(' + glowRGB + ',0)');
+        ctx.fillStyle = auraGrad;
+        ctx.fillRect(cw / 2 - auraR, ballY - auraR, auraR * 2, auraR * 2);
+    }
     ctx.save();
     ctx.shadowColor = currentSkin.glow;
     ctx.shadowBlur = 18 + breathe * 15;
@@ -1784,6 +1794,22 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillStyle = shareFlash > 0 ? 'rgba(100, 180, 240' + shareBright + ')' : 'rgba(52, 152, 219' + shareBright + ')';
         this._roundRect(ctx, btnX, shareBtnY, btnW, btnH, 10);
         ctx.fill();
+        if (!SB.reducedMotion) {
+            var shT = ((SB.frameTime || 0) * 0.0005) % 1;
+            var shX = btnX + btnW * (shT * 1.6 - 0.3);
+            var shW = btnW * 0.2;
+            ctx.save();
+            ctx.beginPath();
+            this._roundRect(ctx, btnX, shareBtnY, btnW, btnH, 10);
+            ctx.clip();
+            var shGrad = ctx.createLinearGradient(shX, 0, shX + shW, 0);
+            shGrad.addColorStop(0, 'rgba(255,255,255,0)');
+            shGrad.addColorStop(0.5, 'rgba(255,255,255,0.12)');
+            shGrad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = shGrad;
+            ctx.fillRect(shX, shareBtnY, shW, btnH);
+            ctx.restore();
+        }
         if (shareFlash > 0) {
             ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
             ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.6) + ')';

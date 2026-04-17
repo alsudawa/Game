@@ -783,6 +783,23 @@ SB.Audio.prototype.playZoneTransition = function(threshold) {
     }
 };
 
+SB.Audio.prototype.playBoomerangReturn = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'triangle';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.linearRampToValueAtTime(700, now + 0.1);
+    osc.frequency.linearRampToValueAtTime(500, now + 0.15);
+    gain.gain.setValueAtTime(0.1, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.18);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.18);
+};
+
 SB.Audio.prototype.playObstacleWarn = function() {
     if (!this.initialized) return;
     var osc = this.ctx.createOscillator();

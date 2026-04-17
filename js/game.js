@@ -609,6 +609,10 @@ SB.Game.prototype._updatePlaying = function(dt) {
             continue;
         }
 
+        if (obs.type === SB.OBSTACLE_TYPES.BOOMERANG && obs.returnFlash > 0.28) {
+            SB.audio.playBoomerangReturn();
+        }
+
         if (!SB.reducedMotion && Math.random() < 0.2) {
             if (obs.type === SB.OBSTACLE_TYPES.BOOMERANG) {
                 var brCx = obs.x + (obs.radius || 10);
@@ -1054,9 +1058,13 @@ SB.Game.prototype._updatePlaying = function(dt) {
             // Fireworks from screen edges
             this.particles.emit(0, ch * 0.6, SB.FX.milestoneFirework);
             this.particles.emit(cw, ch * 0.6, SB.FX.milestoneFireworkR);
+            this.particles.emit(cw * 0.2, 0, SB.FX.milestoneConfettiL);
+            this.particles.emit(cw * 0.8, 0, SB.FX.milestoneConfettiR);
             if (milestoneScore >= 100) {
                 this.particles.emit(cw * 0.3, 0, SB.FX.milestoneFireworkDown);
                 this.particles.emit(cw * 0.7, 0, SB.FX.milestoneFireworkDown);
+                this.particles.emit(cw * 0.5, 0, SB.FX.milestoneConfettiL);
+                this.particles.emit(cw * 0.5, 0, SB.FX.milestoneConfettiR);
             }
             this.ui.milestoneMsg = milestoneScore + ' POINTS!';
             this.ui.milestoneMsgTimer = 1.5;
@@ -1625,6 +1633,20 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                     ctx.stroke();
                 }
                 ctx.restore();
+            }
+            // Laser active screen tint
+            var laserActive = false;
+            var obs2 = this._renderObstacles;
+            for (var li = 0; li < obs2.length; li++) {
+                if (obs2[li].type === SB.OBSTACLE_TYPES.LASER && obs2[li].laserPhase === 'active') {
+                    laserActive = true;
+                    break;
+                }
+            }
+            if (laserActive && !SB.reducedMotion) {
+                var laPulse = (Math.sin((SB.frameTime || 0) * 0.015) + 1) / 2;
+                ctx.fillStyle = 'rgba(100,200,255,' + (0.02 + laPulse * 0.02).toFixed(3) + ')';
+                ctx.fillRect(0, 0, cw, ch);
             }
             // Proximity heartbeat pulse
             if (this._maxDangerGlow > 0.5 && !SB.reducedMotion) {
