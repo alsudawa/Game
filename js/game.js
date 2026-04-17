@@ -1526,14 +1526,6 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
 
     // Spawn warning indicators
     var warnings = this.spawner.getWarnings();
-    // Debug: always visible to confirm code is loaded (v7 cache)
-    ctx.save();
-    ctx.fillStyle = '#FF0000';
-    ctx.font = 'bold 24px sans-serif';
-    ctx.textAlign = 'left';
-    ctx.textBaseline = 'top';
-    ctx.fillText('W:' + warnings.length + ' D:' + this.spawner.difficulty.toFixed(1), 60, 40);
-    ctx.restore();
     for (var wi = 0; wi < warnings.length; wi++) {
         this._drawSpawnWarning(ctx, cw, ch, warnings[wi]);
     }
@@ -1954,6 +1946,46 @@ SB.Game.prototype._drawSpawnWarning = function(ctx, cw, ch, w) {
         ctx.textBaseline = 'middle';
         ctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.9).toFixed(2) + ')';
         ctx.fillText('!', w.x, w.y);
+    } else if (w.side === 2) {
+        var barW = 6 + frac * 8;
+        var barH = 50 + frac * 30;
+        ctx.shadowColor = 'rgba(' + col + ',' + (alpha * 0.8).toFixed(2) + ')';
+        ctx.shadowBlur = 12 + frac * 15;
+        ctx.fillStyle = 'rgba(' + col + ',' + alpha.toFixed(2) + ')';
+        ctx.fillRect(0, w.y - barH / 2, barW, barH);
+        ctx.fillRect(cw - barW, w.y - barH / 2, barW, barH);
+        ctx.shadowBlur = 0;
+        var arSize = 8 + frac * 5;
+        ctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.9).toFixed(2) + ')';
+        ctx.beginPath();
+        ctx.moveTo(barW + 6 + arSize, w.y);
+        ctx.lineTo(barW + 6, w.y - arSize);
+        ctx.lineTo(barW + 6, w.y + arSize);
+        ctx.closePath();
+        ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(cw - barW - 6 - arSize, w.y);
+        ctx.lineTo(cw - barW - 6, w.y - arSize);
+        ctx.lineTo(cw - barW - 6, w.y + arSize);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(' + col + ',' + (alpha * 0.12).toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([6, 10]);
+        ctx.beginPath();
+        ctx.moveTo(barW + arSize + 10, w.y);
+        ctx.lineTo(cw - barW - arSize - 10, w.y);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        if (!SB.reducedMotion) {
+            var ringPhase = (w.timer * 4) % 1;
+            var ringR = 10 + ringPhase * 25;
+            var ringA = (1 - ringPhase) * alpha * 0.5;
+            ctx.strokeStyle = 'rgba(' + col + ',' + ringA.toFixed(2) + ')';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.arc(0, w.y, ringR, 0, SB.TAU); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cw, w.y, ringR, 0, SB.TAU); ctx.stroke();
+        }
     } else {
         // Edge warning: thick glowing bar + large arrow
         var edgeX = w.side < 0 ? 0 : cw;

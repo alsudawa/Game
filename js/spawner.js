@@ -19,7 +19,7 @@ SB.Spawner = function(obstaclePool, collectiblePool, powerupPool) {
     this._warnings = [];
     this._warningPool = [];
     for (var wi = 0; wi < 10; wi++) {
-        this._warningPool.push({ active: false, timer: 0, duration: 0, side: 0, x: 0, y: 0, type: '', configs: null, cw: 0, ch: 0, speedMult: 0 });
+        this._warningPool.push({ active: false, timer: 0, duration: 0, side: 0, x: 0, y: 0, type: '', obstacles: null, collectibles: null });
     }
 };
 
@@ -106,12 +106,7 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
 };
 
 SB.Spawner.prototype._queueObstacle = function(cw, ch, speedMult, d) {
-    // Warning duration: longer at low difficulty, shorter at high difficulty
     var warnDur = SB.lerp(0.8, 0.25, d);
-    // Pre-determine spawn side and Y for the warning indicator
-    var fromLeft = Math.random() < 0.5;
-    var y = SB.randRange(ch * 0.15, ch * 0.8);
-    // Pick obstacle type
     var spawnType = 'platform';
     if (d >= 0.45) {
         var roll = Math.random();
@@ -128,14 +123,13 @@ SB.Spawner.prototype._queueObstacle = function(cw, ch, speedMult, d) {
     } else if (d >= 0.15) {
         spawnType = Math.random() < 0.25 ? 'spike' : 'platform';
     }
-    // Laser and gravity well have their own warnings — spawn them directly
     if (spawnType === 'laser' || spawnType === 'gravity_well') {
         this._spawnByType(spawnType, cw, ch, speedMult);
         return;
     }
-    // In-place spawns (no edge entry) get position warnings instead of edge warnings
-    var inPlace = (spawnType === 'squeeze' || spawnType === 'spiral');
-    // Queue warning
+    var finalSpeed = speedMult * (this.dailySpeedMult || 1);
+    var finalSize = (this.dailySizeMult || 1) * (1 + this.extraDifficulty * 0.15);
+    var built = this._buildSpawnConfigs(spawnType, cw, ch, finalSpeed, finalSize);
     var w = null;
     for (var i = 0; i < this._warningPool.length; i++) {
         if (!this._warningPool[i].active) { w = this._warningPool[i]; break; }
@@ -144,20 +138,194 @@ SB.Spawner.prototype._queueObstacle = function(cw, ch, speedMult, d) {
     w.active = true;
     w.timer = 0;
     w.duration = warnDur;
-    w.side = inPlace ? 0 : (fromLeft ? -1 : 1);
-    w.y = y;
-    w.x = inPlace ? SB.randRange(cw * 0.25, cw * 0.75) : 0;
+    w.side = built.side;
+    w.y = built.y;
+    w.x = built.x;
     w.type = spawnType;
-    w.cw = cw;
-    w.ch = ch;
-    w.speedMult = speedMult;
+    w.obstacles = built.obstacles;
+    w.collectibles = built.collectibles;
     this._warnings.push(w);
 };
 
 SB.Spawner.prototype._executeSpawn = function(w) {
-    var sm = w.speedMult * (this.dailySpeedMult || 1);
-    this._sizeMult = (this.dailySizeMult || 1) * (1 + this.extraDifficulty * 0.15);
-    this._spawnByType(w.type, w.cw, w.ch, sm);
+    for (var i = 0; i < w.obstacles.length; i++) {
+        this.obstaclePool.acquire(w.obstacles[i]);
+    }
+    if (w.collectibles) {
+        for (var j = 0; j < w.collectibles.length; j++) {
+            this.collectiblePool.acquire(w.collectibles[j]);
+        }
+    }
+};
+
+SB.Spawner.prototype._buildSpawnConfigs = function(type, cw, ch, speedMult, sizeMult) {
+    var obstacles = [];
+    var collectibles = [];
+    var side = 0, warnX = 0, warnY = 0;
+
+    if (type === 'platform') {
+        var fromLeft = Math.random() < 0.5;
+        var pw = SB.randRange(60, 120) * sizeMult;
+        var pspeed = SB.randRange(1.5, 3.5) * speedMult;
+        var py = SB.randRange(ch * 0.1, ch * 0.85);
+        side = fromLeft ? -1 : 1;
+        warnY = py;
+        obstacles.push({
+            type: SB.OBSTACLE_TYPES.PLATFORM,
+            x: fromLeft ? -pw : cw, y: py, width: pw, height: 14,
+            speed: pspeed, direction: fromLeft ? 1 : -1,
+            oscillateAmplitude: this.difficulty > 0.4 && Math.random() < 0.3 ? SB.randRange(20, 50) : 0,
+            oscillateSpeed: SB.randRange(2, 4)
+        });
+    } else if (type === 'spike') {
+        var fromLeft = Math.random() < 0.5;
+        var ssize = SB.randRange(22, 30) * sizeMult;
+        var sspeed = SB.randRange(1.0, 2.5) * speedMult;
+        var sy = SB.randRange(ch * 0.1, ch * 0.8);
+        side = fromLeft ? -1 : 1;
+        warnY = sy;
+        obstacles.push({
+            type: SB.OBSTACLE_TYPES.SPIKE,
+            x: fromLeft ? -ssize : cw, y: sy, width: ssize, height: ssize,
+            speed: sspeed, direction: fromLeft ? 1 : -1
+        });
+    } else if (type === 'blade') {
+        var fromLeft = Math.random() < 0.5;
+        var bradius = SB.randRange(16, 22) * sizeMult;
+        var bspeed = SB.randRange(1.5, 3.0) * speedMult;
+        var by = SB.randRange(ch * 0.15, ch * 0.75);
+        side = fromLeft ? -1 : 1;
+        warnY = by;
+        obstacles.push({
+            type: SB.OBSTACLE_TYPES.BLADE,
+            x: fromLeft ? -bradius * 2 : cw, y: by,
+            width: bradius * 2, height: bradius * 2,
+            speed: bspeed, direction: fromLeft ? 1 : -1,
+            radius: bradius, rotationSpeed: SB.randRange(3, 6)
+        });
+    } else if (type === 'boomerang') {
+        var fromLeft = Math.random() < 0.5;
+        var boomR = SB.randRange(14, 20) * sizeMult;
+        var boomSpd = SB.randRange(2.0, 3.5) * speedMult;
+        var boomY = SB.randRange(ch * 0.15, ch * 0.75);
+        var travelDist = SB.randRange(cw * 0.4, cw * 0.7);
+        side = fromLeft ? -1 : 1;
+        warnY = boomY;
+        obstacles.push({
+            type: SB.OBSTACLE_TYPES.BOOMERANG,
+            x: fromLeft ? -boomR * 2 : cw, y: boomY,
+            width: boomR * 2, height: boomR * 2,
+            speed: boomSpd, direction: fromLeft ? 1 : -1,
+            radius: boomR, travelDist: travelDist
+        });
+    } else if (type === 'squeeze') {
+        var sqY = SB.randRange(ch * 0.2, ch * 0.7);
+        var sqMinGap = 56;
+        var sqGapSize = Math.max(sqMinGap, 80 - this.difficulty * 20);
+        var sqGapCenter = SB.randRange(cw * 0.3, cw * 0.7);
+        var sqLeftW = sqGapCenter - sqGapSize / 2;
+        var sqRightW = cw - sqGapCenter - sqGapSize / 2;
+        warnX = sqGapCenter;
+        warnY = sqY;
+        if (sqLeftW > 20) {
+            obstacles.push({
+                type: SB.OBSTACLE_TYPES.PLATFORM,
+                x: 0, y: sqY, width: sqLeftW, height: 14,
+                speed: 0, direction: 0, oscillateAmplitude: 0, oscillateSpeed: 0, maxLifetime: 5.0
+            });
+        }
+        if (sqRightW > 20) {
+            obstacles.push({
+                type: SB.OBSTACLE_TYPES.PLATFORM,
+                x: sqGapCenter + sqGapSize / 2, y: sqY, width: sqRightW, height: 14,
+                speed: 0, direction: 0, oscillateAmplitude: 0, oscillateSpeed: 0, maxLifetime: 5.0
+            });
+        }
+        collectibles.push({ x: sqGapCenter, y: sqY - 25 });
+    } else if (type === 'wave') {
+        var fromLeft = Math.random() < 0.5;
+        var wBaseY = SB.randRange(ch * 0.2, ch * 0.5);
+        var wSize = SB.randRange(20, 26) * sizeMult;
+        var wSpeed = SB.randRange(1.2, 2.2) * speedMult;
+        var wSpacing = SB.randRange(35, 55);
+        side = fromLeft ? -1 : 1;
+        warnY = wBaseY + wSpacing;
+        for (var wi = 0; wi < 3; wi++) {
+            obstacles.push({
+                type: SB.OBSTACLE_TYPES.SPIKE,
+                x: fromLeft ? -(wSize + wi * wSpacing * 0.5) : cw + wi * wSpacing * 0.5,
+                y: wBaseY + wi * wSpacing, width: wSize, height: wSize,
+                speed: wSpeed, direction: fromLeft ? 1 : -1
+            });
+        }
+    } else if (type === 'pincer') {
+        var pnY = SB.randRange(ch * 0.2, ch * 0.7);
+        var pnW = SB.randRange(50, 90) * sizeMult;
+        var pnSpeed = SB.randRange(1.5, 2.5) * speedMult;
+        side = 2;
+        warnX = cw / 2;
+        warnY = pnY;
+        obstacles.push({
+            type: SB.OBSTACLE_TYPES.PLATFORM,
+            x: -pnW, y: pnY, width: pnW, height: 14,
+            speed: pnSpeed, direction: 1
+        });
+        obstacles.push({
+            type: SB.OBSTACLE_TYPES.PLATFORM,
+            x: cw, y: pnY, width: pnW, height: 14,
+            speed: pnSpeed, direction: -1
+        });
+        collectibles.push({ x: cw / 2, y: pnY - 25 });
+    } else if (type === 'corridor') {
+        var corGapCenter = SB.randRange(ch * 0.25, ch * 0.65);
+        var corMinGap = 70;
+        var corGapSize = Math.max(corMinGap, 100 - this.difficulty * 30);
+        var corFromLeft = Math.random() < 0.5;
+        var corSpeed = SB.randRange(1.0, 2.0) * speedMult;
+        var corW = SB.randRange(60, 90) * sizeMult;
+        side = corFromLeft ? -1 : 1;
+        warnY = corGapCenter;
+        if (corGapCenter - corGapSize / 2 > 30) {
+            obstacles.push({
+                type: SB.OBSTACLE_TYPES.PLATFORM,
+                x: corFromLeft ? -corW : cw, y: corGapCenter - corGapSize / 2 - 14,
+                width: corW, height: 14, speed: corSpeed, direction: corFromLeft ? 1 : -1
+            });
+        }
+        if (corGapCenter + corGapSize / 2 < ch - 30) {
+            obstacles.push({
+                type: SB.OBSTACLE_TYPES.PLATFORM,
+                x: corFromLeft ? -corW : cw, y: corGapCenter + corGapSize / 2,
+                width: corW, height: 14, speed: corSpeed, direction: corFromLeft ? 1 : -1
+            });
+        }
+        collectibles.push({
+            type: SB.COLLECTIBLE_TYPES.COIN,
+            x: corFromLeft ? -15 : cw + 15, y: corGapCenter,
+            vx: (corFromLeft ? 1 : -1) * corSpeed * 40, sineAmp: 0, sineFreq: 0
+        });
+    } else if (type === 'spiral') {
+        var spCx = SB.randRange(cw * 0.3, cw * 0.7);
+        var spCy = SB.randRange(ch * 0.25, ch * 0.55);
+        var spiralR = SB.randRange(50, 80);
+        var spSize = SB.randRange(18, 24) * sizeMult;
+        warnX = spCx;
+        warnY = spCy;
+        for (var si = 0; si < 4; si++) {
+            var angle = (SB.TAU / 4) * si;
+            var sx = spCx + Math.cos(angle) * spiralR;
+            var sy = spCy + Math.sin(angle) * spiralR;
+            obstacles.push({
+                type: SB.OBSTACLE_TYPES.SPIKE,
+                x: sx - spSize / 2, y: sy - spSize / 2,
+                width: spSize, height: spSize,
+                speed: 0, direction: 0, maxLifetime: 4.0
+            });
+        }
+        collectibles.push({ x: spCx, y: spCy });
+    }
+
+    return { side: side, x: warnX, y: warnY, obstacles: obstacles, collectibles: collectibles };
 };
 
 SB.Spawner.prototype._spawnByType = function(type, cw, ch, speedMult) {
