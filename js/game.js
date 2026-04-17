@@ -121,7 +121,11 @@ SB.Game.prototype.update = function(dt) {
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
         if (this.comboTimer <= 0) {
-            if (this.comboCount >= 3) SB.audio.playComboBreak();
+            if (this.comboCount >= 3) {
+                SB.audio.playComboBreak();
+                this.screenShake = 0.1;
+                this.screenShakeIntensity = 3;
+            }
             this.comboCount = 0;
         }
     }
@@ -230,6 +234,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         this.ball.bounce(this.input.tapX);
         if (isDoubleTap) {
             this.ball.vy *= 1.25;
+            this.ball.trailBoost = 1.0;
             this.screenFlash = 0.04;
             this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.powerBounce);
             this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '93,173,226');
@@ -374,6 +379,10 @@ SB.Game.prototype._updatePlaying = function(dt) {
     if (this.spawner.lastSpawnedPowerup) {
         this.spawner.lastSpawnedPowerup = false;
         this.screenFlash = 0.06;
+    }
+    if (this.spawner.lastSpawnedObstacle) {
+        this.spawner.lastSpawnedObstacle = false;
+        SB.audio.playObstacleWarn();
     }
 
     // --- Obstacles ---

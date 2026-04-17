@@ -105,7 +105,8 @@ SB.Background.prototype.update = function(dt, difficulty) {
     this.speedLines.length = slw;
 
     // Shooting stars at higher difficulty
-    if (difficulty > 0.3 && Math.random() < 0.004 * dt * 60) {
+    var ssRate = 0.004 + Math.max(0, difficulty - 0.3) * 0.008;
+    if (difficulty > 0.3 && Math.random() < ssRate * dt * 60) {
         this.shootingStars.push({
             x: SB.randRange(0, cw),
             y: SB.randRange(0, ch * 0.4),

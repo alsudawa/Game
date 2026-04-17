@@ -14,6 +14,7 @@ SB.Spawner = function(obstaclePool, collectiblePool, powerupPool) {
     this.graceTimer = 0;
     this.gracePeriod = 2.0;
     this.lastSpawnedPowerup = false;
+    this.lastSpawnedObstacle = false;
 };
 
 SB.Spawner.prototype.reset = function(veteranBonus) {
@@ -50,6 +51,7 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
         if (this.obstacleTimer >= spawnInterval) {
             this.obstacleTimer = 0;
             this._spawnObstacle(canvasWidth, canvasHeight, speedMultiplier);
+            this.lastSpawnedObstacle = true;
         }
     }
 

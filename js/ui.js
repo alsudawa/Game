@@ -834,6 +834,14 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         var nmText = this.nearMissStreak >= 2 ? 'DAREDEVIL x' + this.nearMissStreak : 'CLOSE!';
         ctx.fillText(nmText, cw / 2, ch * 0.22);
         ctx.restore();
+        if (!SB.reducedMotion) {
+            var nmEdge = nmAlpha * 0.15;
+            ctx.save();
+            ctx.strokeStyle = 'rgba(243,156,18,' + nmEdge.toFixed(3) + ')';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(1, 1, cw - 2, ch - 2);
+            ctx.restore();
+        }
     }
 
     // Combo timer bar (thin bar under score showing remaining combo time)

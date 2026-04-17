@@ -26,6 +26,7 @@ SB.Ball = function() {
     this.comboIntensity = 0; // 0-1 based on active combo count
     this.gravityPullAngle = 0;
     this.gravityPullStrength = 0;
+    this.trailBoost = 0;
 };
 
 SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
@@ -68,6 +69,7 @@ SB.Ball.prototype.update = function(dt) {
 
     if (this.wallSquash > 0) this.wallSquash = Math.max(0, this.wallSquash - dt * 6);
     if (this.bounceSquash > 0) this.bounceSquash = Math.max(0, this.bounceSquash - dt * 8);
+    if (this.trailBoost > 0) this.trailBoost = Math.max(0, this.trailBoost - dt * 1.5);
 
     this.wallHitSide = 0;
     if (this.x - this.radius < 0) {
@@ -104,10 +106,10 @@ SB.Ball.prototype.draw = function(ctx) {
     // Trail intensifies when ball is falling fast or combo is active
     var speedFrac = Math.min(Math.abs(this.vy) / SB.Physics.MAX_FALL_SPEED, 1);
     var comboBoost = this.comboIntensity;
-    var trailAlphaMult = 1 + speedFrac * 1.5 + comboBoost * 1.0;
-    var trailSizeMult = 1 + speedFrac * 0.3 + comboBoost * 0.2;
-    // Dynamic trail length: 8 base, up to 14 at high speed/combo
-    var targetLen = Math.floor(8 + speedFrac * 4 + comboBoost * 2);
+    var tb = this.trailBoost || 0;
+    var trailAlphaMult = 1 + speedFrac * 1.5 + comboBoost * 1.0 + tb * 1.5;
+    var trailSizeMult = 1 + speedFrac * 0.3 + comboBoost * 0.2 + tb * 0.3;
+    var targetLen = Math.floor(8 + speedFrac * 4 + comboBoost * 2 + tb * 4);
     this._activeTrailLen = targetLen;
     var drawLen = Math.min(this._trailLen, this._activeTrailLen);
     var start = (this._trailHead - drawLen + this.maxTrail) % this.maxTrail;

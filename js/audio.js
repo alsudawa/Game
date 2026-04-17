@@ -570,5 +570,20 @@ SB.Audio.prototype.playComboBreak = function() {
     osc.stop(now + 0.12);
 };
 
+SB.Audio.prototype.playObstacleWarn = function() {
+    if (!this.initialized) return;
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'sine';
+    var now = this.ctx.currentTime;
+    osc.frequency.value = 200;
+    gain.gain.setValueAtTime(0.03, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.05);
+};
+
 SB.audio = new SB.Audio();
 SB.audio.loadMuteState();
