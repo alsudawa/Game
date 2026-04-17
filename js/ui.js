@@ -263,9 +263,24 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.save();
     ctx.shadowColor = 'rgba(255, 215, 0, 0.5)';
     ctx.shadowBlur = 20;
-    ctx.font = 'bold ' + Math.min(cw * 0.12, 52) + 'px ' + this.font;
+    var titleFont = Math.min(cw * 0.12, 52);
+    ctx.font = 'bold ' + titleFont + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText('SKY BOUNCE', cw / 2, ch * 0.08);
+    // Shimmer sweep
+    if (!SB.reducedMotion) {
+        var shimT = ((SB.frameTime || 0) * 0.0003) % 1;
+        var shimX = cw * (shimT * 1.4 - 0.2);
+        var shimW = cw * 0.15;
+        var shimGrad = ctx.createLinearGradient(shimX, 0, shimX + shimW, 0);
+        shimGrad.addColorStop(0, 'rgba(255,255,255,0)');
+        shimGrad.addColorStop(0.5, 'rgba(255,255,255,0.15)');
+        shimGrad.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = shimGrad;
+        ctx.fillRect(cw / 2 - titleFont * 3, ch * 0.08 - titleFont * 0.6, titleFont * 6, titleFont * 1.2);
+        ctx.globalCompositeOperation = 'source-over';
+    }
     ctx.restore();
 
     // Level & XP bar + Coins
@@ -825,6 +840,16 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.save();
     ctx.textAlign = 'right';
     ctx.textBaseline = 'top';
+    // Golden glow flash behind counter on coin gain
+    if (this.coinBump > 0) {
+        var cbGlowA = (this.coinBump / 0.2) * 0.15;
+        ctx.save();
+        ctx.fillStyle = 'rgba(255,215,0,' + cbGlowA.toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.arc(cw - 35, 16, 20 + (1 - this.coinBump / 0.2) * 10, 0, SB.TAU);
+        ctx.fill();
+        ctx.restore();
+    }
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 4;
     var coinScale = this.coinBump > 0 ? 1 + this.coinBump / 0.2 * 0.3 : 1;
@@ -988,7 +1013,7 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.font = 'bold ' + Math.floor(nmFontSize * nmScale) + 'px ' + this.font;
         ctx.fillStyle = this.nearMissStreak >= 3 ? '#E74C3C' : '#F39C12';
         ctx.shadowColor = ctx.fillStyle;
-        ctx.shadowBlur = 8;
+        ctx.shadowBlur = 8 + Math.min(this.nearMissStreak, 5) * 4;
         var nmText = this.nearMissStreak >= 2 ? 'DAREDEVIL x' + this.nearMissStreak : 'CLOSE!';
         ctx.fillText(nmText, cw / 2, ch * 0.22);
         ctx.restore();
@@ -1356,8 +1381,12 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
 
         ctx.fillStyle = 'rgba(255,255,255,0.15)';
         ctx.fillRect(xpBarX, y, xpBarW, xpBarH);
+        ctx.save();
+        ctx.shadowColor = 'rgba(255,215,0,0.6)';
+        ctx.shadowBlur = 6 + (Math.sin(this.blinkPhase * 2) + 1) / 2 * 4;
         ctx.fillStyle = 'rgba(255,215,0,0.7)';
         ctx.fillRect(xpBarX, y, xpBarW * progress, xpBarH);
+        ctx.restore();
         ctx.restore();
         y += xpBarH + gap;
     }
@@ -1422,9 +1451,14 @@ SB.UI.prototype.drawPauseScreen = function(ctx, cw, ch) {
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
 
-    ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
+    var pauseBreath = 1 + Math.sin(this.blinkPhase * 0.8) * 0.04;
+    ctx.save();
+    ctx.font = 'bold ' + Math.min(cw * 0.1, 40) * pauseBreath + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
+    ctx.shadowColor = 'rgba(255,255,255,0.2)';
+    ctx.shadowBlur = 8 + (Math.sin(this.blinkPhase * 0.8) + 1) / 2 * 6;
     ctx.fillText('PAUSED', cw / 2, ch * 0.3);
+    ctx.restore();
 
     // Current run stats
     ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
