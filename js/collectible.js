@@ -241,6 +241,18 @@ SB.Collectible.prototype._drawCoin = function(ctx) {
     }
 
     ctx.restore();
+
+    // Value indicator for high-value coins
+    if (this.coinValue >= 2 && scaleX > 0.4) {
+        var cvAlpha = Math.min(scaleX, 0.8);
+        ctx.save();
+        ctx.font = 'bold ' + Math.floor(r * 0.7) + 'px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillStyle = 'rgba(255,240,150,' + cvAlpha.toFixed(2) + ')';
+        ctx.fillText('x' + this.coinValue, this.x, this.y - r - 4);
+        ctx.restore();
+    }
 };
 
 SB.Collectible.prototype.getBounds = function() {

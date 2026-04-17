@@ -396,6 +396,25 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         ctx.fillStyle = 'rgba(255,215,0,0.7)';
         ctx.fillText(achText, cw / 2, achY);
 
+        // Achievement count badge
+        if (achCount > 0) {
+            var badgeX = achX + achW + 4;
+            var badgeY = achY;
+            var badgeR = 8;
+            var badgePulse = (Math.sin(this.blinkPhase * 2) + 1) / 2;
+            ctx.save();
+            ctx.shadowColor = 'rgba(255,215,0,0.4)';
+            ctx.shadowBlur = 4 + badgePulse * 4;
+            ctx.beginPath();
+            ctx.arc(badgeX, badgeY, badgeR, 0, SB.TAU);
+            ctx.fillStyle = 'rgba(255,215,0,0.8)';
+            ctx.fill();
+            ctx.font = 'bold ' + Math.min(cw * 0.025, 10) + 'px ' + this.font;
+            ctx.fillStyle = '#000';
+            ctx.fillText('' + achCount, badgeX, badgeY + 0.5);
+            ctx.restore();
+        }
+
         SB._achBtn = { x: achX, y: achY - achH / 2, w: achW, h: achH };
     }
 

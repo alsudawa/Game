@@ -283,6 +283,20 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
         ctx.lineWidth = 1;
         ctx.stroke();
     }
+    // Direction arrow indicator
+    if (Math.abs(this.speed) > 0.5 && !SB.reducedMotion) {
+        var arDir = this.speed * this.direction > 0 ? 1 : -1;
+        var arX = arDir > 0 ? this.x + this.width - 12 : this.x + 12;
+        var arY = this.y + this.height / 2;
+        var arAlpha = Math.min(Math.abs(this.speed) / 4, 0.5);
+        ctx.fillStyle = 'rgba(255,255,255,' + arAlpha.toFixed(2) + ')';
+        ctx.beginPath();
+        ctx.moveTo(arX + arDir * 5, arY);
+        ctx.lineTo(arX - arDir * 3, arY - 3);
+        ctx.lineTo(arX - arDir * 3, arY + 3);
+        ctx.closePath();
+        ctx.fill();
+    }
     ctx.restore();
 };
 
@@ -457,6 +471,21 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
         ctx.strokeStyle = '#E65100';
         ctx.lineWidth = 1;
         ctx.stroke();
+    }
+
+    // Spin blur lines (scale with speed)
+    if (Math.abs(this.speed) > 1.5 && !SB.reducedMotion) {
+        var sbFrac = Math.min((Math.abs(this.speed) - 1.5) / 3, 1);
+        var sbCount = 2 + Math.floor(sbFrac * 2);
+        var sbAlpha = sbFrac * 0.25;
+        ctx.strokeStyle = 'rgba(255,200,100,' + sbAlpha.toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        for (var sbi = 0; sbi < sbCount; sbi++) {
+            var sbAngle = SB.TAU / sbCount * sbi;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius * 0.6, sbAngle, sbAngle + 0.4 + sbFrac * 0.5);
+            ctx.stroke();
+        }
     }
 
     // Return flash warning (double ring + glow)

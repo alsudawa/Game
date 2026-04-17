@@ -65,7 +65,8 @@ SB.Ball.prototype.update = function(dt) {
 
     this.x += this.vx * dt;
     this.y += this.vy * dt;
-    this.visualRotation += this.vx * dt * 0.03;
+    var rotSpd = Math.abs(this.vx) > 2 ? 0.03 + Math.min(Math.abs(this.vx) / 200, 0.02) : 0.03;
+    this.visualRotation += this.vx * dt * rotSpd;
 
     if (this.bounceGlow > 0) this.bounceGlow = Math.max(0, this.bounceGlow - dt * 5);
 
