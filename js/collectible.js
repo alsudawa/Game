@@ -61,7 +61,8 @@ SB.Collectible.prototype.init = function(config) {
 
 SB.Collectible.prototype.update = function(dt) {
     if (!this.active) return;
-    this.rotation += 1.5 * dt;
+    var rotMag = this._magnetPull > 0 ? 1 + this._magnetPull * 3 : 1;
+    this.rotation += 1.5 * dt * rotMag;
     this.pulsePhase += 3 * dt;
     this.lifetime += dt;
 

@@ -1288,8 +1288,9 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
             var dcTips = { Platform: 'Tap left or right to steer around platforms', Spike: 'Watch for spike patterns — they have gaps!', Blade: 'Blades spin in place — time your path', Boomerang: 'Boomerangs return — dodge twice!', Laser: 'Lasers flash before firing — move away fast', Fell: 'Keep tapping to stay airborne!' };
             var tip = dcTips[this.runStats.deathCause];
             if (tip) {
+                var tipFade = Math.max(0, (this.gameOverAlpha - 0.6) / 0.4);
                 ctx.font = Math.min(cw * 0.022, 9) + 'px ' + this.font;
-                ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.3) + ')';
+                ctx.fillStyle = 'rgba(255,255,255,' + (tipFade * 0.3).toFixed(2) + ')';
                 ctx.fillText(tip, cw / 2, y);
                 y += gap;
             }

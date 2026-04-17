@@ -285,6 +285,17 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
         ctx.lineWidth = 1;
         ctx.stroke();
     }
+    // Surface dot pattern
+    if (!SB.highContrast && !SB.reducedMotion) {
+        var dotCount = Math.floor(this.width / 18);
+        var dotGap = this.width / (dotCount + 1);
+        ctx.fillStyle = 'rgba(255,255,255,0.12)';
+        for (var di = 1; di <= dotCount; di++) {
+            ctx.beginPath();
+            ctx.arc(this.x + di * dotGap, this.y + this.height / 2, 1.2, 0, SB.TAU);
+            ctx.fill();
+        }
+    }
     // Direction arrow indicator
     if (Math.abs(this.speed) > 0.5 && !SB.reducedMotion) {
         var arDir = this.speed * this.direction > 0 ? 1 : -1;
@@ -665,9 +676,11 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
         ctx.lineWidth = 2;
         ctx.stroke();
     } else {
+        var psInt = Math.min(this.pullStrength / 300, 1);
+        var coreA = 0.7 + psInt * 0.3;
         var grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, this.radius * pulse);
-        grad.addColorStop(0, 'rgba(142,68,173,0.8)');
-        grad.addColorStop(0.6, 'rgba(155,89,182,0.4)');
+        grad.addColorStop(0, 'rgba(142,68,173,' + coreA.toFixed(2) + ')');
+        grad.addColorStop(0.6, 'rgba(155,89,182,' + (coreA * 0.5).toFixed(2) + ')');
         grad.addColorStop(1, 'rgba(155,89,182,0)');
         ctx.fillStyle = grad;
         ctx.fill();
