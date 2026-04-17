@@ -1,4 +1,4 @@
-var CACHE_NAME = 'sky-bounce-v8';
+var CACHE_NAME = 'sky-bounce-v9';
 var ASSETS = [
     './',
     './index.html',

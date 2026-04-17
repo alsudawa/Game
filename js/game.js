@@ -1919,32 +1919,46 @@ SB.Game.prototype._drawSpawnWarning = function(ctx, cw, ch, w) {
     ctx.save();
 
     if (w.side === 0) {
-        // In-place warning (squeeze, spiral): pulsing crosshair at spawn position
-        var cAlpha = alpha * 0.7;
-        var cR = 20 + (1 - frac) * 15;
+        // In-place warning: ghost outlines of actual obstacle positions + pulsing crosshair
+        if (w.obstacles) {
+            for (var oi = 0; oi < w.obstacles.length; oi++) {
+                var ob = w.obstacles[oi];
+                ctx.save();
+                ctx.shadowColor = 'rgba(' + col + ',' + (alpha * 0.6).toFixed(2) + ')';
+                ctx.shadowBlur = 8 + frac * 10;
+                ctx.strokeStyle = 'rgba(' + col + ',' + (alpha * 0.6).toFixed(2) + ')';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([6, 4]);
+                ctx.strokeRect(ob.x, ob.y, ob.width, ob.height);
+                ctx.setLineDash([]);
+                ctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.12 * pulse).toFixed(3) + ')';
+                ctx.fillRect(ob.x, ob.y, ob.width, ob.height);
+                ctx.shadowBlur = 0;
+                ctx.restore();
+            }
+        }
+        var cAlpha = alpha * 0.8;
+        var cR = 24 + (1 - frac) * 18;
         ctx.strokeStyle = 'rgba(' + col + ',' + cAlpha.toFixed(2) + ')';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 2.5;
         ctx.setLineDash([4, 4]);
         ctx.beginPath();
         ctx.arc(w.x, w.y, cR, 0, SB.TAU);
         ctx.stroke();
         ctx.setLineDash([]);
-        // Cross lines
-        var cLen = 8 + frac * 6;
+        var cLen = 10 + frac * 8;
         ctx.beginPath();
         ctx.moveTo(w.x - cLen, w.y); ctx.lineTo(w.x + cLen, w.y);
         ctx.moveTo(w.x, w.y - cLen); ctx.lineTo(w.x, w.y + cLen);
         ctx.stroke();
-        // Inner fill pulse
         ctx.fillStyle = 'rgba(' + col + ',' + (cAlpha * 0.15).toFixed(2) + ')';
         ctx.beginPath();
         ctx.arc(w.x, w.y, cR, 0, SB.TAU);
         ctx.fill();
-        // "!" icon
-        ctx.font = 'bold 16px sans-serif';
+        ctx.font = 'bold 18px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.9).toFixed(2) + ')';
+        ctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.95).toFixed(2) + ')';
         ctx.fillText('!', w.x, w.y);
     } else if (w.side === 2) {
         var barW = 6 + frac * 8;

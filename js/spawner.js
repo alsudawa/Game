@@ -106,7 +106,7 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
 };
 
 SB.Spawner.prototype._queueObstacle = function(cw, ch, speedMult, d) {
-    var warnDur = SB.lerp(0.8, 0.25, d);
+    var warnDur = SB.lerp(0.8, 0.4, d);
     var spawnType = 'platform';
     if (d >= 0.45) {
         var roll = Math.random();
