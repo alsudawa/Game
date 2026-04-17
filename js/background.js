@@ -11,6 +11,11 @@ SB.Background = function() {
     this._cachedGrad = null;
     this._cachedD = -1;
     this._cachedH = 0;
+    this._pendingStars = 0;
+};
+
+SB.Background.prototype.triggerShootingStar = function(count) {
+    this._pendingStars += (count || 1);
 };
 
 SB.Background.prototype.init = function(cw, ch) {
@@ -126,6 +131,20 @@ SB.Background.prototype.update = function(dt, difficulty) {
         }
     }
     this.speedLines.length = slw;
+
+    // Manual shooting star triggers (from milestones etc.)
+    for (var msi = 0; msi < this._pendingStars; msi++) {
+        this.shootingStars.push({
+            x: SB.randRange(cw * 0.2, cw * 0.8),
+            y: SB.randRange(0, ch * 0.2),
+            vx: SB.randRange(-600, -300) * (Math.random() < 0.5 ? 1 : -1),
+            vy: SB.randRange(200, 400),
+            life: SB.randRange(0.5, 0.8),
+            maxLife: 0.8,
+            size: SB.randRange(2, 3.5)
+        });
+    }
+    this._pendingStars = 0;
 
     // Shooting stars at higher difficulty
     var ssRate = 0.004 + Math.max(0, difficulty - 0.3) * 0.008;

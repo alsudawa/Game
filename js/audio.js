@@ -501,6 +501,16 @@ SB.Audio.prototype.startBGM = function() {
     this._bgmBassGain.connect(this._bgmGain);
     this._bgmBassOsc.start(now);
 
+    // Hi-hat layer: high-freq square wave for rhythmic ticks
+    this._bgmHatOsc = ctx.createOscillator();
+    this._bgmHatOsc.type = 'square';
+    this._bgmHatOsc.frequency.value = 8000;
+    this._bgmHatGain = ctx.createGain();
+    this._bgmHatGain.gain.value = 0.001;
+    this._bgmHatOsc.connect(this._bgmHatGain);
+    this._bgmHatGain.connect(this._bgmGain);
+    this._bgmHatOsc.start(now);
+
     // Scheduler state
     this._bgmBPM = 85;
     this._bgmBeat = 0;
@@ -574,6 +584,18 @@ SB.Audio.prototype._bgmPlayBeat = function(time) {
         this._bgmBassGain.gain.exponentialRampToValueAtTime(0.001, time + bassDur);
     }
 
+    // Hi-hat — appears at medium+ difficulty, every 8th note with accent on beats
+    if (this._bgmDifficulty > 0.25) {
+        var hatVol = SB.lerp(0, 0.02, (this._bgmDifficulty - 0.25) / 0.75);
+        if (pos % 2 === 0) hatVol *= 1.5;
+        var hatDur = 0.02;
+        this._bgmHatGain.gain.cancelScheduledValues(time);
+        this._bgmHatOsc.frequency.setValueAtTime(pos % 2 === 0 ? 8000 : 10000, time);
+        this._bgmHatGain.gain.setValueAtTime(0.001, time);
+        this._bgmHatGain.gain.linearRampToValueAtTime(hatVol, time + 0.002);
+        this._bgmHatGain.gain.exponentialRampToValueAtTime(0.001, time + hatDur);
+    }
+
     // Pad chord transitions on bar boundaries — blended
     if (pos === 0) {
         for (var i = 0; i < 3; i++) {
@@ -605,6 +627,42 @@ SB.Audio.prototype.stopBGM = function() {
     for (var i = 0; i < this._bgmPadOscs.length; i++) this._bgmPadOscs[i].stop(now + 1.1);
     this._bgmArpOsc.stop(now + 1.1);
     this._bgmBassOsc.stop(now + 1.1);
+    this._bgmHatOsc.stop(now + 1.1);
+};
+
+SB.Audio.prototype.startAmbient = function() {
+    if (!this.initialized || this._ambPlaying) return;
+    this._ambPlaying = true;
+    var ctx = this.ctx;
+    var now = ctx.currentTime;
+    this._ambGain = ctx.createGain();
+    this._ambGain.gain.setValueAtTime(0, now);
+    this._ambGain.gain.linearRampToValueAtTime(0.03, now + 1.5);
+    this._ambGain.connect(this.masterGain);
+    this._ambOscs = [];
+    var notes = [130.81, 196.00, 261.63];
+    for (var i = 0; i < 3; i++) {
+        var osc = ctx.createOscillator();
+        osc.type = 'triangle';
+        osc.frequency.value = notes[i];
+        osc.detune.value = SB.randRange(-5, 5);
+        var g = ctx.createGain();
+        g.gain.value = [0.4, 0.25, 0.15][i];
+        osc.connect(g);
+        g.connect(this._ambGain);
+        osc.start(now);
+        this._ambOscs.push(osc);
+    }
+};
+
+SB.Audio.prototype.stopAmbient = function() {
+    if (!this._ambPlaying) return;
+    this._ambPlaying = false;
+    var now = this.ctx.currentTime;
+    this._ambGain.gain.cancelScheduledValues(now);
+    this._ambGain.gain.setValueAtTime(this._ambGain.gain.value, now);
+    this._ambGain.gain.linearRampToValueAtTime(0.001, now + 0.5);
+    for (var i = 0; i < this._ambOscs.length; i++) this._ambOscs[i].stop(now + 0.6);
 };
 
 SB.Audio.prototype.playMagnetCollect = function() {
@@ -687,6 +745,30 @@ SB.Audio.prototype.playAchievement = function() {
         gain.connect(this.masterGain);
         osc.start(t);
         osc.stop(t + 0.2);
+    }
+};
+
+SB.Audio.prototype.playZoneTransition = function(threshold) {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    var chords = {
+        15: [329.63, 440.00, 523.25],
+        25: [349.23, 440.00, 587.33],
+        50: [392.00, 493.88, 659.25]
+    };
+    var notes = chords[threshold] || [329.63, 440.00, 523.25];
+    for (var i = 0; i < notes.length; i++) {
+        var osc = this.ctx.createOscillator();
+        var gain = this.ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = notes[i];
+        var t = now + i * 0.04;
+        gain.gain.setValueAtTime(0.18, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.3);
     }
 };
 

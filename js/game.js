@@ -192,6 +192,7 @@ SB.Game.prototype._updateStart = function(dt) {
         return;
     }
     if (this.input.consumeTap()) {
+        SB.audio.stopAmbient();
         this._transitionTo(SB.STATES.PLAYING);
     }
 };
@@ -691,7 +692,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
                              obs.type === SB.OBSTACLE_TYPES.BLADE ? 'Blade' :
                              obs.type === SB.OBSTACLE_TYPES.BOOMERANG ? 'Boomerang' :
                              obs.type === SB.OBSTACLE_TYPES.LASER ? 'Laser' : 'Obstacle';
-            this.particles.emit(this.ball.x, this.ball.y, SB.FX.deathExplosion);
+            var deathColor = obs.type === SB.OBSTACLE_TYPES.SPIKE ? '255,100,50' :
+                             obs.type === SB.OBSTACLE_TYPES.BLADE ? '180,180,200' :
+                             obs.type === SB.OBSTACLE_TYPES.LASER ? '100,200,255' :
+                             obs.type === SB.OBSTACLE_TYPES.BOOMERANG ? '255,152,0' : '231,76,60';
+            this.particles.emit(this.ball.x, this.ball.y, { count: 18, spread: SB.TAU, speedMin: 80, speedMax: 250, lifeMin: 0.3, lifeMax: 0.7, sizeMin: 2, sizeMax: 5, color: deathColor, gravity: 200, friction: 0.95 });
             this._emitBallShatter(this.ball.x, this.ball.y);
             this._handleDeath();
             return;
@@ -912,6 +917,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         // Special celebrations at key milestones
         var milestoneScore = currentMilestone * 10;
         if (milestoneScore === 25 || milestoneScore === 50 || milestoneScore === 100 || milestoneScore === 200) {
+            this.background.triggerShootingStar(milestoneScore >= 100 ? 3 : 2);
             this.screenFlash = 0.1;
             this.cameraZoom = milestoneScore >= 100 ? 0.15 : 0.08;
             this.particles.emit(cw / 2, ch * 0.3, SB.FX.starCollect);
@@ -1065,6 +1071,7 @@ SB.Game.prototype._updateZone = function() {
         this.currentZone = SB.ZONES.CALM;
     }
     if (prevZone !== this.currentZone && prevZone !== null) {
+        SB.audio.playZoneTransition(this.currentZone.threshold);
         this.ui.zoneMsg = this.currentZone.name;
         this.ui.zoneMsgTimer = 2.0;
         this.ui.zoneWipeTimer = 0.5;
@@ -1265,6 +1272,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.highScore = SB.Storage.getHighScore();
         this.hudCoins = SB.Storage.getCoins();
         this.hudHighScore = this.highScore;
+        SB.audio.startAmbient();
         this.showTutorial = false;
         this.showAchievementViewer = false;
         // Clear all stale button references
