@@ -68,6 +68,7 @@ SB.Game = function(canvas) {
     this.nearMissStreakTimer = 0;
     this.lastBounceTime = 0;
     this.deathCause = '';
+    this.runBounces = 0;
     this.wallFlashSide = 0;
     this.wallFlashTimer = 0;
     this.wallBounceStreak = 0;
@@ -250,6 +251,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.particles.emit(this.ball.x + this.ball.radius, this.ball.y + this.ball.radius, SB.FX.bounceDust);
         }
         this.achievements.onBounce();
+        this.runBounces++;
         if (isPerfect) {
             this.score += 3;
             this.ui.addScorePopup(this.ball.x, this.ball.y - 25, 'PERFECT +3', '#00FF88');
@@ -526,6 +528,15 @@ SB.Game.prototype._updatePlaying = function(dt) {
             continue;
         }
 
+        // Coin trail sparkle
+        if (col.type === SB.COLLECTIBLE_TYPES.COIN && Math.random() < 0.15 && !SB.reducedMotion) {
+            this.particles.emit(col.x + SB.randRange(-4, 4), col.y + SB.randRange(-4, 4), {
+                count: 1, spread: 0, speedMin: 5, speedMax: 15,
+                lifeMin: 0.2, lifeMax: 0.4, sizeMin: 0.5, sizeMax: 1.5,
+                color: '255,200,50', gravity: -10, friction: 0.95
+            });
+        }
+
         if (this.powerupEffects.magnet) {
             var dx = this.ball.x - col.x;
             var dy = this.ball.y - col.y;
@@ -585,7 +596,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
                     if (navigator.vibrate) navigator.vibrate(12);
                 }
             } else {
-                SB.audio.playCollect();
+                if (col._magnetPull > 0) {
+                    SB.audio.playMagnetCollect();
+                } else {
+                    SB.audio.playCollect();
+                }
             }
         }
     }
@@ -899,6 +914,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.lastBounceTime = 0;
         this.isNewHigh = false;
         this.deathCause = '';
+        this.runBounces = 0;
         this.currentZone = SB.ZONES.CALM;
         this.transitionAlpha = 1;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
@@ -1030,6 +1046,8 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
         case SB.STATES.PLAYING:
             this._renderGameplay(ctx, cw, ch);
+            this.ui.runBounces = this.runBounces;
+            this.ui.ballSpeedFrac = Math.min(Math.abs(this.ball.vy) / SB.Physics.MAX_FALL_SPEED, 1);
             this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty, this.ball.y, this.scoreShake);
             // Grace period countdown: 3, 2, 1, GO!
             if (this.spawner.graceTimer < this.spawner.gracePeriod + 0.4 && !this.showTutorial) {

@@ -82,6 +82,7 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
 SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedMult) {
     speedMult *= (this.dailySpeedMult || 1);
     var d = Math.min(this.difficulty + this.veteranBonus, 1.0);
+    this._sizeMult = (this.dailySizeMult || 1) * (1 + this.extraDifficulty * 0.15);
 
     if (d < 0.15) {
         this._spawnPlatform(canvasWidth, canvasHeight, speedMult);
@@ -121,7 +122,7 @@ SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedM
 
 SB.Spawner.prototype._spawnPlatform = function(cw, ch, speedMult) {
     var fromLeft = Math.random() < 0.5;
-    var sm = this.dailySizeMult || 1;
+    var sm = this._sizeMult || 1;
     var w = SB.randRange(60, 120) * sm;
     var h = 14;
     var speed = SB.randRange(1.5, 3.5) * speedMult;
@@ -144,7 +145,7 @@ SB.Spawner.prototype._spawnPlatform = function(cw, ch, speedMult) {
 
 SB.Spawner.prototype._spawnSpike = function(cw, ch, speedMult) {
     var fromLeft = Math.random() < 0.5;
-    var size = SB.randRange(22, 30) * (this.dailySizeMult || 1);
+    var size = SB.randRange(22, 30) * (this._sizeMult || 1);
     var speed = SB.randRange(1.0, 2.5) * speedMult;
     var y = SB.randRange(ch * 0.1, ch * 0.8);
 
@@ -161,7 +162,7 @@ SB.Spawner.prototype._spawnSpike = function(cw, ch, speedMult) {
 
 SB.Spawner.prototype._spawnBlade = function(cw, ch, speedMult) {
     var fromLeft = Math.random() < 0.5;
-    var radius = SB.randRange(16, 22) * (this.dailySizeMult || 1);
+    var radius = SB.randRange(16, 22) * (this._sizeMult || 1);
     var speed = SB.randRange(1.5, 3.0) * speedMult;
     var y = SB.randRange(ch * 0.15, ch * 0.75);
 
@@ -234,7 +235,7 @@ SB.Spawner.prototype._spawnCollectible = function(cw, ch) {
 
 SB.Spawner.prototype._spawnBoomerang = function(cw, ch, speedMult) {
     var fromLeft = Math.random() < 0.5;
-    var radius = SB.randRange(14, 20) * (this.dailySizeMult || 1);
+    var radius = SB.randRange(14, 20) * (this._sizeMult || 1);
     var speed = SB.randRange(2.0, 3.5) * speedMult;
     var y = SB.randRange(ch * 0.15, ch * 0.75);
     var travelDist = SB.randRange(cw * 0.4, cw * 0.7);
@@ -300,7 +301,7 @@ SB.Spawner.prototype._spawnWave = function(cw, ch, speedMult) {
     // Three spikes in a diagonal wave pattern, staggered vertically
     var fromLeft = Math.random() < 0.5;
     var baseY = SB.randRange(ch * 0.2, ch * 0.5);
-    var size = SB.randRange(20, 26) * (this.dailySizeMult || 1);
+    var size = SB.randRange(20, 26) * (this._sizeMult || 1);
     var speed = SB.randRange(1.2, 2.2) * speedMult;
     var spacing = SB.randRange(35, 55);
 
@@ -320,7 +321,7 @@ SB.Spawner.prototype._spawnWave = function(cw, ch, speedMult) {
 SB.Spawner.prototype._spawnPincer = function(cw, ch, speedMult) {
     // Two platforms converging from opposite sides at same height
     var y = SB.randRange(ch * 0.2, ch * 0.7);
-    var w = SB.randRange(50, 90) * (this.dailySizeMult || 1);
+    var w = SB.randRange(50, 90) * (this._sizeMult || 1);
     var speed = SB.randRange(1.5, 2.5) * speedMult;
 
     this.obstaclePool.acquire({
@@ -356,7 +357,7 @@ SB.Spawner.prototype._spawnCorridor = function(cw, ch, speedMult) {
     var gapSize = Math.max(minGap, 100 - this.difficulty * 30);
     var fromLeft = Math.random() < 0.5;
     var speed = SB.randRange(1.0, 2.0) * speedMult;
-    var w = SB.randRange(60, 90) * (this.dailySizeMult || 1);
+    var w = SB.randRange(60, 90) * (this._sizeMult || 1);
 
     // Top block
     if (gapCenter - gapSize / 2 > 30) {
@@ -398,7 +399,7 @@ SB.Spawner.prototype._spawnSpiral = function(cw, ch, speedMult) {
     var cy = SB.randRange(ch * 0.25, ch * 0.55);
     var spikeCount = 4;
     var spiralR = SB.randRange(50, 80);
-    var size = SB.randRange(18, 24) * (this.dailySizeMult || 1);
+    var size = SB.randRange(18, 24) * (this._sizeMult || 1);
 
     for (var i = 0; i < spikeCount; i++) {
         var angle = (SB.TAU / spikeCount) * i;

@@ -706,6 +706,23 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     }
     ctx.restore();
 
+    // Bounce counter + speed gauge (bottom-left)
+    ctx.save();
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.25 * hudAlpha).toFixed(2) + ')';
+    ctx.fillText((this.runBounces || 0) + ' bounces', 10, ch - 10);
+    // Speed gauge bar
+    var sgW = 40, sgH = 3, sgX = 10, sgY = ch - 22;
+    var sgFrac = this.ballSpeedFrac || 0;
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.fillRect(sgX, sgY, sgW, sgH);
+    var sgColor = sgFrac > 0.7 ? '231,76,60' : (sgFrac > 0.4 ? '243,156,18' : '93,173,226');
+    ctx.fillStyle = 'rgba(' + sgColor + ',' + (0.4 * hudAlpha).toFixed(2) + ')';
+    ctx.fillRect(sgX, sgY, sgW * sgFrac, sgH);
+    ctx.restore();
+
     // Combo popups (escalating visual intensity)
     for (var i = 0; i < this.comboPopups.length; i++) {
         var p = this.comboPopups[i];

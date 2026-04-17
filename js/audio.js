@@ -531,6 +531,22 @@ SB.Audio.prototype.stopBGM = function() {
     this._bgmLfo.stop(now + 1.1);
 };
 
+SB.Audio.prototype.playMagnetCollect = function() {
+    if (!this.initialized) return;
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'sine';
+    var now = this.ctx.currentTime;
+    osc.frequency.setValueAtTime(800, now);
+    osc.frequency.linearRampToValueAtTime(1200, now + 0.06);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.08);
+};
+
 SB.Audio.prototype.playComboBreak = function() {
     if (!this.initialized) return;
     var osc = this.ctx.createOscillator();
