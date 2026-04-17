@@ -131,6 +131,17 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
     }
     this.tapRipples.length = trWi;
 
+    // Chain lines
+    if (this._chainLines) {
+        var clWi = 0;
+        for (var cli = 0; cli < this._chainLines.length; cli++) {
+            var cl = this._chainLines[cli];
+            cl.timer += dt;
+            if (cl.timer <= cl.duration) this._chainLines[clWi++] = cl;
+        }
+        this._chainLines.length = clWi;
+    }
+
     // Achievement toast
     if (this.achievementToast) {
         this.achievementToastTimer += dt;
@@ -153,6 +164,13 @@ SB.UI.prototype.addScorePopup = function(x, y, text, color) {
 SB.UI.prototype.addTapRipple = function(x, y, color) {
     if (this.tapRipples.length < 4) {
         this.tapRipples.push({ x: x, y: y, timer: 0, duration: 0.4, color: color || '255,255,255' });
+    }
+};
+
+SB.UI.prototype.addChainLine = function(x1, y1, x2, y2) {
+    if (!this._chainLines) this._chainLines = [];
+    if (this._chainLines.length < 4) {
+        this._chainLines.push({ x1: x1, y1: y1, x2: x2, y2: y2, timer: 0, duration: 0.3 });
     }
 };
 
@@ -806,6 +824,22 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.lineWidth = 3 * (1 - rProgress);
         ctx.stroke();
         ctx.restore();
+    }
+
+    // Collect chain lines
+    if (this._chainLines) {
+        for (var cli = 0; cli < this._chainLines.length; cli++) {
+            var cln = this._chainLines[cli];
+            var clAlpha = (1 - cln.timer / cln.duration) * 0.3;
+            ctx.save();
+            ctx.beginPath();
+            ctx.moveTo(cln.x1, cln.y1);
+            ctx.lineTo(cln.x2, cln.y2);
+            ctx.strokeStyle = 'rgba(255,215,0,' + clAlpha.toFixed(2) + ')';
+            ctx.lineWidth = 1.5 * (1 - cln.timer / cln.duration);
+            ctx.stroke();
+            ctx.restore();
+        }
     }
 
     // Tap ripples (expanding rings at tap position)

@@ -77,6 +77,9 @@ SB.Game = function(canvas) {
     this.powerupFlashTimer = 0;
     this.powerupFlashColor = '255,255,255';
     this.cameraZoom = 0;
+    this.lastCollectX = 0;
+    this.lastCollectY = 0;
+    this.collectChainTimer = 0;
 
     SB.REVIVE_COST = 20;
 };
@@ -123,6 +126,7 @@ SB.Game.prototype.update = function(dt) {
         if (this.wallBounceStreakTimer <= 0) this.wallBounceStreak = 0;
     }
     if (this.scoreShake > 0) this.scoreShake -= dt;
+    if (this.collectChainTimer > 0) this.collectChainTimer -= dt;
     if (this.transitionAlpha > 0) this.transitionAlpha -= dt * 3;
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
@@ -570,6 +574,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 obs.active = false;
                 this.screenShake = 0.25;
                 this.screenShakeIntensity = 8;
+                this.screenFlash = 0.08;
+                this.powerupFlashTimer = 0.2;
+                this.powerupFlashColor = '52,152,219';
                 this.particles.emit(this.ball.x, this.ball.y, SB.FX.shieldBreak);
                 // Obstacle destruction scatter (colored by obstacle type)
                 var obsColor = obs.type === SB.OBSTACLE_TYPES.BLADE ? '180,180,190' :
@@ -659,6 +666,12 @@ SB.Game.prototype._updatePlaying = function(dt) {
             var isCoin = col.type === SB.COLLECTIBLE_TYPES.COIN;
             this.particles.emit(col.x, col.y, isCoin ? SB.FX.coinCollect : SB.FX.starCollect);
             this.ui.addPickupRing(col.x, col.y, isCoin ? '255,180,0' : '255,215,0');
+            if (this.collectChainTimer > 0 && this.comboCount >= 1) {
+                this.ui.addChainLine(this.lastCollectX, this.lastCollectY, col.x, col.y);
+            }
+            this.lastCollectX = col.x;
+            this.lastCollectY = col.y;
+            this.collectChainTimer = 2.0;
             this.ball.bounceSquash = 0.4;
             col.active = false;
             this.comboTimer = 2.0;

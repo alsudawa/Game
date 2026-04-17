@@ -106,6 +106,16 @@ SB.Collectible.prototype.draw = function(ctx) {
     var r = this.radius * pulse;
     var bobY = Math.sin(this.lifetime * 2.2) * 4;
 
+    // Subtle vertical bob trail
+    if (!SB.reducedMotion) {
+        var btGrad = ctx.createLinearGradient(this.x, this.y - 4, this.x, this.y + 4);
+        btGrad.addColorStop(0, 'rgba(255,215,0,0)');
+        btGrad.addColorStop(0.5, 'rgba(255,215,0,0.06)');
+        btGrad.addColorStop(1, 'rgba(255,215,0,0)');
+        ctx.fillStyle = btGrad;
+        ctx.fillRect(this.x - 1, this.y - 4, 2, 8);
+    }
+
     var proxBoost = this._proximity > 0 ? this._proximity : 0;
     var extraGlow = (edgeWarn > 0 ? edgeWarn * 15 : 0) + proxBoost * 20;
 

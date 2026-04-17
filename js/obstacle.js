@@ -229,6 +229,13 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
         gradient.addColorStop(1, '#c0392b');
         ctx.fillStyle = gradient;
         ctx.fill();
+        // Top edge highlight
+        ctx.beginPath();
+        ctx.moveTo(this.x + r, this.y + 1);
+        ctx.lineTo(this.x + this.width - r, this.y + 1);
+        ctx.strokeStyle = 'rgba(255,150,150,0.3)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
     }
     ctx.restore();
 };
@@ -499,6 +506,17 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
     ctx.arc(cx, cy, 3, 0, SB.TAU);
     ctx.fillStyle = hcg ? '#FFFFFF' : 'rgba(200,150,255,0.9)';
     ctx.fill();
+
+    // Outer pull boundary ring (dashed)
+    var bdAlpha = pulse * 0.08;
+    ctx.beginPath();
+    ctx.arc(cx, cy, this.pullRadius, 0, SB.TAU);
+    ctx.strokeStyle = 'rgba(155,89,182,' + bdAlpha.toFixed(3) + ')';
+    ctx.setLineDash([4, 6]);
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
     ctx.restore();
 };
 
