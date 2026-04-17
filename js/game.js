@@ -1751,14 +1751,16 @@ SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
             ocy = obs.y + (obs.height || 0) / 2;
         }
 
-        // Left/right edge warnings
+        // Left/right edge warnings (pulse faster for fast obstacles)
         var fromLeft = (ocx < 0 && ocx > -margin);
         var fromRight = (ocx > cw && ocx < cw + margin);
         if (fromLeft || fromRight) {
             if (ocy >= 0 && ocy <= ch) {
                 var arrowX = fromLeft ? 8 : cw - 8;
                 var distFrac = fromLeft ? (1 + ocx / margin) : (1 - (ocx - cw) / margin);
-                var arrowAlpha = distFrac * 0.6;
+                var obsSpd = Math.abs(obs.speedX || 0) + Math.abs(obs.speedY || 0);
+                var ewPulse = obsSpd > 100 ? (Math.sin((SB.frameTime || 0) * 0.02) + 1) / 2 * 0.3 : 0;
+                var arrowAlpha = distFrac * (0.6 + ewPulse);
                 ctx.fillStyle = 'rgba(231,76,60,' + arrowAlpha.toFixed(2) + ')';
                 ctx.beginPath();
                 if (fromLeft) {

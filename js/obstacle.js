@@ -438,15 +438,25 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
         ctx.stroke();
     }
 
-    // Return flash warning
+    // Return flash warning (double ring + glow)
     if (this.returnFlash > 0) {
-        var rfAlpha = this.returnFlash / 0.3 * 0.5;
-        var rfR = this.radius + 8 + (0.3 - this.returnFlash) / 0.3 * 12;
+        var rfFrac = this.returnFlash / 0.3;
+        var rfAlpha = rfFrac * 0.5;
+        var rfR = this.radius + 8 + (1 - rfFrac) * 12;
+        ctx.save();
+        ctx.shadowColor = 'rgba(255,152,0,0.4)';
+        ctx.shadowBlur = rfFrac * 10;
         ctx.beginPath();
         ctx.arc(cx, cy, rfR, 0, SB.TAU);
         ctx.strokeStyle = 'rgba(255,152,0,' + rfAlpha.toFixed(2) + ')';
         ctx.lineWidth = 2;
         ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(cx, cy, rfR + 6, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(255,152,0,' + (rfAlpha * 0.4).toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
     }
 
     ctx.restore();
@@ -521,6 +531,13 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
             grad.addColorStop(1, 'rgba(255, 100, 100, 0.2)');
             ctx.fillStyle = grad;
             ctx.fillRect(0, this.y - beamH / 2, cw, beamH);
+            // Bright inner core line
+            ctx.strokeStyle = 'rgba(255,255,255,' + (0.5 + beamPulse * 0.3).toFixed(2) + ')';
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(0, this.y);
+            ctx.lineTo(cw, this.y);
+            ctx.stroke();
             // Edge spark emitters
             var sparkT = this.laserTimer * 40;
             ctx.fillStyle = 'rgba(255,200,100,0.7)';

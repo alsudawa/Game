@@ -220,8 +220,9 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
     for (var j = 0; j < this.clouds.length; j++) {
         var cloud = this.clouds[j];
         ctx.save();
-        ctx.fillStyle = 'rgba(255, 255, 255, ' + (cloud.alpha * cloudDiffMult).toFixed(3) + ')';
         var cdepth = cloud.depth || 1;
+        var cBright = Math.floor(200 + cdepth * 55);
+        ctx.fillStyle = 'rgba(' + cBright + ',' + cBright + ',' + cBright + ',' + (cloud.alpha * cloudDiffMult).toFixed(3) + ')';
         ctx.translate(cloud.x + cloudPx * cdepth, cloud.y + cloudPy * cdepth);
         ctx.scale(1, cloud.height / cloud.width);
         ctx.beginPath();

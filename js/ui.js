@@ -1419,11 +1419,15 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillText('SHARE SCORE', cw / 2, shareBtnY + btnH / 2);
         SB._shareBtn = { x: btnX, y: shareBtnY, w: btnW, h: btnH, score: displayScore };
 
-        // Play Again button (pulses gently)
+        // Play Again button (pulses gently with glow ring)
         var paPulse = (Math.sin(this.blinkPhase * 1.5) + 1) / 2 * 0.1;
+        ctx.save();
+        ctx.shadowColor = 'rgba(46,204,113,0.4)';
+        ctx.shadowBlur = 6 + paPulse * 30;
         ctx.fillStyle = 'rgba(46, 204, 113, ' + (alpha * (0.85 + paPulse)).toFixed(2) + ')';
         this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
         ctx.fill();
+        ctx.restore();
         ctx.strokeStyle = 'rgba(46, 204, 113, ' + (paPulse * 3).toFixed(2) + ')';
         ctx.lineWidth = 1.5;
         this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
