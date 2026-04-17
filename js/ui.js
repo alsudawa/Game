@@ -1016,6 +1016,11 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         var dbColor = difficulty > 0.8 ? '155,89,182' : difficulty > 0.5 ? '231,76,60' : difficulty > 0.3 ? '243,156,18' : '93,173,226';
         ctx.fillStyle = 'rgba(' + dbColor + ',' + (0.3 * hudAlpha).toFixed(2) + ')';
         ctx.fillRect(sgX, dbY, sgW * difficulty, sgH);
+        ctx.font = Math.min(cw * 0.015, 6) + 'px ' + this.font;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.12 * hudAlpha).toFixed(3) + ')';
+        ctx.fillText('DIFF', sgX + sgW + 3, dbY + sgH + 1);
     }
     ctx.restore();
 

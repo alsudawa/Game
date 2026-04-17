@@ -189,8 +189,9 @@ SB.Collectible.prototype.draw = function(ctx) {
 SB.Collectible.prototype._drawCoin = function(ctx) {
     var pulse = 1 + Math.sin(this.pulsePhase) * 0.1;
     var r = this.radius * pulse;
-    // 3D coin spin effect via horizontal scale
-    var spin = Math.cos(this.lifetime * 3);
+    // 3D coin spin effect via horizontal scale (faster near ball)
+    var coinSpinSpeed = 3 + (this._proximity > 0 ? this._proximity * 4 : 0);
+    var spin = Math.cos(this.lifetime * coinSpinSpeed);
     var scaleX = 0.4 + Math.abs(spin) * 0.6;
 
     var edgeWarn = this._edgeProximity();

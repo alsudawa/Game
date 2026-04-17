@@ -815,12 +815,13 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
         ctx.restore();
     }
 
-    // Inner eye (dark center + pulsing iris)
+    // Inner eye (dark center deepens with lifetime)
     if (!hcg) {
         var irisR = 5 + Math.sin(this.wellPhase * 2) * 1.5;
+        var darkAge = Math.min(this.lifetime / 4, 1);
         var irisGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, irisR);
-        irisGrad.addColorStop(0, 'rgba(20,0,30,0.9)');
-        irisGrad.addColorStop(0.6, 'rgba(100,50,150,0.6)');
+        irisGrad.addColorStop(0, 'rgba(10,0,15,' + (0.9 + darkAge * 0.1).toFixed(2) + ')');
+        irisGrad.addColorStop(0.6, 'rgba(' + Math.floor(100 - darkAge * 40) + ',50,150,0.6)');
         irisGrad.addColorStop(1, 'rgba(200,150,255,0)');
         ctx.beginPath();
         ctx.arc(cx, cy, irisR, 0, SB.TAU);
