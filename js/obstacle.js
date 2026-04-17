@@ -329,6 +329,14 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
         ctx.closePath();
         ctx.fill();
     }
+    // Bottom drop shadow gradient
+    if (!SB.highContrast) {
+        var bsGrad = ctx.createLinearGradient(this.x, this.y + this.height, this.x, this.y + this.height + 6);
+        bsGrad.addColorStop(0, 'rgba(0,0,0,0.08)');
+        bsGrad.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = bsGrad;
+        ctx.fillRect(this.x + 2, this.y + this.height, this.width - 4, 6);
+    }
     ctx.restore();
 };
 

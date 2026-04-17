@@ -17,14 +17,27 @@ SB.Background.prototype.init = function(cw, ch) {
     this.stars = [];
     for (var i = 0; i < 45; i++) {
         var sDepth = i < 15 ? 0.4 : (i < 30 ? 0.7 : 1.0);
+        var sx = Math.random() * cw;
+        var sy = Math.random() * ch * 0.7;
         this.stars.push({
-            x: Math.random() * cw,
-            y: Math.random() * ch * 0.7,
+            x: sx, y: sy,
             size: SB.randRange(0.5, 2) * sDepth,
             twinkleSpeed: SB.randRange(1, 3) * sDepth,
             twinklePhase: Math.random() * SB.TAU,
             depth: sDepth
         });
+        // Star clusters: ~20% chance to add 1-2 neighbor stars
+        if (Math.random() < 0.2) {
+            for (var ci = 0; ci < 1 + Math.floor(Math.random() * 2); ci++) {
+                this.stars.push({
+                    x: sx + SB.randRange(-8, 8), y: sy + SB.randRange(-6, 6),
+                    size: SB.randRange(0.3, 1) * sDepth,
+                    twinkleSpeed: SB.randRange(1.5, 3.5) * sDepth,
+                    twinklePhase: Math.random() * SB.TAU,
+                    depth: sDepth
+                });
+            }
+        }
     }
 
     this.clouds = [];

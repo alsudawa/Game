@@ -238,6 +238,11 @@ SB.Collectible.prototype._drawCoin = function(ctx) {
         ctx.moveTo(0, -r);
         ctx.lineTo(0, r);
         ctx.stroke();
+        // Specular highlight dot at top edge
+        ctx.beginPath();
+        ctx.arc(0, -r * 0.6, 1.5, 0, SB.TAU);
+        ctx.fillStyle = 'rgba(255,255,255,' + Math.min(edgeAlpha, 0.5).toFixed(2) + ')';
+        ctx.fill();
     }
 
     // Dollar sign (only visible when not edge-on)

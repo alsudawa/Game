@@ -1297,6 +1297,15 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     var goPulse = (Math.sin(this.blinkPhase * 0.8) + 1) / 2 * 0.03;
     ctx.fillStyle = 'rgba(0, 0, 0, ' + (this.gameOverAlpha * (0.7 + goPulse)).toFixed(3) + ')';
     ctx.fillRect(0, 0, cw, ch);
+    // Vignette overlay (dark corners)
+    if (!SB.reducedMotion) {
+        var vigR = Math.max(cw, ch) * 0.7;
+        var vigGrad = ctx.createRadialGradient(cw / 2, ch / 2, vigR * 0.4, cw / 2, ch / 2, vigR);
+        vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+        vigGrad.addColorStop(1, 'rgba(0,0,0,' + (this.gameOverAlpha * 0.2).toFixed(2) + ')');
+        ctx.fillStyle = vigGrad;
+        ctx.fillRect(0, 0, cw, ch);
+    }
 
     var alpha = this.gameOverAlpha;
     // Secondary alpha for detail sections (staggered fade-in)
