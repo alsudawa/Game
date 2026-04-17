@@ -1524,10 +1524,56 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
     var collectibles = this.collectiblePool.getActive();
     var powerups = this.powerupPool.getActive();
 
+    // BGM beat pulse — subtle brightness flash on the beat
+    if (SB.audio.beatPulse > 0 && !SB.reducedMotion) {
+        var bpA = SB.audio.beatPulse * 0.03;
+        ctx.fillStyle = 'rgba(255,255,255,' + bpA.toFixed(3) + ')';
+        ctx.fillRect(0, 0, cw, ch);
+    }
+
+    // Danger zone border glow in INTENSE/EXTREME
+    if (this.state === SB.STATES.PLAYING && this.currentZone.threshold >= 25 && !SB.reducedMotion) {
+        var zPulse = (Math.sin(SB.frameTime * 0.003) + 1) / 2;
+        var zAlpha = (this.currentZone.threshold >= 50 ? 0.12 : 0.06) + zPulse * 0.04;
+        var zCol = this.currentZone.threshold >= 50 ? '155,50,180' : '220,60,50';
+        var zW = 3 + zPulse * 2;
+        ctx.save();
+        ctx.shadowColor = 'rgba(' + zCol + ',0.6)';
+        ctx.shadowBlur = 10 + zPulse * 8;
+        ctx.fillStyle = 'rgba(' + zCol + ',' + zAlpha.toFixed(3) + ')';
+        ctx.fillRect(0, 0, zW, ch);
+        ctx.fillRect(cw - zW, 0, zW, ch);
+        ctx.fillRect(0, 0, cw, zW);
+        ctx.fillRect(0, ch - zW, cw, zW);
+        ctx.shadowBlur = 0;
+        ctx.restore();
+    }
+
     // Spawn warning indicators
     var warnings = this.spawner.getWarnings();
     for (var wi = 0; wi < warnings.length; wi++) {
         this._drawSpawnWarning(ctx, cw, ch, warnings[wi]);
+    }
+
+    // Spawn flash effect when warnings expire and obstacles materialize
+    var flashes = this.spawner.getSpawnFlashes();
+    for (var fi = 0; fi < flashes.length; fi++) {
+        var sf = flashes[fi];
+        var sfA = (sf.timer / 0.25) * 0.3;
+        var sfR = (1 - sf.timer / 0.25) * 30;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,200,100,' + sfA.toFixed(2) + ')';
+        ctx.lineWidth = 2;
+        if (sf.side === 0) {
+            ctx.beginPath(); ctx.arc(sf.x, sf.y, sfR, 0, SB.TAU); ctx.stroke();
+        } else if (sf.side === 2) {
+            ctx.beginPath(); ctx.arc(0, sf.y, sfR, 0, SB.TAU); ctx.stroke();
+            ctx.beginPath(); ctx.arc(cw, sf.y, sfR, 0, SB.TAU); ctx.stroke();
+        } else {
+            var sfX = sf.side < 0 ? 0 : cw;
+            ctx.beginPath(); ctx.arc(sfX, sf.y, sfR, 0, SB.TAU); ctx.stroke();
+        }
+        ctx.restore();
     }
 
     ctx.save();
@@ -2028,6 +2074,26 @@ SB.Game.prototype._drawSpawnWarning = function(ctx, cw, ch, w) {
         ctx.lineTo(arX, w.y + arSize);
         ctx.closePath();
         ctx.fill();
+
+        // Type mini-icon next to arrow
+        var iconX = arX + arDir * (arSize + 12);
+        var iconA = alpha * 0.7;
+        ctx.fillStyle = 'rgba(' + col + ',' + iconA.toFixed(2) + ')';
+        ctx.strokeStyle = 'rgba(' + col + ',' + iconA.toFixed(2) + ')';
+        ctx.lineWidth = 1.5;
+        if (w.type === 'spike' || w.type === 'wave') {
+            ctx.beginPath();
+            ctx.moveTo(iconX, w.y - 6); ctx.lineTo(iconX + 5, w.y + 5); ctx.lineTo(iconX - 5, w.y + 5);
+            ctx.closePath(); ctx.fill();
+        } else if (w.type === 'blade') {
+            ctx.beginPath(); ctx.arc(iconX, w.y, 5, 0, SB.TAU); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(iconX - 5, w.y); ctx.lineTo(iconX + 5, w.y); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(iconX, w.y - 5); ctx.lineTo(iconX, w.y + 5); ctx.stroke();
+        } else if (w.type === 'boomerang') {
+            ctx.beginPath(); ctx.arc(iconX, w.y, 5, -0.5, 2.5); ctx.stroke();
+        } else {
+            ctx.fillRect(iconX - 7, w.y - 2, 14, 4);
+        }
 
         // Horizontal danger line across screen at spawn height
         ctx.strokeStyle = 'rgba(' + col + ',' + (alpha * 0.12).toFixed(2) + ')';

@@ -18,6 +18,9 @@ SB.Spawner = function(obstaclePool, collectiblePool, powerupPool) {
     // Warning queue: obstacles are queued with a warning period before actual spawn
     this._warnings = [];
     this._warningPool = [];
+    this._spawnFlashes = [];
+    this._flashPool = [];
+    for (var fi = 0; fi < 6; fi++) this._flashPool.push({ x: 0, y: 0, side: 0, timer: 0 });
     for (var wi = 0; wi < 10; wi++) {
         this._warningPool.push({ active: false, timer: 0, duration: 0, side: 0, x: 0, y: 0, type: '', obstacles: null, collectibles: null });
     }
@@ -40,6 +43,7 @@ SB.Spawner.prototype.reset = function(veteranBonus) {
     if (this.powerupPool) this.powerupPool.releaseAll();
     this._warnings.length = 0;
     for (var wi = 0; wi < this._warningPool.length; wi++) this._warningPool[wi].active = false;
+    this._spawnFlashes.length = 0;
 };
 
 SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
@@ -70,12 +74,20 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
         w.timer += dt;
         if (w.timer >= w.duration) {
             this._executeSpawn(w);
+            this._addSpawnFlash(w);
             w.active = false;
         } else {
             this._warnings[wwi++] = w;
         }
     }
     this._warnings.length = wwi;
+
+    var fwi = 0;
+    for (var fqi = 0; fqi < this._spawnFlashes.length; fqi++) {
+        this._spawnFlashes[fqi].timer -= dt;
+        if (this._spawnFlashes[fqi].timer > 0) this._spawnFlashes[fwi++] = this._spawnFlashes[fqi];
+    }
+    this._spawnFlashes.length = fwi;
 
     this.collectibleTimer += dt;
     if (this.collectibleTimer >= 3.0) {
@@ -347,6 +359,23 @@ SB.Spawner.prototype._spawnByType = function(type, cw, ch, speedMult) {
 
 SB.Spawner.prototype.getWarnings = function() {
     return this._warnings;
+};
+
+SB.Spawner.prototype._addSpawnFlash = function(w) {
+    var f = null;
+    for (var i = 0; i < this._flashPool.length; i++) {
+        if (this._flashPool[i].timer <= 0) { f = this._flashPool[i]; break; }
+    }
+    if (!f) return;
+    f.x = w.side === 0 ? w.x : (w.side < 0 ? 0 : (w.side === 2 ? -1 : SB.canvasWidth || 400));
+    f.y = w.y;
+    f.side = w.side;
+    f.timer = 0.25;
+    this._spawnFlashes.push(f);
+};
+
+SB.Spawner.prototype.getSpawnFlashes = function() {
+    return this._spawnFlashes;
 };
 
 SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedMult) {

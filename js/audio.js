@@ -506,6 +506,7 @@ SB.Audio.prototype.startBGM = function() {
     this._bgmBeat = 0;
     this._bgmNextBeatTime = now + 0.5;
     this._bgmDifficulty = 0;
+    this.beatPulse = 0;
 
     // I-vi-IV-V major progression
     this._bgmChordsMaj = [
@@ -539,14 +540,19 @@ SB.Audio.prototype._bgmSchedule = function() {
 };
 
 SB.Audio.prototype._bgmPlayBeat = function(time) {
-    var prog = this._bgmDifficulty > 0.5 ? this._bgmChordsMin : this._bgmChordsMaj;
-    var chordIdx = Math.floor(this._bgmBeat / 8) % 4;
+    // Crossfade between major and minor based on difficulty (smooth transition zone 0.35-0.65)
+    var minorBlend = SB.clamp((this._bgmDifficulty - 0.35) / 0.3, 0, 1);
+    var majChord = this._bgmChordsMaj[Math.floor(this._bgmBeat / 8) % 4];
+    var minChord = this._bgmChordsMin[Math.floor(this._bgmBeat / 8) % 4];
     var pos = this._bgmBeat % 8;
-    var chord = prog[chordIdx];
     var eighthDur = 60.0 / this._bgmBPM / 2;
 
-    // Arpeggio — off-beat notes quieter at low difficulty (sparse quarter-note feel)
-    var arpFreq = chord.arp[pos];
+    // Beat pulse for visual sync (1.0 on downbeat, 0.6 on beat 3)
+    if (pos === 0) this.beatPulse = 1.0;
+    else if (pos === 4) this.beatPulse = 0.6;
+
+    // Blend arp frequency between major and minor
+    var arpFreq = SB.lerp(majChord.arp[pos], minChord.arp[pos], minorBlend);
     var arpVol = SB.lerp(0.04, 0.09, this._bgmDifficulty);
     if (pos % 2 === 1) arpVol *= SB.lerp(0.15, 1.0, this._bgmDifficulty);
     var arpDur = eighthDur * 0.7;
@@ -556,21 +562,23 @@ SB.Audio.prototype._bgmPlayBeat = function(time) {
     this._bgmArpGain.gain.linearRampToValueAtTime(arpVol, time + 0.005);
     this._bgmArpGain.gain.exponentialRampToValueAtTime(0.001, time + arpDur);
 
-    // Bass on beats 1 and 3 (positions 0, 4)
+    // Bass on beats 1 and 3 (positions 0, 4) — blended root
     if (pos === 0 || pos === 4) {
+        var bassFreq = SB.lerp(majChord.bass, minChord.bass, minorBlend);
         var bassVol = SB.lerp(0.06, 0.13, this._bgmDifficulty);
         var bassDur = eighthDur * 2 * 0.7;
         this._bgmBassGain.gain.cancelScheduledValues(time);
-        this._bgmBassOsc.frequency.setValueAtTime(chord.bass, time);
+        this._bgmBassOsc.frequency.setValueAtTime(bassFreq, time);
         this._bgmBassGain.gain.setValueAtTime(0.001, time);
         this._bgmBassGain.gain.linearRampToValueAtTime(bassVol, time + 0.008);
         this._bgmBassGain.gain.exponentialRampToValueAtTime(0.001, time + bassDur);
     }
 
-    // Pad chord transitions on bar boundaries
+    // Pad chord transitions on bar boundaries — blended
     if (pos === 0) {
         for (var i = 0; i < 3; i++) {
-            this._bgmPadOscs[i].frequency.linearRampToValueAtTime(chord.pad[i], time + 0.4);
+            var padFreq = SB.lerp(majChord.pad[i], minChord.pad[i], minorBlend);
+            this._bgmPadOscs[i].frequency.linearRampToValueAtTime(padFreq, time + 0.4);
         }
     }
 };
@@ -581,6 +589,7 @@ SB.Audio.prototype.updateBGMIntensity = function(difficulty) {
     this._bgmBPM = SB.lerp(85, 110, difficulty);
     var vol = SB.lerp(0.06, 0.09, difficulty);
     this._bgmGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.5);
+    if (this.beatPulse > 0) this.beatPulse = Math.max(0, this.beatPulse - 0.08);
 };
 
 SB.Audio.prototype.stopBGM = function() {
