@@ -766,8 +766,17 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         scoreColor = 'rgba(255, 215, 0, ' + (sfBlend * hudAlpha).toFixed(2) + ')';
         this.scoreFlash -= 0.016;
     }
-    ctx.fillStyle = scoreColor;
-    ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
+    if (this.scoreFlash > 0) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(255,215,0,0.4)';
+        ctx.shadowBlur = this.scoreFlash / 0.4 * 10;
+        ctx.fillStyle = scoreColor;
+        ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
+        ctx.restore();
+    } else {
+        ctx.fillStyle = scoreColor;
+        ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
+    }
 
     if (comboTimer > 0 && comboCount >= 1) {
         var ctFrac = comboTimer / 2.0;

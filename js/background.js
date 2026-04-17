@@ -76,10 +76,11 @@ SB.Background.prototype.update = function(dt, difficulty) {
         }
     }
 
+    var pSpeedMult = 1 + (difficulty || 0) * 0.8;
     for (var k = 0; k < this.particles.length; k++) {
         var p = this.particles[k];
-        p.x += p.speedX * dt;
-        p.y += p.speedY * dt;
+        p.x += p.speedX * dt * pSpeedMult;
+        p.y += p.speedY * dt * pSpeedMult;
         p.phase += 2 * dt;
         if (p.y < -10) {
             p.y = ch + 10;
@@ -232,12 +233,13 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.restore();
     }
 
+    var pColor = d > 0.8 ? '200,180,255' : d > 0.5 ? '255,200,180' : d > 0.3 ? '255,230,200' : '255,255,255';
     for (var k = 0; k < this.particles.length; k++) {
         var p = this.particles[k];
         var pa = p.alpha * ((Math.sin(p.phase) + 1) / 2);
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.size, 0, SB.TAU);
-        ctx.fillStyle = 'rgba(255, 255, 255, ' + pa + ')';
+        ctx.fillStyle = 'rgba(' + pColor + ',' + pa + ')';
         ctx.fill();
     }
 

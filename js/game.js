@@ -585,8 +585,10 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 obs._nearMissed = true;
                 this.ui.nearMissTimer = 0.6;
                 this.ui.addPickupRing(this.ball.x, this.ball.y, '243,156,18');
-                if (obs.type === SB.OBSTACLE_TYPES.PLATFORM && !SB.reducedMotion) {
-                    this.particles.emit(this.ball.x, obs.y, { count: 3, spread: 1, speedMin: 10, speedMax: 30, lifeMin: 0.2, lifeMax: 0.4, sizeMin: 0.5, sizeMax: 1.5, color: '200,200,200', gravity: 30, friction: 0.9 });
+                if (!SB.reducedMotion) {
+                    var nmColor = obs.type === SB.OBSTACLE_TYPES.BLADE ? '180,180,190' : obs.type === SB.OBSTACLE_TYPES.SPIKE ? '255,100,80' : '200,200,200';
+                    var nmCy = obs.radius ? obs.y + obs.radius : obs.y;
+                    this.particles.emit(this.ball.x, nmCy, { count: 4, spread: SB.TAU, speedMin: 15, speedMax: 40, lifeMin: 0.2, lifeMax: 0.4, sizeMin: 0.5, sizeMax: 1.5, color: nmColor, gravity: 30, friction: 0.9 });
                 }
                 // Streak tracking: consecutive near-misses within 3s
                 if (this.nearMissStreakTimer > 0) {

@@ -164,8 +164,9 @@ SB.Ball.prototype.draw = function(ctx) {
         stretchY *= (1 + this.wallSquash * 0.15);
     }
     if (this.bounceSquash > 0) {
-        stretchX *= (1 + this.bounceSquash * 0.2);
-        stretchY *= (1 - this.bounceSquash * 0.15);
+        var bsEase = this.bounceSquash * this.bounceSquash;
+        stretchX *= (1 + bsEase * 0.35);
+        stretchY *= (1 - bsEase * 0.25);
     }
 
     ctx.save();
