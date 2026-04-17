@@ -119,7 +119,10 @@ SB.Game.prototype.update = function(dt) {
     if (this.transitionAlpha > 0) this.transitionAlpha -= dt * 3;
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
-        if (this.comboTimer <= 0) this.comboCount = 0;
+        if (this.comboTimer <= 0) {
+            if (this.comboCount >= 3) SB.audio.playComboBreak();
+            this.comboCount = 0;
+        }
     }
 
     switch (this.state) {
@@ -232,6 +235,14 @@ SB.Game.prototype._updatePlaying = function(dt) {
         } else {
             this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, SB.FX.bounce);
             this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '255,255,255');
+        }
+        // Heavy landing impact ring
+        if (preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.4) {
+            var impactFrac = Math.min((preBounceVy - SB.Physics.MAX_FALL_SPEED * 0.4) / (SB.Physics.MAX_FALL_SPEED * 0.6), 1);
+            this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '255,255,255');
+            if (impactFrac > 0.5) {
+                this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '200,200,255');
+            }
         }
         // Dust puff when bouncing while falling (heavier at higher speed)
         if (preBounceVy > 100) {
@@ -505,6 +516,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
         var col = collectibles[j];
         col.update(dt);
 
+        var cpDx = this.ball.x - col.x;
+        var cpDy = this.ball.y - col.y;
+        var cpDist = Math.sqrt(cpDx * cpDx + cpDy * cpDy);
+        col._proximity = cpDist < 80 ? 1 - cpDist / 80 : 0;
+
         if (col.x < -50 || col.x > cw + 50 || col.y < -50 || col.y > ch + 50) {
             col.active = false;
             continue;
@@ -551,6 +567,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (isCoin) {
                 this.screenShake = 0.08;
                 this.screenShakeIntensity = 3;
+                this.ui.coinBump = 0.2;
                 if (navigator.vibrate) navigator.vibrate(10);
                 SB.audio.playCoinCollect();
             } else if (this.comboCount >= 2) {

@@ -18,6 +18,7 @@ SB.Collectible = function() {
     this.sineAmp = 0;
     this.sineFreq = 0;
     this.lifetime = 0;
+    this._proximity = 0;
 };
 
 SB.Collectible.prototype.init = function(config) {
@@ -98,12 +99,13 @@ SB.Collectible.prototype.draw = function(ctx) {
     var r = this.radius * pulse;
     var bobY = Math.sin(this.lifetime * 2.2) * 4;
 
-    // Edge proximity warning glow
+    // Edge proximity warning glow + ball proximity sparkle
     var edgeWarn = this._edgeProximity();
-    var extraGlow = edgeWarn > 0 ? edgeWarn * 15 : 0;
+    var proxBoost = this._proximity > 0 ? this._proximity : 0;
+    var extraGlow = (edgeWarn > 0 ? edgeWarn * 15 : 0) + proxBoost * 20;
 
     ctx.save();
-    ctx.shadowColor = 'rgba(255, 215, 0, ' + (0.6 + edgeWarn * 0.4).toFixed(2) + ')';
+    ctx.shadowColor = 'rgba(255, 215, 0, ' + (0.6 + edgeWarn * 0.4 + proxBoost * 0.4).toFixed(2) + ')';
     ctx.shadowBlur = 15 + extraGlow;
 
     ctx.translate(this.x, this.y + bobY);

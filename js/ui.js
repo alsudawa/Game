@@ -38,6 +38,7 @@ SB.UI = function() {
     this.pickupRings = [];
     this.tapRipples = [];
     this.displayScore = 0;
+    this.coinBump = 0;
     this._tips = [
         'Tap left or right to steer',
         'Double-tap for a power bounce!',
@@ -98,6 +99,7 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
     if (this.zoneWipeTimer > 0) this.zoneWipeTimer -= dt;
     if (this.milestoneMsgTimer > 0) this.milestoneMsgTimer -= dt;
     if (this.nearMissTimer > 0) this.nearMissTimer -= dt;
+    if (this.coinBump > 0) this.coinBump -= dt;
 
     // Score popups
     var spWi = 0;
@@ -694,8 +696,9 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.textBaseline = 'top';
     ctx.shadowColor = 'rgba(0,0,0,0.5)';
     ctx.shadowBlur = 4;
-    ctx.font = 'bold ' + Math.min(cw * 0.03, 12) + 'px ' + this.font;
-    ctx.fillStyle = 'rgba(255,215,0,0.75)';
+    var coinScale = this.coinBump > 0 ? 1 + this.coinBump / 0.2 * 0.3 : 1;
+    ctx.font = 'bold ' + Math.min(cw * 0.03 * coinScale, 12 * coinScale) + 'px ' + this.font;
+    ctx.fillStyle = this.coinBump > 0 ? 'rgba(255,215,0,1)' : 'rgba(255,215,0,0.75)';
     ctx.fillText((cachedCoins || 0) + ' coins', cw - 12, 10);
     if (cachedHighScore > 0) {
         ctx.fillStyle = score >= cachedHighScore ? 'rgba(46,204,113,0.6)' : 'rgba(255,255,255,0.3)';
