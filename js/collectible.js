@@ -39,6 +39,13 @@ SB.Collectible.prototype.init = function(config) {
         this.sineAmp = config.sineAmp || 30;
         this.sineFreq = config.sineFreq || 2.5;
         this.sparkles = [];
+        for (var ci = 0; ci < 2; ci++) {
+            this.sparkles.push({
+                angle: SB.randRange(0, SB.TAU), dist: SB.randRange(12, 18),
+                speed: SB.randRange(1.5, 3), size: SB.randRange(0.8, 1.5),
+                phase: SB.randRange(0, SB.TAU)
+            });
+        }
     } else {
         this.pointValue = 5;
         this.coinValue = 1;
@@ -269,6 +276,18 @@ SB.Collectible.prototype._drawCoin = function(ctx) {
             ctx.fillStyle = 'rgba(155,89,182,' + (magnetGlow * 0.4).toFixed(2) + ')';
             ctx.fill();
         }
+    }
+
+    // Orbit sparkles
+    for (var csi = 0; csi < this.sparkles.length; csi++) {
+        var cs = this.sparkles[csi];
+        var csA = (Math.sin(cs.phase) + 1) / 2 * 0.5;
+        var csx = this.x + Math.cos(cs.angle + cs.phase * 0.3) * cs.dist;
+        var csy = this.y + Math.sin(cs.angle + cs.phase * 0.3) * cs.dist;
+        ctx.beginPath();
+        ctx.arc(csx, csy, cs.size, 0, SB.TAU);
+        ctx.fillStyle = 'rgba(255,200,50,' + csA.toFixed(2) + ')';
+        ctx.fill();
     }
 
     // Value indicator for high-value coins

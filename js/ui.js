@@ -1401,7 +1401,13 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     ctx.shadowBlur = 15;
     ctx.font = 'bold ' + Math.min(cw * 0.1, 42) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
-    ctx.fillText('GAME OVER', cw / 2, y);
+    var goShakeX = 0, goShakeY = 0;
+    if (this.gameOverAlpha < 0.5) {
+        var goShakeFrac = (0.5 - this.gameOverAlpha) / 0.5;
+        goShakeX = Math.sin(this.gameOverAlpha * 120) * goShakeFrac * 6;
+        goShakeY = Math.cos(this.gameOverAlpha * 90) * goShakeFrac * 3;
+    }
+    ctx.fillText('GAME OVER', cw / 2 + goShakeX, y + goShakeY);
     ctx.restore();
     y += Math.min(cw * 0.1, 42) * 0.6 + gap;
 

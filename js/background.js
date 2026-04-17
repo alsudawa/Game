@@ -78,7 +78,8 @@ SB.Background.prototype.update = function(dt, difficulty) {
     this.colorPhase = difficulty || 0;
     if (this.bounceShift > 0) this.bounceShift = Math.max(0, this.bounceShift - dt * 4);
 
-    var twinkleMult = 1 + (this.comboBoost || 0) * 2 + (difficulty || 0) * 0.5;
+    var bp = (SB.audio && SB.audio.beatPulse) || 0;
+    var twinkleMult = 1 + (this.comboBoost || 0) * 2 + (difficulty || 0) * 0.5 + bp * 0.8;
     for (var i = 0; i < this.stars.length; i++) {
         this.stars[i].twinklePhase += this.stars[i].twinkleSpeed * dt * twinkleMult;
     }

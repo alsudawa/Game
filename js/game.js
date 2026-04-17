@@ -73,6 +73,10 @@ SB.Game = function(canvas) {
     this.lastBounceTime = 0;
     this._prevBounceInterval = 0;
     this._rhythmCount = 0;
+    this._bounceStartY = 0;
+    this._bounceApexShown = false;
+    this._apexLineY = 0;
+    this._apexLineTimer = 0;
     this.deathCause = '';
     this.runBounces = 0;
     this.wallFlashSide = 0;
@@ -283,6 +287,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
         // Perfect bounce: ball falling fast + near bottom half of screen
         var preBounceVy = this.ball.vy;
         var isPerfect = preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.65 && this.ball.y > SB.canvasHeight * 0.6;
+        this._bounceStartY = this.ball.y;
+        this._bounceApexShown = false;
         this.ball.bounce(this.input.tapX);
         this.background.bounceShift = 0.3 + Math.min(Math.abs(preBounceVy) / SB.Physics.MAX_FALL_SPEED, 1) * 0.4;
         if (isDoubleTap) {
@@ -370,8 +376,18 @@ SB.Game.prototype._updatePlaying = function(dt) {
     }
 
     this.ball.comboIntensity = this.comboCount >= 5 ? 1.0 : (this.comboCount >= 3 ? 0.5 : 0);
+    var prevVy = this.ball.vy;
     this.ball.update(dt);
     SB._ballVx = this.ball.vx;
+    if (prevVy < 0 && this.ball.vy >= 0 && !this._bounceApexShown && this._bounceStartY) {
+        this._bounceApexShown = true;
+        var apexHeight = this._bounceStartY - this.ball.y;
+        if (apexHeight > 80) {
+            this._apexLineY = this.ball.y;
+            this._apexLineTimer = 0.4;
+        }
+    }
+    if (this._apexLineTimer > 0) this._apexLineTimer -= dt;
 
     // Fast-fall sparkle particles behind ball
     var fallFrac = Math.abs(this.ball.vy) / SB.Physics.MAX_FALL_SPEED;
@@ -1500,6 +1516,16 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 ctx.fillStyle = 'rgba(' + zColor + ',' + zPulse.toFixed(3) + ')';
                 ctx.fillRect(0, 0, cw, ch);
             }
+            // Radial vignette in INTENSE/EXTREME
+            if (!SB.reducedMotion) {
+                var vigStr = this.currentZone === SB.ZONES.EXTREME ? 0.12 : 0.06;
+                var vigR = Math.max(cw, ch) * 0.7;
+                var vigGrad = ctx.createRadialGradient(cw / 2, ch / 2, vigR * 0.5, cw / 2, ch / 2, vigR);
+                vigGrad.addColorStop(0, 'rgba(0,0,0,0)');
+                vigGrad.addColorStop(1, 'rgba(0,0,0,' + vigStr.toFixed(2) + ')');
+                ctx.fillStyle = vigGrad;
+                ctx.fillRect(0, 0, cw, ch);
+            }
             // Heat haze in INTENSE/EXTREME (subtle wavy lines at bottom)
             if ((this.currentZone === SB.ZONES.INTENSE || this.currentZone === SB.ZONES.EXTREME) && !SB.reducedMotion) {
                 var hft = (SB.frameTime || 0) * 0.001;
@@ -1699,6 +1725,22 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             ctx.lineTo(lx + (Math.random() - 0.5) * 2, ly - 25 - Math.random() * 20);
             ctx.stroke();
         }
+        ctx.restore();
+    }
+
+    // Bounce apex height indicator
+    if (this._apexLineTimer > 0 && !SB.reducedMotion) {
+        var alA = this._apexLineTimer / 0.4 * 0.2;
+        var alW = 30;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,' + alA.toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.moveTo(this.ball.x - alW / 2, this._apexLineY);
+        ctx.lineTo(this.ball.x + alW / 2, this._apexLineY);
+        ctx.stroke();
+        ctx.setLineDash([]);
         ctx.restore();
     }
 
