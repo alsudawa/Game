@@ -241,10 +241,11 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.fill();
     }
 
-    // Shooting stars with gradient trail
+    // Shooting stars with gradient trail (brighter at higher difficulty)
+    var ssBrightMult = 1 + d * 0.4;
     for (var s = 0; s < this.shootingStars.length; s++) {
         var ss = this.shootingStars[s];
-        var sa = (ss.life / ss.maxLife) * 0.8;
+        var sa = Math.min((ss.life / ss.maxLife) * 0.8 * ssBrightMult, 1);
         var ssSpeed = Math.sqrt(ss.vx * ss.vx + ss.vy * ss.vy);
         var trailMult = 0.04 + (ssSpeed / 600) * 0.04;
         var tailX = ss.x - ss.vx * trailMult;

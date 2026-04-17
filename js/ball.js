@@ -195,6 +195,15 @@ SB.Ball.prototype.draw = function(ctx) {
         var cbPulse = (Math.sin((SB.frameTime || 0) * 0.008) + 1) / 2 * comboBoost * 0.3;
         ctx.fillStyle = 'rgba(255,255,255,' + cbPulse.toFixed(3) + ')';
         ctx.fill();
+        if (!SB.reducedMotion) {
+            var cgR = this.radius + 4 + cbPulse * 6;
+            var cgColor = comboBoost >= 1.0 ? '255,68,68' : '255,215,0';
+            ctx.beginPath();
+            ctx.arc(0, 0, cgR, 0, SB.TAU);
+            ctx.strokeStyle = 'rgba(' + cgColor + ',' + (comboBoost * 0.3).toFixed(2) + ')';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+        }
     }
     if (SB.highContrast) {
         ctx.strokeStyle = '#FFFFFF';

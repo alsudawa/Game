@@ -698,12 +698,26 @@ SB.UI.prototype.drawTutorial = function(ctx, cw, ch, tutorialStep) {
         ctx.fillText('x2 - double score', cw / 2, ch * 0.69);
     }
 
-    // Step indicator
-    ctx.font = smallFont + 'px ' + this.font;
-    ctx.fillStyle = 'rgba(255,255,255,0.3)';
-    var dots = '';
-    for (var i = 0; i < 3; i++) dots += (i === step ? ' \u25CF ' : ' \u25CB ');
-    ctx.fillText(dots, cw / 2, ch * 0.82);
+    // Step indicator dots (active dot glows)
+    var dotSpacing = 18;
+    var dotBaseX = cw / 2 - dotSpacing;
+    var dotY = ch * 0.82;
+    for (var di = 0; di < 3; di++) {
+        var dotActive = di === step;
+        var dotR = dotActive ? 4 : 2.5;
+        ctx.beginPath();
+        ctx.arc(dotBaseX + di * dotSpacing, dotY, dotR, 0, SB.TAU);
+        if (dotActive) {
+            ctx.fillStyle = 'rgba(255,215,0,0.9)';
+            ctx.shadowColor = 'rgba(255,215,0,0.5)';
+            ctx.shadowBlur = 6;
+        } else {
+            ctx.fillStyle = 'rgba(255,255,255,0.3)';
+            ctx.shadowBlur = 0;
+        }
+        ctx.fill();
+    }
+    ctx.shadowBlur = 0;
 
     // Continue hint
     var blinkAlpha = (Math.sin(this.blinkPhase * 2) + 1) / 2 * 0.5 + 0.5;
@@ -1736,6 +1750,16 @@ SB.UI.prototype.drawAchievementViewer = function(ctx, cw, ch, achievements) {
         }
 
         ctx.globalAlpha = 1;
+    }
+
+    // Scroll indicator if list overflows
+    var lastVisibleY = startY + (i - 1) * rowH;
+    if (i < this._achSortedList.length) {
+        var moreAlpha = (Math.sin(this.blinkPhase * 2) + 1) / 2 * 0.3 + 0.2;
+        ctx.textAlign = 'center';
+        ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,' + moreAlpha.toFixed(2) + ')';
+        ctx.fillText('\u25BC ' + (this._achSortedList.length - i) + ' more', cw / 2, ch * 0.91);
     }
 
     // Close hint

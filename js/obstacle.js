@@ -292,6 +292,13 @@ SB.Obstacle.prototype._drawSpike = function(ctx) {
     var spikePulse = Math.sin(this.spawnAge * 4) * 3;
 
     ctx.save();
+    // Oscillating spikes wobble slightly
+    if (this.oscillateAmplitude > 0 && !SB.reducedMotion) {
+        var wobble = Math.sin(this.oscillatePhase * 2) * 0.06;
+        ctx.translate(cx, this.y + size / 2);
+        ctx.rotate(wobble);
+        ctx.translate(-cx, -(this.y + size / 2));
+    }
     ctx.shadowColor = 'rgba(255, 100, 50, 0.5)';
     ctx.shadowBlur = 10 + spikePulse;
 
