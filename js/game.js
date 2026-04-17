@@ -290,6 +290,17 @@ SB.Game.prototype._updatePlaying = function(dt) {
     this.ball.comboIntensity = this.comboCount >= 5 ? 1.0 : (this.comboCount >= 3 ? 0.5 : 0);
     this.ball.update(dt);
 
+    // Fast-fall sparkle particles behind ball
+    var fallFrac = Math.abs(this.ball.vy) / SB.Physics.MAX_FALL_SPEED;
+    if (fallFrac > 0.5 && Math.random() < (fallFrac - 0.5) * 0.6 && !SB.reducedMotion) {
+        var glowRGB = SB.hexToRGB(this.ball.glowColor || '#FFD700');
+        this.particles.emit(this.ball.x + SB.randRange(-4, 4), this.ball.y - this.ball.radius * (this.ball.vy > 0 ? -1 : 1), {
+            count: 1, spread: 0, speedMin: 15, speedMax: 40,
+            lifeMin: 0.1, lifeMax: 0.25, sizeMin: 0.5, sizeMax: 2,
+            color: glowRGB, gravity: 0, friction: 0.9
+        });
+    }
+
     // Ground dust when ball is near bottom and falling
     if (this.ball.y > SB.canvasHeight * 0.85 && this.ball.vy > 200 && Math.random() < 0.3) {
         this.particles.emit(this.ball.x + SB.randRange(-8, 8), SB.canvasHeight, {
@@ -699,6 +710,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.powerupEffects.activate(pu.type);
             this.powerupFlashTimer = 0.15;
             this.powerupFlashColor = puPreset.color || '255,255,255';
+            this.cameraZoom = 0.12;
             this.achievements.onPowerupCollect();
             if (pu.type === SB.POWERUP_TYPES.SCORE_MULT) {
                 this.achievements.onScoreMultUse();
@@ -741,6 +753,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         var msTier = currentMilestone >= 20 ? 3 : currentMilestone >= 10 ? 2 : currentMilestone >= 5 ? 1 : 0;
         SB.audio.playMilestone(msTier);
         this.ui.addPickupRing(this.ball.x, this.ball.y, '255,215,0');
+        this.ui.scoreFlash = 0.4;
         // Special celebrations at key milestones
         var milestoneScore = currentMilestone * 10;
         if (milestoneScore === 25 || milestoneScore === 50 || milestoneScore === 100 || milestoneScore === 200) {

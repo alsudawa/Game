@@ -39,6 +39,7 @@ SB.UI = function() {
     this.tapRipples = [];
     this.displayScore = 0;
     this.coinBump = 0;
+    this.scoreFlash = 0;
     this._tips = [
         'Tap left or right to steer',
         'Double-tap for a power bounce!',
@@ -631,7 +632,13 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     }
     ctx.fillStyle = 'rgba(0, 0, 0, ' + (0.2 * hudAlpha).toFixed(2) + ')';
     ctx.fillText(scoreText, cw / 2 + 2 + ssOx, 22 + ssOy);
-    ctx.fillStyle = 'rgba(255, 255, 255, ' + (0.85 * hudAlpha).toFixed(2) + ')';
+    var scoreColor = 'rgba(255, 255, 255, ' + (0.85 * hudAlpha).toFixed(2) + ')';
+    if (this.scoreFlash > 0) {
+        var sfBlend = this.scoreFlash / 0.4;
+        scoreColor = 'rgba(255, 215, 0, ' + (sfBlend * hudAlpha).toFixed(2) + ')';
+        this.scoreFlash -= 0.016;
+    }
+    ctx.fillStyle = scoreColor;
     ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
 
     if (cachedHighScore > 0 && score < cachedHighScore && score > cachedHighScore * 0.5) {
@@ -865,7 +872,8 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         var ctColor = comboCount >= 5 ? '255,68,68' : (comboCount >= 3 ? '255,140,66' : '255,215,0');
         ctx.fillStyle = 'rgba(255,255,255,0.1)';
         ctx.fillRect(ctBarX, ctBarY, ctBarW, ctBarH);
-        ctx.fillStyle = 'rgba(' + ctColor + ',0.7)';
+        var ctAlpha = comboTimer < 0.5 ? (Math.sin((SB.frameTime || 0) * 0.02) > 0 ? 0.9 : 0.2) : 0.7;
+        ctx.fillStyle = 'rgba(' + ctColor + ',' + ctAlpha.toFixed(2) + ')';
         ctx.fillRect(ctBarX, ctBarY, ctBarW * ctProgress, ctBarH);
     }
 
@@ -1018,6 +1026,14 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
             ctx.fillStyle = 'rgba(231,76,60,' + (alpha * 0.5) + ')';
             ctx.fillText(dcIcon + ' Killed by: ' + this.runStats.deathCause, cw / 2, y);
             y += gap;
+            var dcTips = { Platform: 'Tap left or right to steer around platforms', Spike: 'Watch for spike patterns — they have gaps!', Blade: 'Blades spin in place — time your path', Boomerang: 'Boomerangs return — dodge twice!', Laser: 'Lasers flash before firing — move away fast', Fell: 'Keep tapping to stay airborne!' };
+            var tip = dcTips[this.runStats.deathCause];
+            if (tip) {
+                ctx.font = Math.min(cw * 0.022, 9) + 'px ' + this.font;
+                ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.3) + ')';
+                ctx.fillText(tip, cw / 2, y);
+                y += gap;
+            }
         }
 
         ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
