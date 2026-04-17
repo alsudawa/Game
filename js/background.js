@@ -57,8 +57,9 @@ SB.Background.prototype.init = function(cw, ch) {
 SB.Background.prototype.update = function(dt, difficulty) {
     this.colorPhase = difficulty || 0;
 
+    var twinkleMult = 1 + (this.comboBoost || 0) * 2;
     for (var i = 0; i < this.stars.length; i++) {
-        this.stars[i].twinklePhase += this.stars[i].twinkleSpeed * dt;
+        this.stars[i].twinklePhase += this.stars[i].twinkleSpeed * dt * twinkleMult;
     }
 
     var ch = SB.canvasHeight;

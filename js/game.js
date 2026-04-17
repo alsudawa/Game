@@ -110,6 +110,7 @@ SB.Game.prototype.onResize = function(cw, ch) {
 SB.Game.prototype.update = function(dt) {
     this.ui.update(dt, this.state, this.powerupEffects, this.comboCount, this.comboTimer);
     var bgDiff = this.state === SB.STATES.PLAYING ? this.spawner.difficulty : (this.state === SB.STATES.GAME_OVER ? this.spawner.difficulty * 0.3 : 0);
+    this.background.comboBoost = this.comboCount >= 3 ? Math.min(this.comboCount / 7, 1) : 0;
     this.background.update(dt, bgDiff);
 
     if (this.screenShake > 0) this.screenShake -= dt;
@@ -394,6 +395,18 @@ SB.Game.prototype._updatePlaying = function(dt) {
     this.achievements.updateRunTime(dt);
     this.runSurviveTime += dt;
 
+    // Powerup active shimmer particles orbiting ball
+    if ((pe.shield || pe.magnet || pe.slow || pe.scoreMult) && Math.random() < 0.25 && !SB.reducedMotion) {
+        var puColor = pe.shield ? '52,152,219' : pe.magnet ? '155,89,182' : pe.slow ? '46,204,113' : '255,193,7';
+        var puAngle = Math.random() * SB.TAU;
+        var puDist = this.ball.radius + 10 + Math.random() * 8;
+        this.particles.emit(this.ball.x + Math.cos(puAngle) * puDist, this.ball.y + Math.sin(puAngle) * puDist, {
+            count: 1, spread: 0, speedMin: 5, speedMax: 15,
+            lifeMin: 0.2, lifeMax: 0.4, sizeMin: 0.5, sizeMax: 1.5,
+            color: puColor, gravity: -20, friction: 0.9
+        });
+    }
+
     // Invincibility countdown
     if (this.invincibleTimer > 0) {
         this.invincibleTimer -= dt;
@@ -417,6 +430,13 @@ SB.Game.prototype._updatePlaying = function(dt) {
     if (this.spawner.lastSpawnedObstacle) {
         this.spawner.lastSpawnedObstacle = false;
         SB.audio.playObstacleWarn();
+        var activeObs = this.obstaclePool.getActive();
+        if (activeObs.length > 0) {
+            var newest = activeObs[activeObs.length - 1];
+            var nCx = newest.radius ? newest.x + newest.radius : newest.x + (newest.width || 0) / 2;
+            var nCy = newest.radius ? newest.y + newest.radius : newest.y + (newest.height || 0) / 2;
+            this.ui.addPickupRing(nCx, nCy, '231,76,60');
+        }
     }
 
     // --- Obstacles ---
@@ -1078,6 +1098,7 @@ SB.Game.prototype._transitionTo = function(newState) {
                 }
             }
         }
+        var prevRun = SB.Storage.getLastRun();
         var streak = SB.Storage.updateStreak();
         var recentRuns = SB.Storage.addRecentRun(this.score);
         SB.Storage.updateLifetimeStats(this.score, this.runCoins);
@@ -1095,7 +1116,7 @@ SB.Game.prototype._transitionTo = function(newState) {
             zone: this.currentZone.name,
             deathCause: this.deathCause || 'Unknown',
             bounces: this.runBounces
-        }, streak, recentRuns);
+        }, streak, recentRuns, prevRun);
         SB.audio.stopBGM();
         SB.audio.playGameOver();
     } else if (newState === SB.STATES.START) {
@@ -1377,6 +1398,20 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         this.ball.radius = this.ball.baseRadius * (1 + deathProgress * 0.4);
     } else {
         this.ball.radius = this.ball.baseRadius;
+    }
+
+    // Danger glow ring when ball is low
+    if (this.state === SB.STATES.PLAYING && this.ball.y > ch * 0.7 && !SB.reducedMotion) {
+        var dgFrac = (this.ball.y - ch * 0.7) / (ch * 0.3);
+        var dgPulse = (Math.sin((SB.frameTime || 0) * 0.01) + 1) / 2;
+        var dgAlpha = dgFrac * (0.15 + dgPulse * 0.1);
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.ball.x, this.ball.y, this.ball.radius + 6, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(231,76,60,' + dgAlpha.toFixed(3) + ')';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
     }
 
     if (this.invincibleTimer > 0 && !SB.reducedMotion) {

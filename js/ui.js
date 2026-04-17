@@ -940,7 +940,7 @@ SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
     }
 };
 
-SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dailyJustCompleted, runStats, streak, recentRuns) {
+SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dailyJustCompleted, runStats, streak, recentRuns, prevRun) {
     this.gameOverAlpha = 0;
     this.scoreCountUp = 0;
     this.displayScore = 0;
@@ -953,6 +953,7 @@ SB.UI.prototype.resetGameOver = function(finalScore, xpResult, progression, dail
     this.runStats = runStats || { time: 0, stars: 0, maxCombo: 0 };
     this.streak = streak || { current: 0, best: 0 };
     this.recentRuns = recentRuns || [];
+    this.prevRun = prevRun || null;
 };
 
 SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh) {
@@ -1013,6 +1014,16 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.font = Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, ' + (alpha * 0.7) + ')';
         ctx.fillText('BEST: ' + SB.formatNum(highScore), cw / 2, y);
+    }
+    // Comparison to previous run
+    if (this.prevRun && this.prevRun.score > 0 && this.scoreCountUp >= displayScore) {
+        var diff = displayScore - this.prevRun.score;
+        if (diff !== 0) {
+            ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+            var cmpArrow = diff > 0 ? '\u25B2 +' + diff : '\u25BC ' + diff;
+            ctx.fillStyle = diff > 0 ? 'rgba(46,204,113,' + (alpha * 0.6) + ')' : 'rgba(231,76,60,' + (alpha * 0.5) + ')';
+            ctx.fillText(cmpArrow + ' vs last run', cw / 2, y);
+        }
     }
     y += gap + 4;
 
