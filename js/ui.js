@@ -1071,7 +1071,8 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         }
     }
 
-    ctx.fillStyle = 'rgba(0, 0, 0, ' + (this.gameOverAlpha * 0.7) + ')';
+    var goPulse = (Math.sin(this.blinkPhase * 0.8) + 1) / 2 * 0.03;
+    ctx.fillStyle = 'rgba(0, 0, 0, ' + (this.gameOverAlpha * (0.7 + goPulse)).toFixed(3) + ')';
     ctx.fillRect(0, 0, cw, ch);
 
     var alpha = this.gameOverAlpha;

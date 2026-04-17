@@ -292,6 +292,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.ui.addScorePopup(this.ball.x, this.ball.y - 25, 'PERFECT +3', '#00FF88');
             this.particles.emit(this.ball.x, this.ball.y, { count: 8, spread: SB.TAU, speedMin: 60, speedMax: 140, lifeMin: 0.3, lifeMax: 0.6, sizeMin: 1.5, sizeMax: 3, color: '0,255,136', gravity: 50, friction: 0.92 });
             this.ui.addPickupRing(this.ball.x, this.ball.y, '0,255,136');
+            this.ui.addPickupRing(this.ball.x, this.ball.y, '255,215,0');
+            this.cameraZoom = 0.1;
             SB.audio.playPerfectBounce();
             if (navigator.vibrate) navigator.vibrate(12);
         } else if (isDoubleTap) {

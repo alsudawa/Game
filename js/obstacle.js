@@ -338,7 +338,7 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
     ctx.fillStyle = SB.highContrast ? '#FF0000' : '#2c3e50';
     ctx.fill();
 
-    // Spin motion blur arcs
+    // Spin motion blur arcs + sparks
     if (!SB.reducedMotion) {
         for (var si = 0; si < 3; si++) {
             var sAngle = (SB.TAU / 3) * si;
@@ -349,6 +349,16 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
             ctx.lineWidth = 2;
             ctx.stroke();
         }
+        var sparkPhase = this.spawnAge * 8;
+        if (Math.sin(sparkPhase) > 0.9) {
+            var spkAngle = this.rotation + sparkPhase;
+            var spkX = Math.cos(spkAngle) * (this.radius + 1);
+            var spkY = Math.sin(spkAngle) * (this.radius + 1);
+            ctx.beginPath();
+            ctx.arc(spkX, spkY, 1.5, 0, SB.TAU);
+            ctx.fillStyle = 'rgba(255,220,150,0.6)';
+            ctx.fill();
+        }
     }
 
     ctx.restore();
@@ -357,6 +367,18 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
 SB.Obstacle.prototype._drawBoomerang = function(ctx) {
     var cx = this.x + this.radius;
     var cy = this.y + this.radius;
+
+    if (!SB.reducedMotion) {
+        var tDir = this.direction;
+        for (var ti = 1; ti <= 4; ti++) {
+            var tAlpha = (1 - ti / 5) * 0.12;
+            var tx = cx - tDir * this.speed * 0.3 * ti;
+            ctx.beginPath();
+            ctx.arc(tx, cy, 2 - ti * 0.3, 0, SB.TAU);
+            ctx.fillStyle = 'rgba(255,152,0,' + tAlpha.toFixed(2) + ')';
+            ctx.fill();
+        }
+    }
 
     ctx.save();
     ctx.translate(cx, cy);
@@ -433,7 +455,7 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         ctx.restore();
     } else if (this.laserPhase === 'charge') {
         var pulse = 0.5 + Math.sin(this.laserTimer * 35) * 0.4;
-        var chargeW = 2 + this.laserTimer / 0.3 * 4; // widens as it charges
+        var chargeW = 2 + this.laserTimer / 0.3 * 4;
         ctx.save();
         ctx.shadowColor = 'rgba(255, 50, 50, 0.6)';
         ctx.shadowBlur = 10;
@@ -443,6 +465,11 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         ctx.moveTo(0, this.y);
         ctx.lineTo(cw, this.y);
         ctx.stroke();
+        var chargeFrac = this.laserTimer / 0.3;
+        var barW = 6 + chargeFrac * 4;
+        ctx.fillStyle = 'rgba(255,80,80,' + (pulse * 0.6).toFixed(2) + ')';
+        ctx.fillRect(0, this.y - barW / 2, 3, barW);
+        ctx.fillRect(cw - 3, this.y - barW / 2, 3, barW);
         ctx.restore();
     } else if (this.laserPhase === 'active') {
         var beamPulse = 1 + Math.sin(this.laserTimer * 20) * 0.15;
