@@ -518,7 +518,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
         }
 
         if (hit) {
-            if (this.invincibleTimer > 0) continue; // Post-revive invincibility
+            if (this.invincibleTimer > 0) {
+                obs.active = false;
+                this.particles.emit(this.ball.x, this.ball.y, { count: 5, spread: SB.TAU, speedMin: 40, speedMax: 100, lifeMin: 0.2, lifeMax: 0.4, sizeMin: 1, sizeMax: 2, color: '255,255,255', gravity: 0, friction: 0.9 });
+                continue;
+            }
             if (this.powerupEffects.useShield()) {
                 var obsCx = obs.radius ? obs.x + obs.radius : obs.x + (obs.width || 0) / 2;
                 var obsCy = obs.radius ? obs.y + obs.radius : obs.y + (obs.height || 0) / 2;
@@ -545,6 +549,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 });
                 this.achievements.onShieldUse();
                 SB.audio.playShieldBreak();
+                this.ui.addPickupRing(this.ball.x, this.ball.y, '52,152,219');
+                this.ui.addPickupRing(obsCx, obsCy, obsColor);
                 continue;
             }
             this.deathCause = obs.type === SB.OBSTACLE_TYPES.PLATFORM ? 'Platform' :
@@ -1115,6 +1121,12 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
             this._renderGameplay(ctx, cw, ch);
             this.ui.runBounces = this.runBounces;
             this.ui.ballSpeedFrac = Math.min(Math.abs(this.ball.vy) / SB.Physics.MAX_FALL_SPEED, 1);
+            if (!this.daily.completed) {
+                this.ui.dailyTarget = this.daily.challenge.target;
+                this.ui.dailyProgress = this.score;
+            } else {
+                this.ui.dailyTarget = 0;
+            }
             this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty, this.ball.y, this.scoreShake);
             // Grace period countdown: 3, 2, 1, GO!
             if (this.spawner.graceTimer < this.spawner.gracePeriod + 0.4 && !this.showTutorial) {

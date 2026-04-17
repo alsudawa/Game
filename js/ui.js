@@ -869,6 +869,22 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.fillRect(ctBarX, ctBarY, ctBarW * ctProgress, ctBarH);
     }
 
+    if (this.dailyTarget && this.dailyTarget > 0) {
+        var dcFrac = Math.min((this.dailyProgress || 0) / this.dailyTarget, 1);
+        var dcW = Math.min(cw * 0.25, 100);
+        var dcH = 3;
+        var dcX = cw - dcW - 8;
+        var dcY = ch - 16;
+        ctx.fillStyle = 'rgba(255,255,255,0.1)';
+        ctx.fillRect(dcX, dcY, dcW, dcH);
+        ctx.fillStyle = 'rgba(255,215,0,0.5)';
+        ctx.fillRect(dcX, dcY, dcW * dcFrac, dcH);
+        ctx.textAlign = 'right';
+        ctx.font = Math.min(cw * 0.02, 8) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,0.3)';
+        ctx.fillText('Daily ' + Math.floor(dcFrac * 100) + '%', cw - 8, dcY - 2);
+    }
+
     // Difficulty progress bar (thin bar at very top of screen)
     if (typeof difficulty === 'number' && difficulty > 0) {
         var dpBarW = cw;

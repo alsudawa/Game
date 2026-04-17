@@ -570,6 +570,22 @@ SB.Audio.prototype.playComboBreak = function() {
     osc.stop(now + 0.12);
 };
 
+SB.Audio.prototype.playLaserCharge = function() {
+    if (!this.initialized) return;
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'sawtooth';
+    var now = this.ctx.currentTime;
+    osc.frequency.setValueAtTime(100, now);
+    osc.frequency.exponentialRampToValueAtTime(600, now + 0.25);
+    gain.gain.setValueAtTime(0.06, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+    osc.connect(gain);
+    gain.connect(this.masterGain);
+    osc.start(now);
+    osc.stop(now + 0.3);
+};
+
 SB.Audio.prototype.playAchievement = function() {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;

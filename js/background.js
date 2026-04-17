@@ -64,6 +64,7 @@ SB.Background.prototype.update = function(dt, difficulty) {
     for (var j = 0; j < this.clouds.length; j++) {
         var cloud = this.clouds[j];
         cloud.y += cloud.speed * dt;
+        cloud.x += Math.sin(cloud.y * 0.01) * (cloud.depth || 1) * dt * 3;
         if (cloud.y > ch + 60) {
             cloud.y = -cloud.height - 20;
             cloud.x = Math.random() * cw;

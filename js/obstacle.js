@@ -111,6 +111,7 @@ SB.Obstacle.prototype.update = function(dt) {
         if (this.laserPhase === 'warning' && this.laserTimer >= 0.8) {
             this.laserPhase = 'charge';
             this.laserTimer = 0;
+            if (SB.audio) SB.audio.playLaserCharge();
         } else if (this.laserPhase === 'charge' && this.laserTimer >= 0.3) {
             this.laserPhase = 'active';
             this.laserTimer = 0;
