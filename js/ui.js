@@ -28,6 +28,8 @@ SB.UI = function() {
     this.lockMsgTimer = 0;
     this.zoneMsg = '';
     this.zoneMsgTimer = 0;
+    this.zoneWipeTimer = 0;
+    this.zoneWipeColor = '93,173,226';
     this.milestoneMsg = '';
     this.milestoneMsgTimer = 0;
     this.nearMissTimer = 0;
@@ -93,6 +95,7 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
 
     if (this.lockMsgTimer > 0) this.lockMsgTimer -= dt;
     if (this.zoneMsgTimer > 0) this.zoneMsgTimer -= dt;
+    if (this.zoneWipeTimer > 0) this.zoneWipeTimer -= dt;
     if (this.milestoneMsgTimer > 0) this.milestoneMsgTimer -= dt;
     if (this.nearMissTimer > 0) this.nearMissTimer -= dt;
 
@@ -259,9 +262,10 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.save();
     ctx.shadowColor = currentSkin.glow;
     ctx.shadowBlur = 18 + breathe * 15;
+    var breatheSize = 18 + Math.sin(this.blinkPhase * 1.2) * 1.5;
     ctx.beginPath();
-    ctx.arc(cw / 2, ballY, 18, 0, SB.TAU);
-    var gradient = ctx.createRadialGradient(cw / 2 - 5, ballY - 5, 2, cw / 2, ballY, 18);
+    ctx.arc(cw / 2, ballY, breatheSize, 0, SB.TAU);
+    var gradient = ctx.createRadialGradient(cw / 2 - 5, ballY - 5, 2, cw / 2, ballY, breatheSize);
     gradient.addColorStop(0, currentSkin.core);
     gradient.addColorStop(1, currentSkin.glow);
     ctx.fillStyle = gradient;
@@ -654,6 +658,20 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.shadowBlur = 12;
         ctx.fillText(this.zoneMsg + ' ZONE', cw / 2, ch * 0.12);
         ctx.restore();
+    }
+
+    // Zone transition wipe
+    if (this.zoneWipeTimer > 0 && !SB.reducedMotion) {
+        var wFrac = 1 - this.zoneWipeTimer / 0.5;
+        var wAlpha = wFrac < 0.5 ? wFrac * 2 * 0.15 : (1 - wFrac) * 2 * 0.15;
+        var wX = wFrac * cw * 1.4 - cw * 0.2;
+        var wW = cw * 0.3;
+        var wGrad = ctx.createLinearGradient(wX, 0, wX + wW, 0);
+        wGrad.addColorStop(0, 'rgba(' + this.zoneWipeColor + ',0)');
+        wGrad.addColorStop(0.5, 'rgba(' + this.zoneWipeColor + ',' + wAlpha.toFixed(3) + ')');
+        wGrad.addColorStop(1, 'rgba(' + this.zoneWipeColor + ',0)');
+        ctx.fillStyle = wGrad;
+        ctx.fillRect(wX, 0, wW, ch);
     }
 
     // Milestone popup (below zone message area)

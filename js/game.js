@@ -787,6 +787,8 @@ SB.Game.prototype._updateZone = function() {
     if (prevZone !== this.currentZone && prevZone !== null) {
         this.ui.zoneMsg = this.currentZone.name;
         this.ui.zoneMsgTimer = 2.0;
+        this.ui.zoneWipeTimer = 0.5;
+        this.ui.zoneWipeColor = ({ CALM: '93,173,226', RISING: '243,156,18', INTENSE: '231,76,60', EXTREME: '155,89,182' })[this.currentZone.name] || '255,255,255';
         this.screenFlash = 0.12;
         // Zone-based trail color tinting (smooth blend via timer)
         this.trailBlendTimer = 1.0;
@@ -1071,6 +1073,24 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 var zPulse = (Math.sin((SB.frameTime || 0) * 0.003) + 1) / 2 * zGlowAlpha;
                 ctx.fillStyle = 'rgba(' + zColor + ',' + zPulse.toFixed(3) + ')';
                 ctx.fillRect(0, 0, cw, ch);
+            }
+            // Heat haze in INTENSE/EXTREME (subtle wavy lines at bottom)
+            if ((this.currentZone === SB.ZONES.INTENSE || this.currentZone === SB.ZONES.EXTREME) && !SB.reducedMotion) {
+                var hft = (SB.frameTime || 0) * 0.001;
+                var hAlpha = this.currentZone === SB.ZONES.EXTREME ? 0.04 : 0.025;
+                ctx.save();
+                ctx.strokeStyle = 'rgba(255,200,150,' + hAlpha.toFixed(3) + ')';
+                ctx.lineWidth = 1;
+                for (var hi = 0; hi < 4; hi++) {
+                    var hY = ch * (0.75 + hi * 0.06);
+                    ctx.beginPath();
+                    for (var hx = 0; hx < cw; hx += 4) {
+                        var hy = hY + Math.sin(hx * 0.03 + hft * 2 + hi) * 3;
+                        if (hx === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy);
+                    }
+                    ctx.stroke();
+                }
+                ctx.restore();
             }
             // Edge danger indicators for off-screen obstacles
             this._drawEdgeWarnings(ctx, cw, ch);

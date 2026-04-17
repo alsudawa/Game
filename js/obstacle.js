@@ -159,6 +159,20 @@ SB.Obstacle.prototype.draw = function(ctx) {
         ctx.restore();
     }
 
+    // Drop shadow (skip for laser and gravity well)
+    if (this.type !== SB.OBSTACLE_TYPES.LASER && this.type !== SB.OBSTACLE_TYPES.GRAVITY_WELL) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,0.1)';
+        if (this.radius && (this.type === SB.OBSTACLE_TYPES.BLADE || this.type === SB.OBSTACLE_TYPES.BOOMERANG)) {
+            ctx.beginPath();
+            ctx.ellipse(this.x + this.radius, this.y + this.radius + 8, this.radius * 0.7, this.radius * 0.25, 0, 0, SB.TAU);
+            ctx.fill();
+        } else {
+            ctx.fillRect(this.x + 3, this.y + this.height + 2, this.width - 6, 4);
+        }
+        ctx.restore();
+    }
+
     if (this.type === SB.OBSTACLE_TYPES.PLATFORM) {
         this._drawPlatform(ctx);
     } else if (this.type === SB.OBSTACLE_TYPES.SPIKE) {
