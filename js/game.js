@@ -706,6 +706,14 @@ SB.Game.prototype._updatePlaying = function(dt) {
         if (SB.circleCircleCollision(ballBounds, col.getBounds())) {
             var isCoin = col.type === SB.COLLECTIBLE_TYPES.COIN;
             this.particles.emit(col.x, col.y, isCoin ? SB.FX.coinCollect : SB.FX.starCollect);
+            if (!isCoin && !SB.reducedMotion) {
+                this.particles.emit(col.x, col.y, {
+                    count: 3, spread: 0, speedMin: 40, speedMax: 80,
+                    lifeMin: 0.3, lifeMax: 0.5, sizeMin: 0.8, sizeMax: 1.5,
+                    color: '255,215,0', angle: -Math.PI / 2, angleSpread: 0.6,
+                    gravity: 60, friction: 0.95
+                });
+            }
             this.ui.addPickupRing(col.x, col.y, isCoin ? '255,180,0' : '255,215,0');
             if (this.collectChainTimer > 0 && this.comboCount >= 1) {
                 this.ui.addChainLine(this.lastCollectX, this.lastCollectY, col.x, col.y);
@@ -1098,6 +1106,7 @@ SB.Game.prototype._transitionTo = function(newState) {
         this.runBounces = 0;
         this.currentZone = SB.ZONES.CALM;
         this.transitionAlpha = 1;
+        this.screenFlash = 0.1;
         this.ball.reset(SB.canvasWidth, SB.canvasHeight);
         this.ball.blinking = false;
         this._applySkin();

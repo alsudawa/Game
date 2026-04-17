@@ -197,6 +197,18 @@ SB.Obstacle.prototype.draw = function(ctx) {
         ctx.restore();
     }
 
+    // Speed-based horizontal stretch for fast-moving platforms/spikes
+    var speedStretch = 0;
+    if ((this.type === SB.OBSTACLE_TYPES.PLATFORM || this.type === SB.OBSTACLE_TYPES.SPIKE) && Math.abs(this.speed) > 3 && !SB.reducedMotion) {
+        speedStretch = Math.min((Math.abs(this.speed) - 3) / 5, 1) * 0.04;
+        var stCx = this.x + (this.width || 0) / 2;
+        var stCy = this.y + (this.height || 0) / 2;
+        ctx.save();
+        ctx.translate(stCx, stCy);
+        ctx.scale(1 + speedStretch, 1 - speedStretch * 0.3);
+        ctx.translate(-stCx, -stCy);
+    }
+
     if (this.type === SB.OBSTACLE_TYPES.PLATFORM) {
         this._drawPlatform(ctx);
     } else if (this.type === SB.OBSTACLE_TYPES.SPIKE) {
@@ -210,6 +222,8 @@ SB.Obstacle.prototype.draw = function(ctx) {
     } else if (this.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) {
         this._drawGravityWell(ctx);
     }
+
+    if (speedStretch > 0) ctx.restore();
 
     if (fadeIn < 1 || foAlpha < 1) {
         ctx.restore();
@@ -562,6 +576,21 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
         grad.addColorStop(1, 'rgba(155,89,182,0)');
         ctx.fillStyle = grad;
         ctx.fill();
+    }
+
+    // Inner spinning ring
+    if (!SB.reducedMotion) {
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(this.wellPhase * 1.5);
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius * pulse * 0.55, 0, Math.PI * 1.2);
+        ctx.strokeStyle = 'rgba(200,150,255,' + (wellAlpha * 0.25).toFixed(3) + ')';
+        ctx.setLineDash([3, 4]);
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.restore();
     }
 
     // Inner dot

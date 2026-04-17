@@ -823,6 +823,15 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     var sgColor = sgFrac > 0.7 ? '231,76,60' : (sgFrac > 0.4 ? '243,156,18' : '93,173,226');
     ctx.fillStyle = 'rgba(' + sgColor + ',' + (0.4 * hudAlpha).toFixed(2) + ')';
     ctx.fillRect(sgX, sgY, sgW * sgFrac, sgH);
+    // Difficulty bar
+    if (difficulty > 0) {
+        var dbY = sgY - 8;
+        ctx.fillStyle = 'rgba(255,255,255,0.08)';
+        ctx.fillRect(sgX, dbY, sgW, sgH);
+        var dbColor = difficulty > 0.8 ? '155,89,182' : difficulty > 0.5 ? '231,76,60' : difficulty > 0.3 ? '243,156,18' : '93,173,226';
+        ctx.fillStyle = 'rgba(' + dbColor + ',' + (0.3 * hudAlpha).toFixed(2) + ')';
+        ctx.fillRect(sgX, dbY, sgW * difficulty, sgH);
+    }
     ctx.restore();
 
     // Combo popups (escalating visual intensity)
