@@ -738,13 +738,12 @@ SB.Game.prototype._updatePaused = function(dt) {
 };
 
 SB.Game.prototype._handleDeath = function() {
-    // Haptic feedback on death
     if (navigator.vibrate) navigator.vibrate(80);
-    // Brief white freeze-frame flash at moment of impact
     this.screenFlash = 0.12;
-    // Strong death shake during slow-mo
     this.screenShake = 0.4;
     this.screenShakeIntensity = 14;
+    this.ui.addPickupRing(this.ball.x, this.ball.y, '231,76,60');
+    this.ui.addPickupRing(this.ball.x, this.ball.y, '255,100,100');
     // Trigger slow-mo death sequence
     this.deathSlowMo = 0.3;
     var coins = SB.Storage.getCoins();
@@ -1270,7 +1269,14 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.fillRect(0, 0, cw, ch);
     }
 
+    if (this.invincibleTimer > 0 && !SB.reducedMotion) {
+        ctx.save();
+        ctx.globalAlpha = 0.5 + Math.abs(Math.sin(this.invincibleTimer * 12)) * 0.5;
+    }
     this.ball.draw(ctx);
+    if (this.invincibleTimer > 0 && !SB.reducedMotion) {
+        ctx.restore();
+    }
     this.particles.draw(ctx);
 
     // Wall edge flash (brief glow on the edge the ball bounced off)

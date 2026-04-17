@@ -61,7 +61,7 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
 
     if (state === 'start') {
         this.idleBallPhase += 3 * dt;
-        this.idleBallY = Math.sin(this.idleBallPhase) * 20;
+        this.idleBallY = -Math.abs(Math.sin(this.idleBallPhase)) * 20;
         this._tipTimer += dt;
         if (this._tipTimer >= 4.0) {
             this._tipTimer = 0;
@@ -141,6 +141,9 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
 
 SB.UI.prototype.addScorePopup = function(x, y, text, color) {
     if (this.scorePopups.length < 8) {
+        for (var pi = 0; pi < this.scorePopups.length; pi++) {
+            if (Math.abs(this.scorePopups[pi].y - y) < 18) y -= 18;
+        }
         var drift = (x - SB.canvasWidth / 2) / SB.canvasWidth * 40;
         this.scorePopups.push({ x: x, y: y, text: text, color: color || '#FFD700', timer: 0, drift: drift });
     }
@@ -1220,10 +1223,15 @@ SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost)
     ctx.lineWidth = 5;
     ctx.stroke();
 
-    // Number
-    ctx.font = 'bold ' + Math.min(cw * 0.1, 40) + 'px ' + this.font;
+    // Number with pulse
+    var cpulse = 1 + (1 - (countdown % 1)) * 0.15;
+    ctx.save();
+    ctx.shadowColor = '#E74C3C';
+    ctx.shadowBlur = 5 + (1 - (countdown % 1)) * 10;
+    ctx.font = 'bold ' + Math.min(cw * 0.1, 40) * cpulse + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
     ctx.fillText(countNum, cw / 2, countY);
+    ctx.restore();
 
     // Revive button (includes countdown in text)
     var btnW = Math.min(cw * 0.65, 240);
