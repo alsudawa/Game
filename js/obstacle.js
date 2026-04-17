@@ -270,6 +270,12 @@ SB.Obstacle.prototype._drawSpike = function(ctx) {
         ctx.strokeStyle = '#c0392b';
         ctx.lineWidth = 1.5;
         ctx.stroke();
+        // Bright tip point
+        var tipPulse = (Math.sin(this.spawnAge * 6) + 1) / 2;
+        ctx.beginPath();
+        ctx.arc(cx, this.y + 1, 2, 0, SB.TAU);
+        ctx.fillStyle = 'rgba(255,200,150,' + (0.4 + tipPulse * 0.4).toFixed(2) + ')';
+        ctx.fill();
     }
     ctx.restore();
 };

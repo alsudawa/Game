@@ -157,7 +157,10 @@ SB.UI.prototype.addScorePopup = function(x, y, text, color) {
             if (Math.abs(this.scorePopups[pi].y - y) < 18) y -= 18;
         }
         var drift = (x - SB.canvasWidth / 2) / SB.canvasWidth * 40;
-        this.scorePopups.push({ x: x, y: y, text: text, color: color || '#FFD700', timer: 0, drift: drift });
+        var numMatch = text.match(/\d+/);
+        var valScale = numMatch ? Math.min(parseInt(numMatch[0], 10) / 10, 1.5) : 1;
+        var popScale = 1 + valScale * 0.2;
+        this.scorePopups.push({ x: x, y: y, text: text, color: color || '#FFD700', timer: 0, drift: drift, sizeScale: popScale });
     }
 };
 
@@ -817,7 +820,7 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.globalAlpha = spAlpha;
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = 'bold ' + Math.floor(Math.min(cw * 0.035, 14) * spScale) + 'px ' + this.font;
+        ctx.font = 'bold ' + Math.floor(Math.min(cw * 0.035, 14) * spScale * (sp.sizeScale || 1)) + 'px ' + this.font;
         ctx.fillStyle = sp.color;
         ctx.shadowColor = sp.color;
         ctx.shadowBlur = 4;
@@ -1276,10 +1279,15 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillText('SHARE SCORE', cw / 2, shareBtnY + btnH / 2);
         SB._shareBtn = { x: btnX, y: shareBtnY, w: btnW, h: btnH, score: displayScore };
 
-        // Play Again button
-        ctx.fillStyle = 'rgba(46, 204, 113, ' + alpha * 0.85 + ')';
+        // Play Again button (pulses gently)
+        var paPulse = (Math.sin(this.blinkPhase * 1.5) + 1) / 2 * 0.1;
+        ctx.fillStyle = 'rgba(46, 204, 113, ' + (alpha * (0.85 + paPulse)).toFixed(2) + ')';
         this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(46, 204, 113, ' + (paPulse * 3).toFixed(2) + ')';
+        ctx.lineWidth = 1.5;
+        this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
+        ctx.stroke();
         ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
         ctx.fillText('PLAY AGAIN', cw / 2, playBtnY + btnH / 2);

@@ -213,10 +213,11 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.fill();
     }
 
+    var cloudDiffMult = 1 + d * 0.8;
     for (var j = 0; j < this.clouds.length; j++) {
         var cloud = this.clouds[j];
         ctx.save();
-        ctx.fillStyle = 'rgba(255, 255, 255, ' + cloud.alpha + ')';
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + (cloud.alpha * cloudDiffMult).toFixed(3) + ')';
         var cdepth = cloud.depth || 1;
         ctx.translate(cloud.x + cloudPx * cdepth, cloud.y + cloudPy * cdepth);
         ctx.scale(1, cloud.height / cloud.width);

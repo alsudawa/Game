@@ -117,10 +117,12 @@ SB.Collectible.prototype.draw = function(ctx) {
     }
 
     var proxBoost = this._proximity > 0 ? this._proximity : 0;
-    var extraGlow = (edgeWarn > 0 ? edgeWarn * 15 : 0) + proxBoost * 20;
+    var magnetPull = this._magnetPull || 0;
+    var extraGlow = (edgeWarn > 0 ? edgeWarn * 15 : 0) + proxBoost * 20 + magnetPull * 25;
 
     ctx.save();
-    ctx.shadowColor = 'rgba(255, 215, 0, ' + (0.6 + edgeWarn * 0.4 + proxBoost * 0.4).toFixed(2) + ')';
+    var glowColor = magnetPull > 0.3 ? '155,89,182' : '255,215,0';
+    ctx.shadowColor = 'rgba(' + glowColor + ',' + (0.6 + edgeWarn * 0.4 + proxBoost * 0.4 + magnetPull * 0.4).toFixed(2) + ')';
     ctx.shadowBlur = 15 + extraGlow;
 
     ctx.translate(this.x, this.y + bobY);
