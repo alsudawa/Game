@@ -461,81 +461,141 @@ SB.Audio.prototype.startBGM = function() {
 
     this._bgmGain = ctx.createGain();
     this._bgmGain.gain.setValueAtTime(0, now);
-    this._bgmGain.gain.linearRampToValueAtTime(0.05, now + 2.0);
+    this._bgmGain.gain.linearRampToValueAtTime(0.07, now + 2.0);
     this._bgmGain.connect(this.masterGain);
 
-    // Slow LFO for gentle volume pulsing
-    this._bgmLfo = ctx.createOscillator();
-    this._bgmLfo.type = 'sine';
-    this._bgmLfo.frequency.value = 0.12;
-    var lfoGain = ctx.createGain();
-    lfoGain.gain.value = 0.012;
-    this._bgmLfo.connect(lfoGain);
-    lfoGain.connect(this._bgmGain.gain);
-    this._bgmLfo.start(now);
-
-    // Ambient pad: three triangle waves for warm chord
-    var notes = [130.81, 196.00, 261.63]; // C3, G3, C4
-    var volumes = [0.5, 0.3, 0.15];
-    this._bgmOscs = [];
-
-    for (var i = 0; i < notes.length; i++) {
+    // Pad layer: 3 triangle oscillators for sustained chord
+    this._bgmPadOscs = [];
+    var padInit = [130.81, 164.81, 196.00];
+    var padVols = [0.35, 0.2, 0.12];
+    for (var i = 0; i < 3; i++) {
         var osc = ctx.createOscillator();
         osc.type = 'triangle';
-        osc.frequency.value = notes[i];
-        if (i > 0) osc.detune.value = SB.randRange(-4, 4);
+        osc.frequency.value = padInit[i];
+        if (i > 0) osc.detune.value = SB.randRange(-3, 3);
         var g = ctx.createGain();
-        g.gain.value = volumes[i];
+        g.gain.value = padVols[i];
         osc.connect(g);
         g.connect(this._bgmGain);
         osc.start(now);
-        this._bgmOscs.push(osc);
+        this._bgmPadOscs.push(osc);
+    }
+
+    // Arp layer: single oscillator with gain envelope per note
+    this._bgmArpOsc = ctx.createOscillator();
+    this._bgmArpOsc.type = 'sine';
+    this._bgmArpOsc.frequency.value = 261.63;
+    this._bgmArpGain = ctx.createGain();
+    this._bgmArpGain.gain.value = 0.001;
+    this._bgmArpOsc.connect(this._bgmArpGain);
+    this._bgmArpGain.connect(this._bgmGain);
+    this._bgmArpOsc.start(now);
+
+    // Bass layer: single oscillator with gain envelope
+    this._bgmBassOsc = ctx.createOscillator();
+    this._bgmBassOsc.type = 'sine';
+    this._bgmBassOsc.frequency.value = 130.81;
+    this._bgmBassGain = ctx.createGain();
+    this._bgmBassGain.gain.value = 0.001;
+    this._bgmBassOsc.connect(this._bgmBassGain);
+    this._bgmBassGain.connect(this._bgmGain);
+    this._bgmBassOsc.start(now);
+
+    // Scheduler state
+    this._bgmBPM = 85;
+    this._bgmBeat = 0;
+    this._bgmNextBeatTime = now + 0.5;
+    this._bgmDifficulty = 0;
+
+    // I-vi-IV-V major progression
+    this._bgmChordsMaj = [
+        { bass: 130.81, pad: [130.81, 164.81, 196.00], arp: [261.63, 329.63, 392.00, 523.25, 523.25, 392.00, 329.63, 261.63] },
+        { bass: 110.00, pad: [110.00, 130.81, 164.81], arp: [220.00, 261.63, 329.63, 440.00, 440.00, 329.63, 261.63, 220.00] },
+        { bass: 174.61, pad: [174.61, 220.00, 261.63], arp: [349.23, 440.00, 523.25, 698.46, 698.46, 523.25, 440.00, 349.23] },
+        { bass: 98.00,  pad: [196.00, 246.94, 293.66], arp: [392.00, 493.88, 587.33, 783.99, 783.99, 587.33, 493.88, 392.00] }
+    ];
+    // i-VII-VI-V minor progression (tense)
+    this._bgmChordsMin = [
+        { bass: 130.81, pad: [130.81, 155.56, 196.00], arp: [261.63, 311.13, 392.00, 523.25, 523.25, 392.00, 311.13, 261.63] },
+        { bass: 116.54, pad: [116.54, 146.83, 174.61], arp: [233.08, 293.66, 349.23, 466.16, 466.16, 349.23, 293.66, 233.08] },
+        { bass: 103.83, pad: [103.83, 130.81, 155.56], arp: [207.65, 261.63, 311.13, 415.30, 415.30, 311.13, 261.63, 207.65] },
+        { bass: 98.00,  pad: [196.00, 246.94, 293.66], arp: [392.00, 493.88, 587.33, 783.99, 783.99, 587.33, 493.88, 392.00] }
+    ];
+
+    var self = this;
+    this._bgmTimerId = setInterval(function() { self._bgmSchedule(); }, 80);
+};
+
+SB.Audio.prototype._bgmSchedule = function() {
+    if (!this._bgmPlaying || !this.ctx) return;
+    if (this._bgmNextBeatTime < this.ctx.currentTime - 0.5) {
+        this._bgmNextBeatTime = this.ctx.currentTime + 0.05;
+    }
+    while (this._bgmNextBeatTime < this.ctx.currentTime + 0.15) {
+        this._bgmPlayBeat(this._bgmNextBeatTime);
+        this._bgmNextBeatTime += 60.0 / this._bgmBPM / 2;
+        this._bgmBeat = (this._bgmBeat + 1) % 32;
+    }
+};
+
+SB.Audio.prototype._bgmPlayBeat = function(time) {
+    var prog = this._bgmDifficulty > 0.5 ? this._bgmChordsMin : this._bgmChordsMaj;
+    var chordIdx = Math.floor(this._bgmBeat / 8) % 4;
+    var pos = this._bgmBeat % 8;
+    var chord = prog[chordIdx];
+    var eighthDur = 60.0 / this._bgmBPM / 2;
+
+    // Arpeggio — off-beat notes quieter at low difficulty (sparse quarter-note feel)
+    var arpFreq = chord.arp[pos];
+    var arpVol = SB.lerp(0.04, 0.09, this._bgmDifficulty);
+    if (pos % 2 === 1) arpVol *= SB.lerp(0.15, 1.0, this._bgmDifficulty);
+    var arpDur = eighthDur * 0.7;
+    this._bgmArpGain.gain.cancelScheduledValues(time);
+    this._bgmArpOsc.frequency.setValueAtTime(arpFreq, time);
+    this._bgmArpGain.gain.setValueAtTime(0.001, time);
+    this._bgmArpGain.gain.linearRampToValueAtTime(arpVol, time + 0.005);
+    this._bgmArpGain.gain.exponentialRampToValueAtTime(0.001, time + arpDur);
+
+    // Bass on beats 1 and 3 (positions 0, 4)
+    if (pos === 0 || pos === 4) {
+        var bassVol = SB.lerp(0.06, 0.13, this._bgmDifficulty);
+        var bassDur = eighthDur * 2 * 0.7;
+        this._bgmBassGain.gain.cancelScheduledValues(time);
+        this._bgmBassOsc.frequency.setValueAtTime(chord.bass, time);
+        this._bgmBassGain.gain.setValueAtTime(0.001, time);
+        this._bgmBassGain.gain.linearRampToValueAtTime(bassVol, time + 0.008);
+        this._bgmBassGain.gain.exponentialRampToValueAtTime(0.001, time + bassDur);
+    }
+
+    // Pad chord transitions on bar boundaries
+    if (pos === 0) {
+        for (var i = 0; i < 3; i++) {
+            this._bgmPadOscs[i].frequency.linearRampToValueAtTime(chord.pad[i], time + 0.4);
+        }
     }
 };
 
 SB.Audio.prototype.updateBGMIntensity = function(difficulty) {
-    if (!this._bgmPlaying || !this._bgmLfo) return;
-    var targetFreq = SB.lerp(0.12, 0.5, difficulty);
-    this._bgmLfo.frequency.value = targetFreq;
-
-    // Volume scales slightly with difficulty (more presence at high intensity)
-    var targetVol = SB.lerp(0.05, 0.08, difficulty);
-    this._bgmGain.gain.setTargetAtTime(targetVol, this.ctx.currentTime, 0.5);
-
-    // Chord progression based on difficulty zone
-    // CALM: C major (C3, G3, C4)
-    // RISING: A minor (A2, E3, A3)
-    // INTENSE: D minor (D3, A3, D4)
-    // EXTREME: B diminished (B2, F3, B3)
-    if (this._bgmOscs && this._bgmOscs.length === 3) {
-        var now = this.ctx.currentTime;
-        var chords = [
-            [130.81, 196.00, 261.63],  // C3, G3, C4
-            [110.00, 164.81, 220.00],  // A2, E3, A3
-            [146.83, 220.00, 293.66],  // D3, A3, D4
-            [123.47, 174.61, 246.94]   // B2, F3, B3
-        ];
-        var ci = difficulty < 0.3 ? 0 : (difficulty < 0.5 ? 1 : (difficulty < 0.8 ? 2 : 3));
-        var chord = chords[ci];
-        for (var i = 0; i < 3; i++) {
-            this._bgmOscs[i].frequency.linearRampToValueAtTime(chord[i], now + 0.5);
-        }
-    }
+    if (!this._bgmPlaying) return;
+    this._bgmDifficulty = difficulty;
+    this._bgmBPM = SB.lerp(85, 110, difficulty);
+    var vol = SB.lerp(0.06, 0.09, difficulty);
+    this._bgmGain.gain.setTargetAtTime(vol, this.ctx.currentTime, 0.5);
 };
 
 SB.Audio.prototype.stopBGM = function() {
     if (!this._bgmPlaying) return;
     this._bgmPlaying = false;
+    if (this._bgmTimerId) { clearInterval(this._bgmTimerId); this._bgmTimerId = null; }
 
     var now = this.ctx.currentTime;
     this._bgmGain.gain.cancelScheduledValues(now);
     this._bgmGain.gain.setValueAtTime(this._bgmGain.gain.value, now);
     this._bgmGain.gain.linearRampToValueAtTime(0.001, now + 1.0);
 
-    for (var i = 0; i < this._bgmOscs.length; i++) {
-        this._bgmOscs[i].stop(now + 1.1);
-    }
-    this._bgmLfo.stop(now + 1.1);
+    for (var i = 0; i < this._bgmPadOscs.length; i++) this._bgmPadOscs[i].stop(now + 1.1);
+    this._bgmArpOsc.stop(now + 1.1);
+    this._bgmBassOsc.stop(now + 1.1);
 };
 
 SB.Audio.prototype.playMagnetCollect = function() {
