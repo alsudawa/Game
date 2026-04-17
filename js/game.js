@@ -948,8 +948,13 @@ SB.Game.prototype._updatePlaying = function(dt) {
     // Update BGM intensity with difficulty
     SB.audio.updateBGMIntensity(this.spawner.difficulty);
 
-    // Check achievements mid-game
+    var preAchCount = this.achievements.pendingNotifications.length;
     this.achievements.checkAll();
+    if (this.achievements.pendingNotifications.length > preAchCount) {
+        this.screenFlash = 0.15;
+        this.cameraZoom = 0.1;
+        this.particles.emit(cw / 2, ch * 0.12, { count: 12, spread: SB.TAU, speedMin: 40, speedMax: 100, lifeMin: 0.4, lifeMax: 0.8, sizeMin: 1, sizeMax: 2.5, color: '255,215,0', gravity: 40, friction: 0.95 });
+    }
 
     if (this.ball.y - this.ball.radius > ch) {
         if (this.invincibleTimer > 0) {
@@ -966,7 +971,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
 };
 
 SB.Game.prototype._updatePaused = function(dt) {
-    // Resume button
+    this.ball.y += Math.sin((SB.frameTime || 0) * 0.002) * 0.15;
+    this.ball.bounceGlow = 0.1 + (Math.sin((SB.frameTime || 0) * 0.003) + 1) / 2 * 0.15;
     if (SB._resumeBtnTapped) {
         SB._resumeBtnTapped = null;
         SB._resumeBtn = null;
@@ -1100,7 +1106,8 @@ SB.Game.prototype._updateZone = function() {
             EXTREME: 'rgba(155,89,182,'
         })[this.currentZone.name] || this.skinManager.getCurrentSkin().trail;
         this.ball.trailColor = this._targetTrailColor;
-        // Zone transition sound
+        var zoneGlow = ({ CALM: null, RISING: '#F39C12', INTENSE: '#E74C3C', EXTREME: '#9B59B6' })[this.currentZone.name];
+        this.ball.glowColor = zoneGlow || this.skinManager.getCurrentSkin().glow;
         if (this.currentZone === SB.ZONES.EXTREME) {
             this.achievements.onReachExtreme();
             SB.audio.playZoneWarning(2);
@@ -1967,6 +1974,28 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.textBaseline = 'bottom';
         ctx.fillStyle = 'rgba(' + cbColor + ',0.7)';
         ctx.fillText(cmMult, this.ball.x, cbY - 1);
+        ctx.restore();
+    }
+
+    // Gravity well screen-edge warp lines
+    if (this.ball.gravityPullStrength > 0.2 && !SB.reducedMotion) {
+        var gwStr = (this.ball.gravityPullStrength - 0.2) / 0.8;
+        var gwAngle = this.ball.gravityPullAngle;
+        var gwA = gwStr * 0.12;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(155,89,182,' + gwA.toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        for (var gwi = 0; gwi < 6; gwi++) {
+            var gwOff = gwi * (SB.TAU / 6) + (SB.frameTime || 0) * 0.002;
+            var gwSx = this.ball.x + Math.cos(gwOff) * Math.max(cw, ch) * 0.6;
+            var gwSy = this.ball.y + Math.sin(gwOff) * Math.max(cw, ch) * 0.6;
+            var gwEx = this.ball.x + Math.cos(gwAngle) * 30;
+            var gwEy = this.ball.y + Math.sin(gwAngle) * 30;
+            ctx.beginPath();
+            ctx.moveTo(gwSx, gwSy);
+            ctx.lineTo(gwEx, gwEy);
+            ctx.stroke();
+        }
         ctx.restore();
     }
 };
