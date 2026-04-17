@@ -648,16 +648,25 @@ SB.Obstacle.prototype._drawBoomerang = function(ctx) {
         }
     }
 
+    // Return flash ring
+    if (this.returnFlash > 0 && !SB.reducedMotion) {
+        var rfFrac = this.returnFlash / 0.3;
+        var rfR = this.radius * (2 - rfFrac);
+        ctx.beginPath();
+        ctx.arc(0, 0, rfR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(255,80,60,' + (rfFrac * 0.4).toFixed(2) + ')';
+        ctx.lineWidth = 2 * rfFrac;
+        ctx.stroke();
+    }
+
     // Return "!" indicator when returning
     if (this.returning && !SB.reducedMotion) {
         var retBlink = (Math.sin((SB.frameTime || 0) * 0.012) + 1) / 2;
-        ctx.save();
+        ctx.fillStyle = 'rgba(255,100,50,' + (0.4 + retBlink * 0.4).toFixed(2) + ')';
         ctx.font = 'bold 12px sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        ctx.fillStyle = 'rgba(255,100,50,' + (0.4 + retBlink * 0.4).toFixed(2) + ')';
-        ctx.fillText('!', cx, cy - this.radius - 4);
-        ctx.restore();
+        ctx.fillText('!', 0, -this.radius - 4);
     }
 
     // Return flash warning (double ring + glow)
@@ -734,6 +743,13 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         ctx.lineTo(cw, this.y);
         ctx.stroke();
         var chargeFrac = this.laserTimer / 0.3;
+        if (!SB.reducedMotion) {
+            var cpR = 20 + chargeFrac * 30;
+            var cpA = pulse * 0.15 * chargeFrac;
+            ctx.fillStyle = 'rgba(255,50,50,' + cpA.toFixed(3) + ')';
+            ctx.beginPath(); ctx.arc(1.5, this.y, cpR, 0, SB.TAU); ctx.fill();
+            ctx.beginPath(); ctx.arc(cw - 1.5, this.y, cpR, 0, SB.TAU); ctx.fill();
+        }
         var barW = 6 + chargeFrac * 4;
         ctx.fillStyle = 'rgba(255,80,80,' + (pulse * 0.6).toFixed(2) + ')';
         ctx.fillRect(0, this.y - barW / 2, 3, barW);

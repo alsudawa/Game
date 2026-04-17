@@ -816,6 +816,21 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.fillStyle = scoreColor;
         ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
         ctx.restore();
+    } else if (comboCount >= 3 && !SB.reducedMotion) {
+        var swBaseX = cw / 2 + ssOx;
+        var swBaseY = 20 + ssOy;
+        ctx.save();
+        ctx.textAlign = 'left';
+        var swTotalW = ctx.measureText(scoreText).width;
+        var swStartX = swBaseX - swTotalW / 2;
+        ctx.fillStyle = scoreColor;
+        for (var swi = 0; swi < scoreText.length; swi++) {
+            var swOff = Math.sin((SB.frameTime || 0) * 0.006 + swi * 0.8) * 2;
+            ctx.fillText(scoreText[swi], swStartX, swBaseY + swOff);
+            swStartX += ctx.measureText(scoreText[swi]).width;
+        }
+        ctx.textAlign = 'center';
+        ctx.restore();
     } else {
         ctx.fillStyle = scoreColor;
         ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);

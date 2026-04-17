@@ -224,6 +224,14 @@ SB.Ball.prototype.draw = function(ctx) {
             ctx.stroke();
         }
     }
+    if (!SB.highContrast && !SB.reducedMotion && Math.abs(this.vx) > 1) {
+        var spinA = Math.min(Math.abs(this.vx) / 8, 0.2);
+        ctx.strokeStyle = 'rgba(255,255,255,' + spinA.toFixed(2) + ')';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, this.radius * 0.85, this.radius * 0.3, 0, 0, Math.PI);
+        ctx.stroke();
+    }
     if (SB.highContrast) {
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 3;
