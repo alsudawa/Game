@@ -1648,6 +1648,29 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 ctx.fillStyle = 'rgba(100,200,255,' + (0.02 + laPulse * 0.02).toFixed(3) + ')';
                 ctx.fillRect(0, 0, cw, ch);
             }
+            // Gravity well proximity purple tint
+            if (!SB.reducedMotion) {
+                var gwObs = this._renderObstacles;
+                for (var gwi = 0; gwi < gwObs.length; gwi++) {
+                    if (gwObs[gwi].type === SB.OBSTACLE_TYPES.GRAVITY_WELL && gwObs[gwi].active) {
+                        var gwcx = gwObs[gwi].x + gwObs[gwi].radius;
+                        var gwcy = gwObs[gwi].y + gwObs[gwi].radius;
+                        var gwBdx = gwcx - this.ball.x;
+                        var gwBdy = gwcy - this.ball.y;
+                        var gwBd = Math.sqrt(gwBdx * gwBdx + gwBdy * gwBdy);
+                        var gwPr = gwObs[gwi].pullRadius || 120;
+                        if (gwBd < gwPr) {
+                            var gwStr = (1 - gwBd / gwPr);
+                            var gwTintA = gwStr * gwStr * 0.06;
+                            var gwGrad = ctx.createRadialGradient(gwcx, gwcy, 0, gwcx, gwcy, gwPr);
+                            gwGrad.addColorStop(0, 'rgba(155,89,182,' + gwTintA.toFixed(3) + ')');
+                            gwGrad.addColorStop(1, 'rgba(155,89,182,0)');
+                            ctx.fillStyle = gwGrad;
+                            ctx.fillRect(gwcx - gwPr, gwcy - gwPr, gwPr * 2, gwPr * 2);
+                        }
+                    }
+                }
+            }
             // Proximity heartbeat pulse
             if (this._maxDangerGlow > 0.5 && !SB.reducedMotion) {
                 var hbFrac = (this._maxDangerGlow - 0.5) / 0.5;
@@ -1922,6 +1945,23 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.fillStyle = 'rgba(180,30,30,' + redTint.toFixed(3) + ')';
         ctx.fillRect(0, 0, cw, ch);
         this.ball.radius = this.ball.baseRadius * (1 + deathProgress * 0.4);
+        if (!SB.reducedMotion) {
+            var rlCount = 8;
+            var rlA = deathProgress * 0.15;
+            ctx.save();
+            ctx.strokeStyle = 'rgba(255,255,255,' + rlA.toFixed(3) + ')';
+            ctx.lineWidth = 1;
+            for (var rli = 0; rli < rlCount; rli++) {
+                var rlAngle = (rli / rlCount) * SB.TAU + deathProgress * 0.5;
+                var rlInner = 30 + deathProgress * 20;
+                var rlOuter = rlInner + 20 + deathProgress * 40;
+                ctx.beginPath();
+                ctx.moveTo(this.ball.x + Math.cos(rlAngle) * rlInner, this.ball.y + Math.sin(rlAngle) * rlInner);
+                ctx.lineTo(this.ball.x + Math.cos(rlAngle) * rlOuter, this.ball.y + Math.sin(rlAngle) * rlOuter);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
         ctx.save();
         ctx.globalAlpha = 1 - deathProgress * 0.6;
     } else {
@@ -2012,6 +2052,31 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             ctx.stroke();
         }
         ctx.restore();
+    }
+
+    if (this.powerupEffects.hasAnyActive() && !SB.reducedMotion) {
+        var puArcR = this.ball.radius + 14;
+        var puTypes = [
+            { active: this.powerupEffects.shield, timer: this.powerupEffects.shieldTimer, dur: this.powerupEffects.shieldDuration, color: '93,173,226' },
+            { active: this.powerupEffects.magnet, timer: this.powerupEffects.magnetTimer, dur: this.powerupEffects.magnetDuration, color: '155,89,182' },
+            { active: this.powerupEffects.slow, timer: this.powerupEffects.slowTimer, dur: this.powerupEffects.slowDuration, color: '46,204,113' },
+            { active: this.powerupEffects.scoreMult, timer: this.powerupEffects.scoreMultTimer, dur: this.powerupEffects.scoreMultDuration, color: '255,215,0' }
+        ];
+        var puArcIdx = 0;
+        for (var pai = 0; pai < puTypes.length; pai++) {
+            if (!puTypes[pai].active) continue;
+            var puFrac = puTypes[pai].timer / puTypes[pai].dur;
+            var puStart = -Math.PI / 2;
+            var puEnd = puStart + SB.TAU * puFrac;
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(this.ball.x, this.ball.y, puArcR + puArcIdx * 4, puStart, puEnd);
+            ctx.strokeStyle = 'rgba(' + puTypes[pai].color + ',' + (0.3 + (puFrac < 0.25 ? Math.sin((SB.frameTime || 0) * 0.02) * 0.2 : 0)).toFixed(2) + ')';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+            ctx.restore();
+            puArcIdx++;
+        }
     }
 
     if (this.invincibleTimer > 0 && !SB.reducedMotion) {

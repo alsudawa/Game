@@ -1218,6 +1218,13 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.shadowColor = sp.color;
         ctx.shadowBlur = 4;
         ctx.fillText(sp.text, sp.x, sp.y);
+        if (!SB.reducedMotion && sp.timer < 0.3) {
+            var echoA = (1 - sp.timer / 0.3) * 0.2;
+            var echoOff = sp.timer * 15;
+            ctx.shadowBlur = 0;
+            ctx.globalAlpha = echoA;
+            ctx.fillText(sp.text, sp.x, sp.y + echoOff);
+        }
         ctx.restore();
     }
 
@@ -1939,6 +1946,12 @@ SB.UI.prototype.drawPauseScreen = function(ctx, cw, ch) {
     ctx.fillText('RESUME', cw / 2, resumeY + btnH / 2);
 
     SB._resumeBtn = { x: resumeX, y: resumeY, w: btnW, h: btnH };
+
+    // Gameplay tip
+    var tipText = this._tips[this._tipIndex];
+    ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.35 * pfA).toFixed(2) + ')';
+    ctx.fillText(tipText, cw / 2, resumeY - 18);
 
     // Quit button
     var quitY = ch * 0.58;
