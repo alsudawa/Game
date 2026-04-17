@@ -80,6 +80,7 @@ SB.Game = function(canvas) {
     this.lastCollectX = 0;
     this.lastCollectY = 0;
     this.collectChainTimer = 0;
+    this.comboBreakFlash = 0;
 
     SB.REVIVE_COST = 20;
 };
@@ -127,6 +128,7 @@ SB.Game.prototype.update = function(dt) {
     }
     if (this.scoreShake > 0) this.scoreShake -= dt;
     if (this.collectChainTimer > 0) this.collectChainTimer -= dt;
+    if (this.comboBreakFlash > 0) this.comboBreakFlash -= dt;
     if (this.transitionAlpha > 0) this.transitionAlpha -= dt * 3;
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
@@ -135,6 +137,7 @@ SB.Game.prototype.update = function(dt) {
                 SB.audio.playComboBreak();
                 this.screenShake = 0.1;
                 this.screenShakeIntensity = 3;
+                this.comboBreakFlash = 0.15;
             }
             this.comboCount = 0;
         }
@@ -1305,6 +1308,11 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
         ctx.fillStyle = 'rgba(' + this.powerupFlashColor + ',' + puFA.toFixed(3) + ')';
         ctx.fillRect(0, 0, cw, ch);
     }
+    if (this.comboBreakFlash > 0) {
+        var cbfA = (this.comboBreakFlash / 0.15) * 0.12;
+        ctx.fillStyle = 'rgba(100,50,0,' + cbfA.toFixed(3) + ')';
+        ctx.fillRect(0, 0, cw, ch);
+    }
 
     if (this.transitionAlpha > 0) {
         ctx.fillStyle = 'rgba(0, 0, 0, ' + Math.max(0, this.transitionAlpha).toFixed(2) + ')';
@@ -1433,6 +1441,16 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
     }
 
     if (this.invincibleTimer > 0 && !SB.reducedMotion) {
+        // Golden invincible glow ring
+        var invPulse = (Math.sin(this.invincibleTimer * 8) + 1) / 2;
+        var invR = this.ball.radius + 10 + invPulse * 4;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.ball.x, this.ball.y, invR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(255,215,0,' + (0.2 + invPulse * 0.15).toFixed(2) + ')';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
         ctx.save();
         ctx.globalAlpha = 0.5 + Math.abs(Math.sin(this.invincibleTimer * 12)) * 0.5;
     }

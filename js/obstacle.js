@@ -315,6 +315,19 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
     ctx.fillStyle = SB.highContrast ? '#FF0000' : '#2c3e50';
     ctx.fill();
 
+    // Spin motion blur arcs
+    if (!SB.reducedMotion) {
+        for (var si = 0; si < 3; si++) {
+            var sAngle = (SB.TAU / 3) * si;
+            var sAlpha = 0.08;
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius + 2, sAngle, sAngle + 0.5);
+            ctx.strokeStyle = 'rgba(180,180,190,' + sAlpha.toFixed(2) + ')';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        }
+    }
+
     ctx.restore();
 };
 

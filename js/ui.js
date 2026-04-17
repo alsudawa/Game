@@ -369,6 +369,16 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         ctx.font = Math.min(cw * 0.045, 18) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255, 215, 0, 0.7)';
         ctx.fillText('BEST: ' + SB.formatNum(highScore), cw / 2, ch * 0.74);
+        // Sparkle dots flanking the score
+        var hsSparkle = (Math.sin(this.blinkPhase * 2.5) + 1) / 2;
+        var hsW = ctx.measureText('BEST: ' + SB.formatNum(highScore)).width / 2 + 8;
+        ctx.fillStyle = 'rgba(255,215,0,' + (hsSparkle * 0.5).toFixed(2) + ')';
+        ctx.beginPath();
+        ctx.arc(cw / 2 - hsW, ch * 0.74, 1.5, 0, SB.TAU);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(cw / 2 + hsW, ch * 0.74, 1.5, 0, SB.TAU);
+        ctx.fill();
     }
 
     // Last run summary
@@ -414,6 +424,12 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.fillText('HC', muteX + muteSize / 2, hcY + muteSize / 2);
     ctx.restore();
     SB._hcBtn = { x: muteX, y: hcY, w: muteSize + 4, h: muteSize + 4 };
+
+    // Version text
+    ctx.font = Math.min(cw * 0.018, 7) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(255,255,255,0.1)';
+    ctx.textAlign = 'center';
+    ctx.fillText('Sky Bounce v1.0', cw / 2, ch * 0.97);
 };
 
 SB.UI.prototype._drawDailyChallenge = function(ctx, cw, y, daily) {
