@@ -242,6 +242,23 @@ SB.UI.prototype.drawAchievementToast = function(ctx, cw, ch) {
     ctx.fillStyle = 'rgba(255,215,0,0.9)';
     ctx.fillText(this.achievementToast.desc, x + 38, y + h / 2 + 12);
 
+    if (!SB.reducedMotion) {
+        var atShT = ((SB.frameTime || 0) * 0.0004) % 1;
+        var atShX = x + w * (atShT * 1.4 - 0.2);
+        var atShW = w * 0.15;
+        ctx.save();
+        ctx.beginPath();
+        this._roundRect(ctx, x, y, w, h, 12);
+        ctx.clip();
+        var atShGrad = ctx.createLinearGradient(atShX, 0, atShX + atShW, 0);
+        atShGrad.addColorStop(0, 'rgba(255,215,0,0)');
+        atShGrad.addColorStop(0.5, 'rgba(255,215,0,0.15)');
+        atShGrad.addColorStop(1, 'rgba(255,215,0,0)');
+        ctx.fillStyle = atShGrad;
+        ctx.fillRect(atShX, y, atShW, h);
+        ctx.restore();
+    }
+
     ctx.restore();
 };
 
@@ -1896,6 +1913,13 @@ SB.UI.prototype.drawPauseScreen = function(ctx, cw, ch) {
     var pauseOscBg = 0.6 + Math.sin(this.blinkPhase * 0.5) * 0.03;
     ctx.fillStyle = 'rgba(0, 0, 0, ' + (pauseOscBg * pfA).toFixed(3) + ')';
     ctx.fillRect(0, 0, cw, ch);
+    if (this.currentZone && this.currentZone !== 'CALM') {
+        var pzTint = { RISING: '243,156,18', INTENSE: '231,76,60', EXTREME: '155,89,182' }[this.currentZone] || null;
+        if (pzTint) {
+            ctx.fillStyle = 'rgba(' + pzTint + ',' + (0.03 * pfA).toFixed(3) + ')';
+            ctx.fillRect(0, 0, cw, ch);
+        }
+    }
 
     if (!SB.reducedMotion) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';

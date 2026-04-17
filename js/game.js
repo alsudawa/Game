@@ -2054,6 +2054,30 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.restore();
     }
 
+    if (this.powerupEffects.slow && !SB.reducedMotion) {
+        var smRingCount = 3;
+        var smPhase = ((SB.frameTime || 0) * 0.002) % 1;
+        for (var smi = 0; smi < smRingCount; smi++) {
+            var smFrac = (smPhase + smi / smRingCount) % 1;
+            var smR = this.ball.radius + 8 + smFrac * 30;
+            var smA = (1 - smFrac) * 0.12;
+            ctx.beginPath();
+            ctx.arc(this.ball.x, this.ball.y, smR, 0, SB.TAU);
+            ctx.strokeStyle = 'rgba(46,204,113,' + smA.toFixed(3) + ')';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+    }
+
+    if (this.powerupEffects.magnet && !SB.reducedMotion) {
+        var mgR = this.ball.radius + 20 + (Math.sin((SB.frameTime || 0) * 0.005) + 1) / 2 * 10;
+        var mgGrad = ctx.createRadialGradient(this.ball.x, this.ball.y, this.ball.radius, this.ball.x, this.ball.y, mgR);
+        mgGrad.addColorStop(0, 'rgba(155,89,182,0.08)');
+        mgGrad.addColorStop(1, 'rgba(155,89,182,0)');
+        ctx.fillStyle = mgGrad;
+        ctx.fillRect(this.ball.x - mgR, this.ball.y - mgR, mgR * 2, mgR * 2);
+    }
+
     if (this.powerupEffects.shield && !SB.reducedMotion) {
         var shAngle = ((SB.frameTime || 0) * 0.003) % SB.TAU;
         var shR = this.ball.radius + 10;
