@@ -749,7 +749,8 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     // Score popups
     for (var si = 0; si < this.scorePopups.length; si++) {
         var sp = this.scorePopups[si];
-        var spAlpha = 1 - sp.timer / 0.8;
+        var spFrac = sp.timer / 0.8;
+        var spAlpha = 1 - spFrac * spFrac;
         // Scale: burst up then settle (1.0 → 1.4 → 1.0)
         var spScale = sp.timer < 0.1 ? 1 + (sp.timer / 0.1) * 0.4 : 1.4 - (sp.timer - 0.1) / 0.7 * 0.4;
         ctx.save();
@@ -768,13 +769,15 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     for (var ri = 0; ri < this.pickupRings.length; ri++) {
         var ring = this.pickupRings[ri];
         var rProgress = ring.timer / ring.duration;
-        var rRadius = 10 + rProgress * 35;
+        var rProgress = ring.timer / ring.duration;
+        var rEase = 1 - (1 - rProgress) * (1 - rProgress);
+        var rRadius = 10 + rEase * 40;
         var rAlpha = (1 - rProgress) * 0.5;
         ctx.save();
         ctx.beginPath();
         ctx.arc(ring.x, ring.y, rRadius, 0, SB.TAU);
         ctx.strokeStyle = 'rgba(' + ring.color + ',' + rAlpha.toFixed(2) + ')';
-        ctx.lineWidth = 2 * (1 - rProgress);
+        ctx.lineWidth = 3 * (1 - rProgress);
         ctx.stroke();
         ctx.restore();
     }

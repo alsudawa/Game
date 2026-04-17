@@ -74,6 +74,8 @@ SB.Game = function(canvas) {
     this.wallBounceStreak = 0;
     this.wallBounceStreakTimer = 0;
     this.scoreShake = 0;
+    this.powerupFlashTimer = 0;
+    this.powerupFlashColor = '255,255,255';
 
     SB.REVIVE_COST = 20;
 };
@@ -111,6 +113,7 @@ SB.Game.prototype.update = function(dt) {
 
     if (this.screenShake > 0) this.screenShake -= dt;
     if (this.screenFlash > 0) this.screenFlash -= dt;
+    if (this.powerupFlashTimer > 0) this.powerupFlashTimer -= dt;
     if (this.wallFlashTimer > 0) this.wallFlashTimer -= dt;
     if (this.wallBounceStreakTimer > 0) {
         this.wallBounceStreakTimer -= dt;
@@ -401,14 +404,24 @@ SB.Game.prototype._updatePlaying = function(dt) {
             continue;
         }
 
-        if (obs.type === SB.OBSTACLE_TYPES.BOOMERANG && Math.random() < 0.2 && !SB.reducedMotion) {
-            var brCx = obs.x + (obs.radius || 10);
-            var brCy = obs.y + (obs.radius || 10);
-            this.particles.emit(brCx + SB.randRange(-5, 5), brCy + SB.randRange(-5, 5), {
-                count: 1, spread: 0, speedMin: 5, speedMax: 15,
-                lifeMin: 0.15, lifeMax: 0.3, sizeMin: 0.5, sizeMax: 1.5,
-                color: '231,76,60', gravity: 0, friction: 0.9
-            });
+        if (!SB.reducedMotion && Math.random() < 0.2) {
+            if (obs.type === SB.OBSTACLE_TYPES.BOOMERANG) {
+                var brCx = obs.x + (obs.radius || 10);
+                var brCy = obs.y + (obs.radius || 10);
+                this.particles.emit(brCx + SB.randRange(-5, 5), brCy + SB.randRange(-5, 5), {
+                    count: 1, spread: 0, speedMin: 5, speedMax: 15,
+                    lifeMin: 0.15, lifeMax: 0.3, sizeMin: 0.5, sizeMax: 1.5,
+                    color: '231,76,60', gravity: 0, friction: 0.9
+                });
+            } else if (obs.type === SB.OBSTACLE_TYPES.BLADE) {
+                var blCx = obs.x + (obs.radius || 10);
+                var blCy = obs.y + (obs.radius || 10);
+                this.particles.emit(blCx + SB.randRange(-3, 3), blCy + SB.randRange(-3, 3), {
+                    count: 1, spread: 0, speedMin: 8, speedMax: 20,
+                    lifeMin: 0.1, lifeMax: 0.25, sizeMin: 0.5, sizeMax: 1,
+                    color: '180,180,190', gravity: 0, friction: 0.85
+                });
+            }
         }
 
         // Danger proximity glow (within 60px)
@@ -474,6 +487,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (nearHit) {
                 obs._nearMissed = true;
                 this.ui.nearMissTimer = 0.6;
+                if (obs.type === SB.OBSTACLE_TYPES.PLATFORM && !SB.reducedMotion) {
+                    this.particles.emit(this.ball.x, obs.y, { count: 3, spread: 1, speedMin: 10, speedMax: 30, lifeMin: 0.2, lifeMax: 0.4, sizeMin: 0.5, sizeMax: 1.5, color: '200,200,200', gravity: 30, friction: 0.9 });
+                }
                 // Streak tracking: consecutive near-misses within 3s
                 if (this.nearMissStreakTimer > 0) {
                     this.nearMissStreak++;
@@ -651,6 +667,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this.ui.addPickupRing(pu.x, pu.y, puPreset.color);
             pu.active = false;
             this.powerupEffects.activate(pu.type);
+            this.powerupFlashTimer = 0.15;
+            this.powerupFlashColor = puPreset.color || '255,255,255';
             this.achievements.onPowerupCollect();
             if (pu.type === SB.POWERUP_TYPES.SCORE_MULT) {
                 this.achievements.onScoreMultUse();
@@ -1182,6 +1200,11 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
 
     if (this.screenFlash > 0) {
         ctx.fillStyle = 'rgba(255, 255, 255, ' + (this.screenFlash / 0.15) * 0.4 + ')';
+        ctx.fillRect(0, 0, cw, ch);
+    }
+    if (this.powerupFlashTimer > 0) {
+        var puFA = (this.powerupFlashTimer / 0.15) * 0.08;
+        ctx.fillStyle = 'rgba(' + this.powerupFlashColor + ',' + puFA.toFixed(3) + ')';
         ctx.fillRect(0, 0, cw, ch);
     }
 
