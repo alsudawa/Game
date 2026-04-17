@@ -628,6 +628,14 @@ SB.UI.prototype._drawDailyChallenge = function(ctx, cw, y, daily) {
         ctx.fillRect(pbX, pbY, pbW, pbH);
         ctx.fillStyle = 'rgba(255,215,0,' + (0.4 + pbAnim * 0.3).toFixed(2) + ')';
         ctx.fillRect(pbX, pbY, pbW * pbAnim, pbH);
+        if (!SB.reducedMotion && this._dailyBarFill < 1 && pbAnim > 0.1) {
+            var dSpX = pbX + pbW * pbAnim;
+            var dSpA = (1 - this._dailyBarFill) * 0.5;
+            ctx.beginPath();
+            ctx.arc(dSpX, pbY + pbH / 2, 2, 0, SB.TAU);
+            ctx.fillStyle = 'rgba(255,215,0,' + dSpA.toFixed(2) + ')';
+            ctx.fill();
+        }
     }
 
     ctx.textAlign = 'center';
@@ -1122,6 +1130,16 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.fillRect(dmX, dmY, dmW * dmFrac, dmH);
     }
 
+    if (this._obsCount > 0 && difficulty > 0.3) {
+        ctx.save();
+        ctx.font = Math.min(cw * 0.018, 7) + 'px ' + this.font;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.15 * hudAlpha).toFixed(2) + ')';
+        ctx.fillText(this._obsCount + ' obs', dmX + dmW + 5, dmY - 1);
+        ctx.restore();
+    }
+
     // Coin counter + PB in HUD (top-right)
     ctx.save();
     ctx.textAlign = 'right';
@@ -1336,10 +1354,11 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     var pauseCx = 28;
     var pauseCy = 28;
     var pausePulse = (Math.sin(this.blinkPhase * 1.5) + 1) / 2 * 0.06;
+    var pauseZoneCol = ({ CALM: '255,255,255', RISING: '243,156,18', INTENSE: '231,76,60', EXTREME: '155,89,182' })[this.currentZone] || '255,255,255';
     ctx.save();
     ctx.beginPath();
     ctx.arc(pauseCx, pauseCy, pauseR, 0, SB.TAU);
-    ctx.fillStyle = 'rgba(255,255,255,' + (0.1 + pausePulse).toFixed(3) + ')';
+    ctx.fillStyle = 'rgba(' + pauseZoneCol + ',' + (0.1 + pausePulse).toFixed(3) + ')';
     ctx.fill();
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -1842,6 +1861,14 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillText(this.achCount + '/' + SB.ACHIEVEMENTS.length + ' achievements', cw / 2, y);
         ctx.restore();
         y += gap;
+    }
+
+    if (detailAlpha > 0 && !SB.reducedMotion) {
+        var gbA = detailAlpha * 0.08;
+        ctx.strokeStyle = 'rgba(255,255,255,' + gbA.toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        this._roundRect(ctx, 15, 15, cw - 30, ch - 30, 15);
+        ctx.stroke();
     }
 
     if (this.gameOverAlpha >= 0.8) {

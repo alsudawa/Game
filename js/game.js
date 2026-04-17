@@ -1510,6 +1510,7 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
             } else {
                 this.ui.dailyTarget = 0;
             }
+            this.ui._obsCount = this._renderObstacles ? this._renderObstacles.length : 0;
             this.ui.drawHUD(ctx, cw, ch, this.score, this.currentZone, this.hudCoins, this.hudHighScore, this.comboTimer, this.comboCount, this.spawner.difficulty, this.ball.y, this.scoreShake);
             // Grace period countdown: 3, 2, 1, GO!
             if (this.spawner.graceTimer < this.spawner.gracePeriod + 0.4 && !this.showTutorial) {
