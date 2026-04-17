@@ -207,7 +207,8 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         var cloud = this.clouds[j];
         ctx.save();
         ctx.fillStyle = 'rgba(255, 255, 255, ' + cloud.alpha + ')';
-        ctx.translate(cloud.x + cloudPx, cloud.y + cloudPy);
+        var cdepth = cloud.depth || 1;
+        ctx.translate(cloud.x + cloudPx * cdepth, cloud.y + cloudPy * cdepth);
         ctx.scale(1, cloud.height / cloud.width);
         ctx.beginPath();
         ctx.arc(0, 0, cloud.width / 2, 0, SB.TAU);

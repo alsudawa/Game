@@ -570,6 +570,25 @@ SB.Audio.prototype.playComboBreak = function() {
     osc.stop(now + 0.12);
 };
 
+SB.Audio.prototype.playAchievement = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    var notes = [659, 880, 1047, 1319];
+    for (var i = 0; i < notes.length; i++) {
+        var osc = this.ctx.createOscillator();
+        var gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = notes[i];
+        var t = now + i * 0.08;
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        osc.start(t);
+        osc.stop(t + 0.2);
+    }
+};
+
 SB.Audio.prototype.playObstacleWarn = function() {
     if (!this.initialized) return;
     var osc = this.ctx.createOscillator();

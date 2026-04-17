@@ -401,6 +401,16 @@ SB.Game.prototype._updatePlaying = function(dt) {
             continue;
         }
 
+        if (obs.type === SB.OBSTACLE_TYPES.BOOMERANG && Math.random() < 0.2 && !SB.reducedMotion) {
+            var brCx = obs.x + (obs.radius || 10);
+            var brCy = obs.y + (obs.radius || 10);
+            this.particles.emit(brCx + SB.randRange(-5, 5), brCy + SB.randRange(-5, 5), {
+                count: 1, spread: 0, speedMin: 5, speedMax: 15,
+                lifeMin: 0.15, lifeMax: 0.3, sizeMin: 0.5, sizeMax: 1.5,
+                color: '231,76,60', gravity: 0, friction: 0.9
+            });
+        }
+
         // Danger proximity glow (within 60px)
         if (obs.type !== SB.OBSTACLE_TYPES.GRAVITY_WELL && obs.type !== SB.OBSTACLE_TYPES.LASER) {
             var dpCx, dpCy;
@@ -889,6 +899,7 @@ SB.Game.prototype._updateGameOver = function(dt) {
         var notif = this.achievements.popNotification();
         if (notif) {
             this.ui.showAchievementToast(notif);
+            SB.audio.playAchievement();
         }
     }
 
@@ -1274,11 +1285,14 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.restore();
     }
 
-    // Death slow-mo vignette
     if (this.deathSlowMo > 0) {
-        var vigAlpha = (0.3 - this.deathSlowMo) / 0.3 * 0.35;
+        var deathProgress = (0.3 - this.deathSlowMo) / 0.3;
+        var vigAlpha = deathProgress * 0.35;
         ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0, vigAlpha).toFixed(3) + ')';
         ctx.fillRect(0, 0, cw, ch);
+        this.ball.radius = this.ball.baseRadius * (1 + deathProgress * 0.4);
+    } else {
+        this.ball.radius = this.ball.baseRadius;
     }
 
     if (this.invincibleTimer > 0 && !SB.reducedMotion) {
@@ -1367,10 +1381,10 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
     // Powerup timer arcs around ball
     var pe = this.powerupEffects;
     var arcItems = [];
-    if (pe.shield) arcItems.push({ frac: pe.shieldTimer / pe.shieldDuration, color: '52,152,219' });
-    if (pe.magnet) arcItems.push({ frac: pe.magnetTimer / pe.magnetDuration, color: '155,89,182' });
-    if (pe.slow) arcItems.push({ frac: pe.slowTimer / pe.slowDuration, color: '46,204,113' });
-    if (pe.scoreMult) arcItems.push({ frac: pe.scoreMultTimer / pe.scoreMultDuration, color: '255,193,7' });
+    if (pe.shield) arcItems.push({ frac: pe.shieldTimer / pe.shieldDuration, color: '52,152,219', expiring: pe.shieldTimer < 1 });
+    if (pe.magnet) arcItems.push({ frac: pe.magnetTimer / pe.magnetDuration, color: '155,89,182', expiring: pe.magnetTimer < 1 });
+    if (pe.slow) arcItems.push({ frac: pe.slowTimer / pe.slowDuration, color: '46,204,113', expiring: pe.slowTimer < 1 });
+    if (pe.scoreMult) arcItems.push({ frac: pe.scoreMultTimer / pe.scoreMultDuration, color: '255,193,7', expiring: pe.scoreMultTimer < 1 });
     if (arcItems.length > 0) {
         var arcR = this.ball.radius + 16;
         var arcSeg = SB.TAU / arcItems.length;
@@ -1378,9 +1392,13 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         for (var ai = 0; ai < arcItems.length; ai++) {
             var arcStart = -Math.PI / 2 + ai * arcSeg;
             var arcEnd = arcStart + arcSeg * arcItems[ai].frac;
+            var arcAlpha = 0.35;
+            if (arcItems[ai].expiring) {
+                arcAlpha = Math.sin((SB.frameTime || 0) * 0.015) > 0 ? 0.5 : 0.1;
+            }
             ctx.beginPath();
             ctx.arc(this.ball.x, this.ball.y, arcR + ai * 3, arcStart, arcEnd);
-            ctx.strokeStyle = 'rgba(' + arcItems[ai].color + ',0.35)';
+            ctx.strokeStyle = 'rgba(' + arcItems[ai].color + ',' + arcAlpha.toFixed(2) + ')';
             ctx.lineWidth = 2;
             ctx.stroke();
         }
