@@ -213,15 +213,29 @@ SB.UI.prototype.drawAchievementToast = function(ctx, cw, ch) {
     this._roundRect(ctx, x, y, w, h, 12);
     ctx.stroke();
 
+    // Trophy icon (procedural)
+    var tX = x + 22, tY = y + h / 2 - 4;
+    var tS = Math.min(cw * 0.02, 8);
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.moveTo(tX - tS, tY - tS);
+    ctx.lineTo(tX + tS, tY - tS);
+    ctx.lineTo(tX + tS * 0.7, tY + tS * 0.3);
+    ctx.lineTo(tX - tS * 0.7, tY + tS * 0.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.fillRect(tX - tS * 0.2, tY + tS * 0.3, tS * 0.4, tS * 0.6);
+    ctx.fillRect(tX - tS * 0.5, tY + tS * 0.85, tS, tS * 0.2);
+
     ctx.textAlign = 'left';
     ctx.textBaseline = 'middle';
     ctx.font = Math.min(cw * 0.05, 20) + 'px ' + this.font;
     ctx.fillStyle = '#FFFFFF';
-    ctx.fillText(this.achievementToast.icon + ' ' + this.achievementToast.name, x + 14, y + h / 2 - 8);
+    ctx.fillText(this.achievementToast.icon + ' ' + this.achievementToast.name, x + 38, y + h / 2 - 8);
 
     ctx.font = Math.min(cw * 0.03, 12) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255,215,0,0.9)';
-    ctx.fillText(this.achievementToast.desc, x + 14, y + h / 2 + 12);
+    ctx.fillText(this.achievementToast.desc, x + 38, y + h / 2 + 12);
 
     ctx.restore();
 };
@@ -532,10 +546,11 @@ SB.UI.prototype._drawSkinSelector = function(ctx, cw, y, skinManager, playerLeve
 
         // Border
         if (info.selected) {
+            var selPulse = (Math.sin(this.blinkPhase * 2) + 1) / 2;
             ctx.strokeStyle = '#FFD700';
             ctx.lineWidth = 2.5;
-            ctx.shadowColor = '#FFD700';
-            ctx.shadowBlur = 8;
+            ctx.shadowColor = skin.glow;
+            ctx.shadowBlur = 8 + selPulse * 8;
         } else {
             ctx.strokeStyle = 'rgba(255,255,255,0.4)';
             ctx.lineWidth = 1;
@@ -1167,9 +1182,14 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         if (this.runStats.deathCause) {
             var dcIcons = { Platform: '\u25AC', Spike: '\u25B2', Blade: '\u2699', Boomerang: '\u27A0', Laser: '\u26A1', Fell: '\u2193' };
             var dcIcon = dcIcons[this.runStats.deathCause] || '\u2620';
+            var dcPulse = (Math.sin(this.blinkPhase * 3) + 1) / 2;
+            ctx.save();
             ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
-            ctx.fillStyle = 'rgba(231,76,60,' + (alpha * 0.5) + ')';
+            ctx.fillStyle = 'rgba(231,76,60,' + (alpha * (0.5 + dcPulse * 0.3)).toFixed(2) + ')';
+            ctx.shadowColor = 'rgba(231,76,60,0.4)';
+            ctx.shadowBlur = dcPulse * 6;
             ctx.fillText(dcIcon + ' Killed by: ' + this.runStats.deathCause, cw / 2, y);
+            ctx.restore();
             y += gap;
             var dcTips = { Platform: 'Tap left or right to steer around platforms', Spike: 'Watch for spike patterns — they have gaps!', Blade: 'Blades spin in place — time your path', Boomerang: 'Boomerangs return — dodge twice!', Laser: 'Lasers flash before firing — move away fast', Fell: 'Keep tapping to stay airborne!' };
             var tip = dcTips[this.runStats.deathCause];

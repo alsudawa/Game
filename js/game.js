@@ -731,6 +731,13 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 });
             }
             this.ui.addPickupRing(col.x, col.y, isCoin ? '255,180,0' : '255,215,0');
+            if (!isCoin && !SB.reducedMotion) {
+                this.particles.emit(col.x, col.y, {
+                    count: 4, spread: SB.TAU, speedMin: 15, speedMax: 40,
+                    lifeMin: 0.4, lifeMax: 0.7, sizeMin: 0.5, sizeMax: 1.2,
+                    color: '255,230,120', gravity: 80, friction: 0.97
+                });
+            }
             if (this.collectChainTimer > 0 && this.comboCount >= 1) {
                 this.ui.addChainLine(this.lastCollectX, this.lastCollectY, col.x, col.y);
             }
@@ -1336,13 +1343,15 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                     ctx.restore();
                 }
             }
-            // Powerup active border pulse
+            // Powerup active border pulse (flashes faster when expiring)
             var pe = this.powerupEffects;
             if ((pe.shield || pe.magnet || pe.slow || pe.scoreMult) && !SB.reducedMotion) {
                 var pbColor = pe.shield ? '52,152,219' : pe.magnet ? '155,89,182' : pe.slow ? '46,204,113' : '255,193,7';
-                var pbPulse = (Math.sin((SB.frameTime || 0) * 0.005) + 1) / 2;
-                var pbAlpha = 0.03 + pbPulse * 0.04;
-                var pbW = 3;
+                var pbExpiring = (pe.shield && pe.shieldTimer <= 2) || (pe.magnet && pe.magnetTimer <= 2) || (pe.slow && pe.slowTimer <= 2) || (pe.scoreMult && pe.scoreMultTimer <= 2);
+                var pbSpeed = pbExpiring ? 0.018 : 0.005;
+                var pbPulse = (Math.sin((SB.frameTime || 0) * pbSpeed) + 1) / 2;
+                var pbAlpha = pbExpiring ? 0.06 + pbPulse * 0.1 : 0.03 + pbPulse * 0.04;
+                var pbW = pbExpiring ? 4 : 3;
                 ctx.fillStyle = 'rgba(' + pbColor + ',' + pbAlpha.toFixed(3) + ')';
                 ctx.fillRect(0, 0, pbW, ch);
                 ctx.fillRect(cw - pbW, 0, pbW, ch);
