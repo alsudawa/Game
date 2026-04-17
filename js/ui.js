@@ -172,10 +172,10 @@ SB.UI.prototype.addTapRipple = function(x, y, color) {
     }
 };
 
-SB.UI.prototype.addChainLine = function(x1, y1, x2, y2) {
+SB.UI.prototype.addChainLine = function(x1, y1, x2, y2, combo) {
     if (!this._chainLines) this._chainLines = [];
     if (this._chainLines.length < 4) {
-        this._chainLines.push({ x1: x1, y1: y1, x2: x2, y2: y2, timer: 0, duration: 0.3 });
+        this._chainLines.push({ x1: x1, y1: y1, x2: x2, y2: y2, timer: 0, duration: 0.3, combo: combo || 1 });
     }
 };
 
@@ -1016,7 +1016,8 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
             ctx.moveTo(cln.x1, cln.y1);
             ctx.lineTo(cln.x2, cln.y2);
             ctx.strokeStyle = 'rgba(255,215,0,' + clAlpha.toFixed(2) + ')';
-            ctx.lineWidth = 1.5 * (1 - cln.timer / cln.duration);
+            var clCombo = Math.min(cln.combo || 1, 7);
+            ctx.lineWidth = (1.5 + clCombo * 0.3) * (1 - cln.timer / cln.duration);
             ctx.stroke();
             ctx.restore();
         }
@@ -1156,7 +1157,8 @@ SB.UI.prototype._drawPowerupBar = function(ctx, cw, ch) {
 
         ctx.fillStyle = 'rgba(0,0,0,0.3)';
         ctx.fillRect(x, barY, 70, 8);
-        ctx.fillStyle = item.color;
+        var pbColor = progress > 0.5 ? item.color : (progress > 0.25 ? '#FFD700' : '#FF4444');
+        ctx.fillStyle = pbColor;
         ctx.fillRect(x, barY, 70 * progress, 8);
         ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
         ctx.fillStyle = item.color;

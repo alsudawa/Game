@@ -363,8 +363,9 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
     ctx.save();
     ctx.translate(cx, cy);
     ctx.rotate(this.rotation);
-    ctx.shadowColor = 'rgba(150, 150, 150, 0.5)';
-    ctx.shadowBlur = 8;
+    var bladeGlowInt = Math.min(Math.abs(this.rotationSpeed || 5) / 8, 1);
+    ctx.shadowColor = 'rgba(150, 150, 150, ' + (0.4 + bladeGlowInt * 0.4).toFixed(2) + ')';
+    ctx.shadowBlur = 6 + bladeGlowInt * 10;
 
     ctx.beginPath();
     ctx.arc(0, 0, this.radius, 0, SB.TAU);
@@ -628,8 +629,9 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
     // Pull field rings (expanding outward)
     ctx.save();
     ctx.globalAlpha = wellAlpha;
-    for (var ring = 2; ring >= 0; ring--) {
-        var ringPhase = (this.wellPhase * 0.5 + ring * 0.8) % 2;
+    var ringCount = 3 + Math.min(Math.floor(this.lifetime / 1.5), 2);
+    for (var ring = ringCount - 1; ring >= 0; ring--) {
+        var ringPhase = (this.wellPhase * 0.5 + ring * (2.4 / ringCount)) % 2;
         var ringR = this.radius + ringPhase * (this.pullRadius - this.radius);
         var ringAlpha = (1 - ringPhase / 2) * (hcg ? 0.3 : 0.12);
         ctx.beginPath();

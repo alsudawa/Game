@@ -263,9 +263,10 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.moveTo(ss.x, ss.y);
         ctx.lineTo(tailX, tailY);
         ctx.stroke();
-        // Bright head dot
+        // Bright head dot (scales with speed)
+        var headScale = 0.8 + Math.min(ssSpeed / 800, 0.5);
         ctx.beginPath();
-        ctx.arc(ss.x, ss.y, ss.size * 0.8, 0, SB.TAU);
+        ctx.arc(ss.x, ss.y, ss.size * headScale, 0, SB.TAU);
         ctx.fillStyle = 'rgba(255, 255, 240, ' + sa.toFixed(2) + ')';
         ctx.fill();
         ctx.restore();

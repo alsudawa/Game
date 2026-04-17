@@ -741,7 +741,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 });
             }
             if (this.collectChainTimer > 0 && this.comboCount >= 1) {
-                this.ui.addChainLine(this.lastCollectX, this.lastCollectY, col.x, col.y);
+                this.ui.addChainLine(this.lastCollectX, this.lastCollectY, col.x, col.y, this.comboCount);
             }
             this.lastCollectX = col.x;
             this.lastCollectY = col.y;
