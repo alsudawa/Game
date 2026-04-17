@@ -233,6 +233,12 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.fillStyle = 'rgba(255,255,255,' + ambPulse.toFixed(4) + ')';
         ctx.fillRect(0, 0, cw, ch);
     }
+    if (d > 0.85 && !SB.reducedMotion) {
+        var exPulse = (Math.sin((SB.frameTime || 0) * 0.004) + 1) / 2;
+        var exA = (d - 0.85) / 0.15 * exPulse * 0.025;
+        ctx.fillStyle = 'rgba(155,89,182,' + exA.toFixed(4) + ')';
+        ctx.fillRect(0, 0, cw, ch);
+    }
 
     // Parallax offsets based on ball position (subtle depth)
     var pxNorm = typeof ballX === 'number' ? (ballX - cw / 2) / cw : 0;

@@ -306,6 +306,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         var isPerfect = preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.65 && this.ball.y > SB.canvasHeight * 0.6;
         this._bounceStartY = this.ball.y;
         this._bounceApexShown = false;
+        this.ui.addTapRipple(this.ball.x, this.ball.y + this.ball.radius, '255,255,255');
         this.ball.bounce(this.input.tapX);
         this.background.bounceShift = 0.3 + Math.min(Math.abs(preBounceVy) / SB.Physics.MAX_FALL_SPEED, 1) * 0.4;
         if (isDoubleTap) {

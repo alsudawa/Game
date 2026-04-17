@@ -169,6 +169,16 @@ SB.Collectible.prototype.draw = function(ctx) {
     ctx.arc(0, 0, r * 0.18, 0, SB.TAU);
     ctx.fillStyle = 'rgba(255,255,255,0.7)';
     ctx.fill();
+    if (!SB.reducedMotion) {
+        var twinkle = Math.sin(this.lifetime * 5.5);
+        if (twinkle > 0.92) {
+            var twA = (twinkle - 0.92) / 0.08;
+            ctx.beginPath();
+            ctx.arc(0, 0, r * 0.6, 0, SB.TAU);
+            ctx.fillStyle = 'rgba(255,255,255,' + (twA * 0.3).toFixed(2) + ')';
+            ctx.fill();
+        }
+    }
     if (SB.highContrast) {
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 2;

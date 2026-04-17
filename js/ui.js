@@ -474,6 +474,16 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     ctx.font = 'bold ' + Math.min(cw * 0.06, 24) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + blinkAlpha + ')';
     ctx.fillText('TAP TO START', cw / 2, ch * 0.65);
+    if (!SB.reducedMotion) {
+        var tapRingPhase = (this.blinkPhase * 0.4) % 1;
+        var tapRingR = 30 + tapRingPhase * 40;
+        var tapRingA = (1 - tapRingPhase) * 0.15;
+        ctx.beginPath();
+        ctx.arc(cw / 2, ch * 0.65, tapRingR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(255,255,255,' + tapRingA.toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+    }
 
     // Rotating tips
     var tipAlpha = this._tipTimer < 0.3 ? this._tipTimer / 0.3 : (this._tipTimer > 3.5 ? (4.0 - this._tipTimer) / 0.5 : 1);
@@ -1533,6 +1543,15 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     ctx.font = 'bold ' + scoreFontSize + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255, 255, 255, ' + alpha + ')';
     ctx.fillText(SB.formatNum(this.scoreCountUp), cw / 2, y);
+    if (this.scoreCountUp < displayScore && !SB.reducedMotion) {
+        var scSpX = cw / 2 + SB.randRange(-40, 40);
+        var scSpY = y + SB.randRange(-10, 10);
+        var scSpA = 0.3 + Math.random() * 0.3;
+        ctx.beginPath();
+        ctx.arc(scSpX, scSpY, 1 + Math.random(), 0, SB.TAU);
+        ctx.fillStyle = 'rgba(255,255,255,' + scSpA.toFixed(2) + ')';
+        ctx.fill();
+    }
     y += scoreFontSize * 0.5 + gap;
 
     // New best or best
