@@ -286,6 +286,18 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     var currentSkin = skinManager ? skinManager.getCurrentSkin() : SB.SKINS[0];
     var ballY = ch * 0.34 + this.idleBallY;
     var breathe = Math.sin(this.blinkPhase * 0.8) * 0.5 + 0.5;
+    // Ball drop shadow (scales with height from rest position)
+    var shadowDist = Math.abs(this.idleBallY);
+    var shadowScale = 0.6 + (1 - shadowDist / 20) * 0.4;
+    var shadowAlpha = 0.05 + (1 - shadowDist / 20) * 0.1;
+    ctx.save();
+    ctx.fillStyle = 'rgba(0,0,0,' + shadowAlpha.toFixed(2) + ')';
+    ctx.translate(cw / 2, ch * 0.34 + 22);
+    ctx.scale(shadowScale, 0.3 * shadowScale);
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, SB.TAU);
+    ctx.fill();
+    ctx.restore();
     // Idle ball trail
     var glowRGB = SB.hexToRGB(currentSkin.glow);
     for (var bt = 3; bt >= 1; bt--) {
@@ -688,6 +700,19 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     }
     ctx.fillStyle = scoreColor;
     ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
+
+    if (comboTimer > 0 && comboCount >= 1) {
+        var ctFrac = comboTimer / 2.0;
+        var ctR = Math.min(cw * 0.05, 20) + 20;
+        var ctColor = comboCount >= 5 ? '255,68,68' : comboCount >= 3 ? '255,140,66' : '255,215,0';
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cw / 2, 30, ctR, -Math.PI / 2, -Math.PI / 2 + SB.TAU * ctFrac);
+        ctx.strokeStyle = 'rgba(' + ctColor + ',' + (0.3 * hudAlpha * ctFrac).toFixed(2) + ')';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+        ctx.restore();
+    }
 
     if (cachedHighScore > 0 && score < cachedHighScore && score > cachedHighScore * 0.5) {
         var pbDiff = Math.ceil(cachedHighScore - score);

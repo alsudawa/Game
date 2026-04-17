@@ -1260,6 +1260,19 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 ctx.fillStyle = 'rgba(46, 204, 113, ' + slowPulse.toFixed(3) + ')';
                 ctx.fillRect(0, 0, cw, ch);
             }
+            // Powerup active border pulse
+            var pe = this.powerupEffects;
+            if ((pe.shield || pe.magnet || pe.slow || pe.scoreMult) && !SB.reducedMotion) {
+                var pbColor = pe.shield ? '52,152,219' : pe.magnet ? '155,89,182' : pe.slow ? '46,204,113' : '255,193,7';
+                var pbPulse = (Math.sin((SB.frameTime || 0) * 0.005) + 1) / 2;
+                var pbAlpha = 0.03 + pbPulse * 0.04;
+                var pbW = 3;
+                ctx.fillStyle = 'rgba(' + pbColor + ',' + pbAlpha.toFixed(3) + ')';
+                ctx.fillRect(0, 0, pbW, ch);
+                ctx.fillRect(cw - pbW, 0, pbW, ch);
+                ctx.fillRect(0, 0, cw, pbW);
+                ctx.fillRect(0, ch - pbW, cw, pbW);
+            }
             // Zone edge glow (subtle colored border for INTENSE/EXTREME)
             if (this.currentZone === SB.ZONES.INTENSE || this.currentZone === SB.ZONES.EXTREME) {
                 var zGlowAlpha = this.currentZone === SB.ZONES.EXTREME ? 0.06 : 0.03;
@@ -1430,11 +1443,34 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         var vigAlpha = deathProgress * 0.35;
         ctx.fillStyle = 'rgba(0,0,0,' + Math.max(0, vigAlpha).toFixed(3) + ')';
         ctx.fillRect(0, 0, cw, ch);
+        var redTint = deathProgress * deathProgress * 0.12;
+        ctx.fillStyle = 'rgba(180,30,30,' + redTint.toFixed(3) + ')';
+        ctx.fillRect(0, 0, cw, ch);
         this.ball.radius = this.ball.baseRadius * (1 + deathProgress * 0.4);
         ctx.save();
         ctx.globalAlpha = 1 - deathProgress * 0.6;
     } else {
         this.ball.radius = this.ball.baseRadius;
+    }
+
+    // Falling speed wind lines around ball
+    var fallFrac = Math.abs(this.ball.vy) / SB.Physics.MAX_FALL_SPEED;
+    if (fallFrac > 0.5 && this.deathSlowMo <= 0 && !SB.reducedMotion) {
+        var wlAlpha = (fallFrac - 0.5) / 0.5 * 0.15;
+        var wlCount = fallFrac > 0.8 ? 4 : 3;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,' + wlAlpha.toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        for (var wli = 0; wli < wlCount; wli++) {
+            var wlX = this.ball.x + (wli - (wlCount - 1) / 2) * (this.ball.radius * 0.8);
+            var wlY = this.ball.y - this.ball.radius - 4 - wli * 3;
+            var wlLen = 8 + fallFrac * 12;
+            ctx.beginPath();
+            ctx.moveTo(wlX, wlY);
+            ctx.lineTo(wlX, wlY - wlLen);
+            ctx.stroke();
+        }
+        ctx.restore();
     }
 
     // Danger glow ring when ball is low
