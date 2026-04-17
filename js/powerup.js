@@ -22,11 +22,13 @@ SB.Powerup.prototype.init = function(config) {
     this.type = config.type || SB.POWERUP_TYPES.SHIELD;
     this.active = true;
     this.phase = 0;
+    this.bobY = 0;
 };
 
 SB.Powerup.prototype.update = function(dt) {
     if (!this.active) return;
     this.phase += 3 * dt;
+    this.bobY = Math.sin(this.phase * 0.8) * 5;
 };
 
 SB.Powerup.prototype.draw = function(ctx) {
@@ -36,7 +38,7 @@ SB.Powerup.prototype.draw = function(ctx) {
     var r = this.radius * pulse;
 
     ctx.save();
-    ctx.translate(this.x, this.y);
+    ctx.translate(this.x, this.y + (this.bobY || 0));
 
     // Outer glow
     var colors = {

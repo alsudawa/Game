@@ -724,6 +724,12 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,215,0,' + (0.4 * hudAlpha).toFixed(2) + ')';
         ctx.fillText(pbDiff + ' to PB', cw / 2, 58);
+    } else if (score >= 5) {
+        var nextMs = (Math.floor(score / 10) + 1) * 10;
+        var msDiff = Math.ceil(nextMs - score);
+        ctx.font = Math.min(cw * 0.02, 8) + 'px ' + this.font;
+        ctx.fillStyle = 'rgba(255,255,255,' + (0.2 * hudAlpha).toFixed(2) + ')';
+        ctx.fillText('next ' + nextMs + ' in ' + msDiff, cw / 2, 58);
     }
 
     // Score multiplier badge with countdown

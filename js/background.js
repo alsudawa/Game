@@ -7,6 +7,7 @@ SB.Background = function() {
     this.shootingStars = [];
     this.speedLines = [];
     this.colorPhase = 0;
+    this.bounceShift = 0;
     this._cachedGrad = null;
     this._cachedD = -1;
     this._cachedH = 0;
@@ -56,6 +57,7 @@ SB.Background.prototype.init = function(cw, ch) {
 
 SB.Background.prototype.update = function(dt, difficulty) {
     this.colorPhase = difficulty || 0;
+    if (this.bounceShift > 0) this.bounceShift = Math.max(0, this.bounceShift - dt * 4);
 
     var twinkleMult = 1 + (this.comboBoost || 0) * 2;
     for (var i = 0; i < this.stars.length; i++) {
@@ -198,10 +200,11 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
     // Parallax offsets based on ball position (subtle depth)
     var pxNorm = typeof ballX === 'number' ? (ballX - cw / 2) / cw : 0;
     var pyNorm = typeof ballY === 'number' ? (ballY - ch / 2) / ch : 0;
+    var bShift = this.bounceShift || 0;
     var starPx = pxNorm * -2;
-    var starPy = pyNorm * -1.5;
+    var starPy = pyNorm * -1.5 - bShift * 3;
     var cloudPx = pxNorm * -5;
-    var cloudPy = pyNorm * -3;
+    var cloudPy = pyNorm * -3 - bShift * 1.5;
 
     for (var i = 0; i < this.stars.length; i++) {
         var star = this.stars[i];

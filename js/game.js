@@ -249,6 +249,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         var preBounceVy = this.ball.vy;
         var isPerfect = preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.65 && this.ball.y > SB.canvasHeight * 0.6;
         this.ball.bounce(this.input.tapX);
+        this.background.bounceShift = 0.3 + Math.min(Math.abs(preBounceVy) / SB.Physics.MAX_FALL_SPEED, 1) * 0.4;
         if (isDoubleTap) {
             this.ball.vy *= 1.25;
             this.ball.trailBoost = 1.0;
@@ -624,7 +625,19 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 this.achievements.onShieldUse();
                 SB.audio.playShieldBreak();
                 this.ui.addPickupRing(this.ball.x, this.ball.y, '52,152,219');
+                this.ui.addPickupRing(this.ball.x, this.ball.y, '52,152,219');
                 this.ui.addPickupRing(obsCx, obsCy, obsColor);
+                if (!SB.reducedMotion) {
+                    for (var sbi = 0; sbi < 8; sbi++) {
+                        var sbAngle = SB.TAU * sbi / 8;
+                        this.particles.emit(this.ball.x + Math.cos(sbAngle) * (this.ball.radius + 8), this.ball.y + Math.sin(sbAngle) * (this.ball.radius + 8), {
+                            count: 1, spread: 0, speedMin: 60, speedMax: 120,
+                            lifeMin: 0.2, lifeMax: 0.35, sizeMin: 1, sizeMax: 2,
+                            color: '52,152,219', angle: sbAngle, angleSpread: 0.2,
+                            gravity: 0, friction: 0.85
+                        });
+                    }
+                }
                 continue;
             }
             this.deathCause = obs.type === SB.OBSTACLE_TYPES.PLATFORM ? 'Platform' :
@@ -1591,6 +1604,17 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.setLineDash([6, 8]);
         ctx.stroke();
         ctx.setLineDash([]);
+        // Inner field rings (pulsing inward)
+        for (var mri = 1; mri <= 2; mri++) {
+            var mrR = magnetR * (0.4 + mri * 0.2) + Math.sin(mft * 4 + mri) * 3;
+            ctx.beginPath();
+            ctx.arc(this.ball.x, this.ball.y, mrR, 0, SB.TAU);
+            ctx.strokeStyle = 'rgba(155,89,182,' + (magnetAlpha * 0.4).toFixed(3) + ')';
+            ctx.lineWidth = 0.8;
+            ctx.setLineDash([3, 6]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
         // Converging dots (4 rotating dots spiraling inward)
         ctx.fillStyle = 'rgba(155, 89, 182, 0.4)';
         for (var mi = 0; mi < 4; mi++) {
