@@ -79,8 +79,9 @@ SB.Input.prototype._checkShareButton = function(x, y) {
     if (SB._shareBtn) {
         var btn = SB._shareBtn;
         if (x >= btn.x && x <= btn.x + btn.w && y >= btn.y && y <= btn.y + btn.h) {
+            SB._shareTapped = true;
             SB.shareScore(btn.score);
-            this.tapped = false; // Don't treat share tap as game tap
+            this.tapped = false;
         }
     }
 };

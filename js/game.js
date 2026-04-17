@@ -1096,6 +1096,10 @@ SB.Game.prototype._updateZone = function() {
 SB.Game.prototype._updateGameOver = function(dt) {
     this.gameOverCooldown += dt;
     this.particles.update(dt);
+    if (SB._shareTapped) {
+        SB._shareTapped = false;
+        this.ui.shareTapFlash = 0.3;
+    }
 
     // Gentle particle rain during game over
     if (Math.random() < 0.15 && !SB.reducedMotion) {
@@ -1520,6 +1524,12 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
     var collectibles = this.collectiblePool.getActive();
     var powerups = this.powerupPool.getActive();
 
+    // Spawn warning indicators
+    var warnings = this.spawner.getWarnings();
+    for (var wi = 0; wi < warnings.length; wi++) {
+        this._drawSpawnWarning(ctx, cw, ch, warnings[wi]);
+    }
+
     ctx.save();
     ctx.translate(pxOff, pyOff);
     for (var i = 0; i < this._renderObstacles.length; i++) {
@@ -1893,6 +1903,51 @@ SB.Game.prototype._drawEdgeWarnings = function(ctx, cw, ch) {
             ctx.closePath();
             ctx.fill();
         }
+    }
+    ctx.restore();
+};
+
+SB.Game.prototype._drawSpawnWarning = function(ctx, cw, ch, w) {
+    var frac = w.timer / w.duration;
+    // Pulse frequency increases as spawn approaches (urgency)
+    var pulseRate = 4 + frac * 16;
+    var pulse = (Math.sin(w.timer * pulseRate) + 1) / 2;
+    var alpha = (0.2 + frac * 0.5) * (0.5 + pulse * 0.5);
+
+    var typeColors = { platform: '231,76,60', spike: '255,100,50', blade: '180,180,190', boomerang: '255,152,0', wave: '255,100,50', pincer: '231,76,60', squeeze: '231,76,60', corridor: '231,76,60', spiral: '255,100,50' };
+    var col = typeColors[w.type] || '231,76,60';
+
+    var edgeX = w.side < 0 ? 0 : cw;
+    var barW = 4 + frac * 4;
+    var barH = 30 + frac * 20;
+
+    ctx.save();
+    // Glowing edge bar
+    ctx.fillStyle = 'rgba(' + col + ',' + alpha.toFixed(2) + ')';
+    if (w.side < 0) {
+        ctx.fillRect(0, w.y - barH / 2, barW, barH);
+    } else {
+        ctx.fillRect(cw - barW, w.y - barH / 2, barW, barH);
+    }
+    // Arrow pointing inward
+    var arX = w.side < 0 ? barW + 4 : cw - barW - 4;
+    var arDir = w.side < 0 ? 1 : -1;
+    ctx.fillStyle = 'rgba(' + col + ',' + (alpha * 0.8).toFixed(2) + ')';
+    ctx.beginPath();
+    ctx.moveTo(arX + arDir * 8, w.y);
+    ctx.lineTo(arX, w.y - 6);
+    ctx.lineTo(arX, w.y + 6);
+    ctx.closePath();
+    ctx.fill();
+    // Expanding ring pulse (grows as spawn approaches)
+    if (!SB.reducedMotion) {
+        var ringR = 8 + frac * 15;
+        var ringA = pulse * alpha * 0.4;
+        ctx.beginPath();
+        ctx.arc(edgeX, w.y, ringR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(' + col + ',' + ringA.toFixed(2) + ')';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
     }
     ctx.restore();
 };

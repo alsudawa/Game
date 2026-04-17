@@ -15,6 +15,12 @@ SB.Spawner = function(obstaclePool, collectiblePool, powerupPool) {
     this.gracePeriod = 2.0;
     this.lastSpawnedPowerup = false;
     this.lastSpawnedObstacle = false;
+    // Warning queue: obstacles are queued with a warning period before actual spawn
+    this._warnings = [];
+    this._warningPool = [];
+    for (var wi = 0; wi < 10; wi++) {
+        this._warningPool.push({ active: false, timer: 0, duration: 0, side: 0, y: 0, type: '', configs: null, cw: 0, ch: 0, speedMult: 0 });
+    }
 };
 
 SB.Spawner.prototype.reset = function(veteranBonus) {
@@ -32,6 +38,8 @@ SB.Spawner.prototype.reset = function(veteranBonus) {
     this.obstaclePool.releaseAll();
     this.collectiblePool.releaseAll();
     if (this.powerupPool) this.powerupPool.releaseAll();
+    this._warnings.length = 0;
+    for (var wi = 0; wi < this._warningPool.length; wi++) this._warningPool[wi].active = false;
 };
 
 SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
@@ -50,10 +58,24 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
         this.obstacleTimer += dt;
         if (this.obstacleTimer >= spawnInterval) {
             this.obstacleTimer = 0;
-            this._spawnObstacle(canvasWidth, canvasHeight, speedMultiplier);
+            this._queueObstacle(canvasWidth, canvasHeight, speedMultiplier, d);
             this.lastSpawnedObstacle = true;
         }
     }
+
+    // Process warning queue
+    var wwi = 0;
+    for (var wqi = 0; wqi < this._warnings.length; wqi++) {
+        var w = this._warnings[wqi];
+        w.timer += dt;
+        if (w.timer >= w.duration) {
+            this._executeSpawn(w);
+            w.active = false;
+        } else {
+            this._warnings[wwi++] = w;
+        }
+    }
+    this._warnings.length = wwi;
 
     this.collectibleTimer += dt;
     if (this.collectibleTimer >= 3.0) {
@@ -81,6 +103,79 @@ SB.Spawner.prototype.update = function(dt, score, canvasWidth, canvasHeight) {
             this.lastSpawnedPowerup = true;
         }
     }
+};
+
+SB.Spawner.prototype._queueObstacle = function(cw, ch, speedMult, d) {
+    // Warning duration: longer at low difficulty, shorter at high difficulty
+    var warnDur = SB.lerp(0.8, 0.25, d);
+    // Pre-determine spawn side and Y for the warning indicator
+    var fromLeft = Math.random() < 0.5;
+    var y = SB.randRange(ch * 0.15, ch * 0.8);
+    // Pick obstacle type
+    var spawnType = 'platform';
+    if (d >= 0.45) {
+        var roll = Math.random();
+        if (roll < 0.08) spawnType = 'blade';
+        else if (roll < 0.15) spawnType = 'boomerang';
+        else if (roll < 0.22) spawnType = 'laser';
+        else if (roll < 0.29 && this.extraDifficulty > 0.1) spawnType = 'gravity_well';
+        else if (roll < 0.40) spawnType = 'spike';
+        else if (roll < 0.50) spawnType = 'squeeze';
+        else if (roll < 0.58) spawnType = 'wave';
+        else if (roll < 0.66) spawnType = 'pincer';
+        else if (roll < 0.74 && this.extraDifficulty > 0.05) spawnType = 'corridor';
+        else if (roll < 0.80 && this.extraDifficulty > 0.2) spawnType = 'spiral';
+    } else if (d >= 0.15) {
+        spawnType = Math.random() < 0.25 ? 'spike' : 'platform';
+    }
+    // Laser and gravity well have their own warnings — spawn them directly
+    if (spawnType === 'laser' || spawnType === 'gravity_well') {
+        this._spawnByType(spawnType, cw, ch, speedMult);
+        return;
+    }
+    // Queue warning
+    var w = null;
+    for (var i = 0; i < this._warningPool.length; i++) {
+        if (!this._warningPool[i].active) { w = this._warningPool[i]; break; }
+    }
+    if (!w) { w = { active: false }; this._warningPool.push(w); }
+    w.active = true;
+    w.timer = 0;
+    w.duration = warnDur;
+    w.side = fromLeft ? -1 : 1;
+    w.y = y;
+    w.type = spawnType;
+    w.cw = cw;
+    w.ch = ch;
+    w.speedMult = speedMult;
+    this._warnings.push(w);
+};
+
+SB.Spawner.prototype._executeSpawn = function(w) {
+    var sm = w.speedMult * (this.dailySpeedMult || 1);
+    this._sizeMult = (this.dailySizeMult || 1) * (1 + this.extraDifficulty * 0.15);
+    this._spawnByType(w.type, w.cw, w.ch, sm);
+};
+
+SB.Spawner.prototype._spawnByType = function(type, cw, ch, speedMult) {
+    switch (type) {
+        case 'platform': this._spawnPlatform(cw, ch, speedMult); break;
+        case 'spike': this._spawnSpike(cw, ch, speedMult); break;
+        case 'blade': this._spawnBlade(cw, ch, speedMult); break;
+        case 'boomerang': this._spawnBoomerang(cw, ch, speedMult); break;
+        case 'laser': this._spawnLaser(cw, ch); break;
+        case 'gravity_well': this._spawnGravityWell(cw, ch); break;
+        case 'squeeze': this._spawnSqueeze(cw, ch, speedMult); break;
+        case 'wave': this._spawnWave(cw, ch, speedMult); break;
+        case 'pincer': this._spawnPincer(cw, ch, speedMult); break;
+        case 'corridor': this._spawnCorridor(cw, ch, speedMult); break;
+        case 'spiral': this._spawnSpiral(cw, ch, speedMult); break;
+        default: this._spawnPlatform(cw, ch, speedMult);
+    }
+};
+
+SB.Spawner.prototype.getWarnings = function() {
+    return this._warnings;
 };
 
 SB.Spawner.prototype._spawnObstacle = function(canvasWidth, canvasHeight, speedMult) {

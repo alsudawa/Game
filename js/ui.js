@@ -57,6 +57,7 @@ SB.UI = function() {
     this._tipIndex = Math.floor(Math.random() * this._tips.length);
     this._tipTimer = 0;
     this._dailyBarFill = 0;
+    this.shareTapFlash = 0;
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -1623,9 +1624,17 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         var shareBtnY = playBtnY - btnH - 10;
 
         // Share button
-        ctx.fillStyle = 'rgba(52, 152, 219, ' + alpha * 0.9 + ')';
+        if (this.shareTapFlash > 0) this.shareTapFlash = Math.max(0, this.shareTapFlash - 0.016);
+        var shareFlash = this.shareTapFlash > 0 ? this.shareTapFlash / 0.3 : 0;
+        var shareBright = shareFlash > 0 ? ', ' + (alpha * (0.9 + shareFlash * 0.1)) : ', ' + alpha * 0.9;
+        ctx.fillStyle = shareFlash > 0 ? 'rgba(100, 180, 240' + shareBright + ')' : 'rgba(52, 152, 219' + shareBright + ')';
         this._roundRect(ctx, btnX, shareBtnY, btnW, btnH, 10);
         ctx.fill();
+        if (shareFlash > 0) {
+            ctx.font = 'bold ' + Math.min(cw * 0.035, 14) + 'px ' + this.font;
+            ctx.fillStyle = 'rgba(255,255,255,' + (alpha * 0.6) + ')';
+            ctx.fillText('Sharing...', cw / 2, shareBtnY + btnH / 2 + btnH + 10);
+        }
         ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
         // Share arrow icon
