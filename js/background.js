@@ -331,9 +331,18 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.translate(cloud.x + cloudPx * cdepth, cloud.y + cloudPy * cdepth);
         ctx.scale(1, cloud.height / cloud.width);
         var cloudScale = 1 + d * 0.15;
+        var cloudR = cloud.width / 2 * cloudScale;
         ctx.beginPath();
-        ctx.arc(0, 0, cloud.width / 2 * cloudScale, 0, SB.TAU);
+        ctx.arc(0, 0, cloudR, 0, SB.TAU);
         ctx.fill();
+        if (d > 0.5 && !SB.reducedMotion) {
+            var cgStr = (d - 0.5) / 0.5 * 0.05;
+            var cgGrad = ctx.createRadialGradient(0, 0, cloudR * 0.5, 0, 0, cloudR * 1.8);
+            cgGrad.addColorStop(0, 'rgba(' + cR + ',' + cG + ',' + cB + ',' + cgStr.toFixed(3) + ')');
+            cgGrad.addColorStop(1, 'rgba(' + cR + ',' + cG + ',' + cB + ',0)');
+            ctx.fillStyle = cgGrad;
+            ctx.fillRect(-cloudR * 1.8, -cloudR * 1.8, cloudR * 3.6, cloudR * 3.6);
+        }
         ctx.restore();
     }
 

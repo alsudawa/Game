@@ -2054,29 +2054,20 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.restore();
     }
 
-    if (this.powerupEffects.hasAnyActive() && !SB.reducedMotion) {
-        var puArcR = this.ball.radius + 14;
-        var puTypes = [
-            { active: this.powerupEffects.shield, timer: this.powerupEffects.shieldTimer, dur: this.powerupEffects.shieldDuration, color: '93,173,226' },
-            { active: this.powerupEffects.magnet, timer: this.powerupEffects.magnetTimer, dur: this.powerupEffects.magnetDuration, color: '155,89,182' },
-            { active: this.powerupEffects.slow, timer: this.powerupEffects.slowTimer, dur: this.powerupEffects.slowDuration, color: '46,204,113' },
-            { active: this.powerupEffects.scoreMult, timer: this.powerupEffects.scoreMultTimer, dur: this.powerupEffects.scoreMultDuration, color: '255,215,0' }
-        ];
-        var puArcIdx = 0;
-        for (var pai = 0; pai < puTypes.length; pai++) {
-            if (!puTypes[pai].active) continue;
-            var puFrac = puTypes[pai].timer / puTypes[pai].dur;
-            var puStart = -Math.PI / 2;
-            var puEnd = puStart + SB.TAU * puFrac;
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(this.ball.x, this.ball.y, puArcR + puArcIdx * 4, puStart, puEnd);
-            ctx.strokeStyle = 'rgba(' + puTypes[pai].color + ',' + (0.3 + (puFrac < 0.25 ? Math.sin((SB.frameTime || 0) * 0.02) * 0.2 : 0)).toFixed(2) + ')';
-            ctx.lineWidth = 2;
-            ctx.stroke();
-            ctx.restore();
-            puArcIdx++;
-        }
+    if (this.powerupEffects.shield && !SB.reducedMotion) {
+        var shAngle = ((SB.frameTime || 0) * 0.003) % SB.TAU;
+        var shR = this.ball.radius + 10;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(this.ball.x, this.ball.y, shR, shAngle, shAngle + 0.8);
+        ctx.strokeStyle = 'rgba(150,220,255,0.25)';
+        ctx.lineWidth = 2.5;
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(this.ball.x, this.ball.y, shR, shAngle + Math.PI, shAngle + Math.PI + 0.5);
+        ctx.strokeStyle = 'rgba(150,220,255,0.15)';
+        ctx.stroke();
+        ctx.restore();
     }
 
     if (this.invincibleTimer > 0 && !SB.reducedMotion) {

@@ -390,6 +390,11 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     }
     ctx.restore();
 
+    // Skin name label
+    ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
+    ctx.fillStyle = 'rgba(' + glowRGB + ',0.5)';
+    ctx.fillText(currentSkin.name, cw / 2, ch * 0.34 + 35);
+
     // Skin selector
     if (skinManager && progression) {
         this._drawSkinSelector(ctx, cw, ch * 0.44, skinManager, progression.level);
@@ -891,6 +896,18 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         var ulA = 0.25 * hudAlpha;
         ctx.fillStyle = 'rgba(' + ulRGB + ',' + ulA.toFixed(2) + ')';
         ctx.fillRect(cw / 2 - ulW / 2, 38 + ssOy, ulW, 1.5);
+    }
+
+    if (cachedHighScore > 0 && score >= cachedHighScore - 5 && score < cachedHighScore && !SB.reducedMotion) {
+        var hsApproach = 1 - (cachedHighScore - score) / 5;
+        var hsPulse = (Math.sin((SB.frameTime || 0) * 0.01) + 1) / 2;
+        var hsGlowA = hsApproach * (0.1 + hsPulse * 0.1) * hudAlpha;
+        ctx.save();
+        ctx.shadowColor = 'rgba(255,215,0,' + hsGlowA.toFixed(2) + ')';
+        ctx.shadowBlur = 15 + hsPulse * 10;
+        ctx.fillStyle = 'rgba(255,215,0,' + (hsGlowA * 0.5).toFixed(3) + ')';
+        ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
+        ctx.restore();
     }
 
     if (comboTimer > 0 && comboCount >= 1) {
@@ -1583,8 +1600,8 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillStyle = 'rgba(255,255,255,' + (slA0 * 0.45).toFixed(2) + ')';
         var runSec = Math.floor(this.runStats.time);
         var timeStr = runSec >= 60 ? Math.floor(runSec / 60) + ':' + (runSec % 60 < 10 ? '0' : '') + (runSec % 60) : runSec + 's';
-        var statsText = timeStr + '  |  ' + this.runStats.stars + ' stars';
-        if (this.runStats.bounces) statsText += '  |  ' + this.runStats.bounces + ' bounces';
+        var statsText = '\u23F1 ' + timeStr + '  \u2605 ' + this.runStats.stars;
+        if (this.runStats.bounces) statsText += '  \u2B06 ' + this.runStats.bounces;
         ctx.fillText(statsText, cw / 2, y);
         ctx.restore();
         if (this.runStats.maxCombo >= 2) {
