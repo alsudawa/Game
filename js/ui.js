@@ -844,6 +844,22 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.fillText(scoreText, cw / 2 + ssOx, 20 + ssOy);
     }
 
+    if (this.scoreSizePulse > 0.1 && !SB.reducedMotion) {
+        var shimFrac = ((SB.frameTime || 0) * 0.002 + this.scoreSizePulse * 5) % 1;
+        var shimW2 = cw * 0.12;
+        var shimX2 = (cw / 2 - shimW2 * 2) + shimFrac * shimW2 * 4;
+        var shimGrad2 = ctx.createLinearGradient(shimX2, 0, shimX2 + shimW2, 0);
+        shimGrad2.addColorStop(0, 'rgba(255,215,0,0)');
+        shimGrad2.addColorStop(0.5, 'rgba(255,215,0,' + (this.scoreSizePulse * 0.3).toFixed(2) + ')');
+        shimGrad2.addColorStop(1, 'rgba(255,215,0,0)');
+        ctx.save();
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.fillStyle = shimGrad2;
+        ctx.fillRect(cw / 2 - cw * 0.2, 16 + ssOy, cw * 0.4, 36);
+        ctx.globalCompositeOperation = 'source-over';
+        ctx.restore();
+    }
+
     if (comboTimer > 0 && comboCount >= 1) {
         var ctFrac = comboTimer / 2.0;
         var ctR = Math.min(cw * 0.05, 20) + 20;
@@ -1784,6 +1800,26 @@ SB.UI.prototype.drawPauseScreen = function(ctx, cw, ch) {
         ctx.fillStyle = 'rgba(0, 0, 0, 0.12)';
         for (var sl = 0; sl < ch; sl += 4) {
             ctx.fillRect(0, sl, cw, 2);
+        }
+    }
+
+    if (!SB.reducedMotion) {
+        if (!this._pauseSparkles) {
+            this._pauseSparkles = [];
+            for (var psi = 0; psi < 8; psi++) {
+                this._pauseSparkles.push({ x: Math.random(), y: Math.random(), s: 0.5 + Math.random() * 1.5, ph: Math.random() * SB.TAU, sp: 0.01 + Math.random() * 0.02 });
+            }
+        }
+        for (var psi2 = 0; psi2 < this._pauseSparkles.length; psi2++) {
+            var ps = this._pauseSparkles[psi2];
+            ps.y -= ps.sp * 0.016;
+            ps.ph += 0.02;
+            if (ps.y < -0.02) { ps.y = 1.02; ps.x = Math.random(); }
+            var psA = (Math.sin(ps.ph) + 1) / 2 * 0.25 * pfA;
+            ctx.beginPath();
+            ctx.arc(ps.x * cw, ps.y * ch, ps.s, 0, SB.TAU);
+            ctx.fillStyle = 'rgba(255,255,255,' + psA.toFixed(3) + ')';
+            ctx.fill();
         }
     }
 

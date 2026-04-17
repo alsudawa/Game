@@ -93,6 +93,10 @@ SB.Game = function(canvas) {
     this._prevCollectY = 0;
     this.collectChainTimer = 0;
     this.comboBreakFlash = 0;
+    this._impactWaveX = 0;
+    this._impactWaveY = 0;
+    this._impactWaveTimer = 0;
+    this._impactWaveStr = 0;
 
     SB.REVIVE_COST = 20;
 };
@@ -142,6 +146,7 @@ SB.Game.prototype.update = function(dt) {
     if (this.scoreShake > 0) this.scoreShake -= dt;
     if (this.collectChainTimer > 0) this.collectChainTimer -= dt;
     if (this.comboBreakFlash > 0) this.comboBreakFlash -= dt;
+    if (this._impactWaveTimer > 0) this._impactWaveTimer -= dt;
     if (this.transitionAlpha > 0) this.transitionAlpha -= dt * 3;
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
@@ -151,6 +156,14 @@ SB.Game.prototype.update = function(dt) {
                 this.screenShake = 0.1;
                 this.screenShakeIntensity = 3;
                 this.comboBreakFlash = 0.15;
+                if (!SB.reducedMotion) {
+                    var cbColor = this.comboCount >= 5 ? '255,68,68' : '255,140,66';
+                    this.particles.emit(this.ball.x, this.ball.y, {
+                        count: 6, spread: SB.TAU, speedMin: 30, speedMax: 80,
+                        lifeMin: 0.2, lifeMax: 0.5, sizeMin: 1, sizeMax: 2.5,
+                        color: cbColor, gravity: 60, friction: 0.92
+                    });
+                }
             }
             this.comboCount = 0;
         }
@@ -322,6 +335,12 @@ SB.Game.prototype._updatePlaying = function(dt) {
             if (impactFrac > 0.5) {
                 this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '200,200,255');
             }
+        }
+        if (preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.4) {
+            this._impactWaveX = this.ball.x;
+            this._impactWaveY = this.ball.y + this.ball.radius;
+            this._impactWaveTimer = 0.35;
+            this._impactWaveStr = Math.min((preBounceVy - SB.Physics.MAX_FALL_SPEED * 0.4) / (SB.Physics.MAX_FALL_SPEED * 0.6), 1);
         }
         // Ground impact crack lines (brief radial lines from bounce point)
         if (preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.5 && !SB.reducedMotion) {
@@ -1862,6 +1881,26 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         bzGrad.addColorStop(1, 'rgba(231,50,40,0)');
         ctx.fillStyle = bzGrad;
         ctx.fillRect(0, ch - bzH, cw, bzH);
+    }
+
+    if (this._impactWaveTimer > 0 && !SB.reducedMotion) {
+        var iwFrac = 1 - this._impactWaveTimer / 0.35;
+        var iwR1 = iwFrac * 60 * this._impactWaveStr;
+        var iwR2 = iwFrac * 40 * this._impactWaveStr;
+        var iwA = (1 - iwFrac) * 0.2 * this._impactWaveStr;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(255,255,255,' + iwA.toFixed(3) + ')';
+        ctx.lineWidth = 1.5 * (1 - iwFrac);
+        ctx.beginPath();
+        ctx.ellipse(this._impactWaveX, this._impactWaveY, iwR1, iwR1 * 0.3, 0, 0, SB.TAU);
+        ctx.stroke();
+        if (iwR2 > 5) {
+            ctx.strokeStyle = 'rgba(255,255,255,' + (iwA * 0.5).toFixed(3) + ')';
+            ctx.beginPath();
+            ctx.ellipse(this._impactWaveX, this._impactWaveY, iwR2, iwR2 * 0.3, 0, 0, SB.TAU);
+            ctx.stroke();
+        }
+        ctx.restore();
     }
 
     if (this.invincibleTimer > 0 && !SB.reducedMotion) {
