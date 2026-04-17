@@ -398,10 +398,10 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
         ctx.fill();
     }
 
-    ctx.strokeStyle = SB.highContrast ? '#FFFFFF' : '#95a5a6';
     ctx.lineWidth = 2;
     for (var i = 0; i < 6; i++) {
         var angle = (SB.TAU / 6) * i;
+        ctx.strokeStyle = SB.highContrast ? '#FFFFFF' : (i % 2 === 0 ? '#95a5a6' : '#b0b8b8');
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(Math.cos(angle) * this.radius, Math.sin(angle) * this.radius);
@@ -730,6 +730,22 @@ SB.Obstacle.prototype._drawGravityWell = function(ctx) {
     ctx.arc(cx, cy, 2, 0, SB.TAU);
     ctx.fillStyle = hcg ? '#FFFFFF' : 'rgba(255,220,255,0.9)';
     ctx.fill();
+
+    // Distortion wave ring
+    if (!SB.reducedMotion && !hcg) {
+        var waveR = (this.radius + this.pullRadius) * 0.5;
+        var waveSegs = 24;
+        ctx.beginPath();
+        for (var wi = 0; wi <= waveSegs; wi++) {
+            var wAngle = SB.TAU * wi / waveSegs;
+            var wR = waveR + Math.sin(wAngle * 4 + this.wellPhase * 3) * 3;
+            if (wi === 0) ctx.moveTo(cx + Math.cos(wAngle) * wR, cy + Math.sin(wAngle) * wR);
+            else ctx.lineTo(cx + Math.cos(wAngle) * wR, cy + Math.sin(wAngle) * wR);
+        }
+        ctx.strokeStyle = 'rgba(180,120,255,' + (wellAlpha * 0.1).toFixed(3) + ')';
+        ctx.lineWidth = 0.8;
+        ctx.stroke();
+    }
 
     // Outer pull boundary ring (dashed)
     var bdAlpha = pulse * 0.08;

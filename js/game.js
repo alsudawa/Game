@@ -282,6 +282,19 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '200,200,255');
             }
         }
+        // Ground impact crack lines (brief radial lines from bounce point)
+        if (preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.5 && !SB.reducedMotion) {
+            var crackCount = preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.8 ? 4 : 2;
+            for (var ci = 0; ci < crackCount; ci++) {
+                var cAngle = Math.PI + (ci / (crackCount - 1 || 1) - 0.5) * Math.PI * 0.6;
+                this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, {
+                    count: 1, spread: 0, speedMin: 60, speedMax: 120,
+                    lifeMin: 0.1, lifeMax: 0.2, sizeMin: 0.5, sizeMax: 1,
+                    color: '200,200,220', angle: cAngle, angleSpread: 0.15,
+                    gravity: 200, friction: 0.85
+                });
+            }
+        }
         // Dust puff when bouncing while falling (heavier at higher speed, directional)
         if (preBounceVy > 100) {
             this.particles.emit(this.ball.x - this.ball.radius, this.ball.y + this.ball.radius, SB.FX.bounceDust);
@@ -376,6 +389,17 @@ SB.Game.prototype._updatePlaying = function(dt) {
             gravity: 80,
             friction: 0.94
         });
+        // Vertical spread particles along wall
+        if (!SB.reducedMotion) {
+            for (var wsi = 0; wsi < 3; wsi++) {
+                this.particles.emit(wx, this.ball.y + (wsi - 1) * 8, {
+                    count: 1, spread: 0, speedMin: 10, speedMax: 30,
+                    lifeMin: 0.15, lifeMax: 0.25, sizeMin: 0.8, sizeMax: 1.5,
+                    color: '255,255,255', angle: this.ball.wallHitSide < 0 ? 0 : Math.PI,
+                    angleSpread: 0.3, gravity: 60, friction: 0.9
+                });
+            }
+        }
         this.wallFlashSide = this.ball.wallHitSide;
         this.wallFlashTimer = 0.15;
         if (this.wallBounceStreakTimer > 0) {

@@ -990,8 +990,8 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         var sp = this.scorePopups[si];
         var spFrac = sp.timer / 0.8;
         var spAlpha = 1 - spFrac * spFrac;
-        // Scale: burst up then settle (1.0 → 1.4 → 1.0)
-        var spScale = sp.timer < 0.1 ? 1 + (sp.timer / 0.1) * 0.4 : 1.4 - (sp.timer - 0.1) / 0.7 * 0.4;
+        // Scale: pop from 0 → 1.4 → 1.0
+        var spScale = sp.timer < 0.05 ? (sp.timer / 0.05) * 1.4 : (sp.timer < 0.15 ? 1.4 : 1.4 - (sp.timer - 0.15) / 0.65 * 0.4);
         ctx.save();
         ctx.globalAlpha = spAlpha;
         ctx.textAlign = 'center';
