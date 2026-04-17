@@ -421,6 +421,12 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
         gradient.addColorStop(1, '#7f8c8d');
         ctx.fillStyle = gradient;
         ctx.fill();
+        // Outer edge highlight
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius - 1, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(220,220,230,0.2)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
     }
 
     ctx.lineWidth = 2;
@@ -686,6 +692,18 @@ SB.Obstacle.prototype._drawLaser = function(ctx) {
         ctx.save();
         ctx.fillStyle = 'rgba(255, 50, 50, ' + (a * 0.4).toFixed(2) + ')';
         ctx.fillRect(0, this.y - bh / 2, cw, bh);
+        if (a > 0.1 && !SB.reducedMotion) {
+            ctx.strokeStyle = 'rgba(255,120,60,' + (a * 0.25).toFixed(2) + ')';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            var hStep = 8;
+            ctx.moveTo(0, this.y);
+            for (var hx = hStep; hx <= cw; hx += hStep) {
+                var hOff = Math.sin(hx * 0.08 + this.laserTimer * 20) * bh * 0.4;
+                ctx.lineTo(hx, this.y + hOff);
+            }
+            ctx.stroke();
+        }
         ctx.restore();
     }
 };

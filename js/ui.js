@@ -56,6 +56,7 @@ SB.UI = function() {
     ];
     this._tipIndex = Math.floor(Math.random() * this._tips.length);
     this._tipTimer = 0;
+    this._dailyBarFill = 0;
 };
 
 SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTimer) {
@@ -70,6 +71,9 @@ SB.UI.prototype.update = function(dt, state, powerupEffects, comboCount, comboTi
             this._tipTimer = 0;
             this._tipIndex = (this._tipIndex + 1) % this._tips.length;
         }
+        if (this._dailyBarFill < 1) this._dailyBarFill = Math.min(1, this._dailyBarFill + dt * 1.2);
+    } else {
+        this._dailyBarFill = 0;
     }
 
     // Combo popups (swap-and-pop to avoid splice in hot loop)
@@ -555,10 +559,11 @@ SB.UI.prototype._drawDailyChallenge = function(ctx, cw, y, daily) {
         var pbX = boxX + 10;
         var pbY = boxY + boxH - 7;
         var pbFrac = Math.min((daily.bestAttempt || 0) / daily.challenge.target, 1);
+        var pbAnim = pbFrac * this._dailyBarFill;
         ctx.fillStyle = 'rgba(255,255,255,0.1)';
         ctx.fillRect(pbX, pbY, pbW, pbH);
-        ctx.fillStyle = 'rgba(255,215,0,' + (0.4 + pbFrac * 0.3).toFixed(2) + ')';
-        ctx.fillRect(pbX, pbY, pbW * pbFrac, pbH);
+        ctx.fillStyle = 'rgba(255,215,0,' + (0.4 + pbAnim * 0.3).toFixed(2) + ')';
+        ctx.fillRect(pbX, pbY, pbW * pbAnim, pbH);
     }
 
     ctx.textAlign = 'center';
@@ -969,7 +974,18 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     ctx.textBaseline = 'bottom';
     ctx.font = Math.min(cw * 0.025, 10) + 'px ' + this.font;
     ctx.fillStyle = 'rgba(255,255,255,' + (0.25 * hudAlpha).toFixed(2) + ')';
-    ctx.fillText((this.runBounces || 0) + ' bounces', 10, ch - 10);
+    var bcText = (this.runBounces || 0) + ' bounces';
+    ctx.fillText(bcText, 22, ch - 10);
+    var shY = ch - 16, shX = 14;
+    ctx.fillStyle = 'rgba(255,255,255,' + (0.2 * hudAlpha).toFixed(2) + ')';
+    ctx.beginPath();
+    ctx.moveTo(shX - 4, shY - 2);
+    ctx.lineTo(shX + 2, shY - 5);
+    ctx.lineTo(shX + 3, shY - 1);
+    ctx.lineTo(shX + 5, shY);
+    ctx.lineTo(shX - 4, shY);
+    ctx.closePath();
+    ctx.fill();
     // Speed gauge bar
     var sgW = 40, sgH = 3, sgX = 10, sgY = ch - 22;
     var sgFrac = this.ballSpeedFrac || 0;
@@ -1032,9 +1048,8 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
     for (var ri = 0; ri < this.pickupRings.length; ri++) {
         var ring = this.pickupRings[ri];
         var rProgress = ring.timer / ring.duration;
-        var rProgress = ring.timer / ring.duration;
-        var rEase = 1 - (1 - rProgress) * (1 - rProgress);
-        var rRadius = 10 + rEase * 40;
+        var rElastic = rProgress < 0.6 ? (rProgress / 0.6) * 1.15 : 1.15 - Math.sin((rProgress - 0.6) / 0.4 * Math.PI) * 0.15;
+        var rRadius = 10 + rElastic * 40;
         var rAlpha = (1 - rProgress) * 0.5;
         ctx.save();
         ctx.beginPath();
