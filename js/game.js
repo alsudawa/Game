@@ -280,10 +280,19 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 this.ui.addPickupRing(this.ball.x, this.ball.y + this.ball.radius, '200,200,255');
             }
         }
-        // Dust puff when bouncing while falling (heavier at higher speed)
+        // Dust puff when bouncing while falling (heavier at higher speed, directional)
         if (preBounceVy > 100) {
             this.particles.emit(this.ball.x - this.ball.radius, this.ball.y + this.ball.radius, SB.FX.bounceDust);
             this.particles.emit(this.ball.x + this.ball.radius, this.ball.y + this.ball.radius, SB.FX.bounceDust);
+            if (preBounceVy > SB.Physics.MAX_FALL_SPEED * 0.5 && !SB.reducedMotion) {
+                var dustAngle = this.ball.vx > 0 ? Math.PI * 0.8 : Math.PI * 0.2;
+                this.particles.emit(this.ball.x, this.ball.y + this.ball.radius, {
+                    count: 2, spread: 0, speedMin: 30, speedMax: 60,
+                    lifeMin: 0.2, lifeMax: 0.4, sizeMin: 1, sizeMax: 2,
+                    color: '180,180,180', angle: dustAngle, angleSpread: 0.4,
+                    gravity: 40, friction: 0.92
+                });
+            }
         }
         this.achievements.onBounce();
         this.runBounces++;
@@ -376,6 +385,11 @@ SB.Game.prototype._updatePlaying = function(dt) {
             var wbBonus = this.wallBounceStreak;
             this.score += wbBonus;
             this.ui.addScorePopup(this.ball.x, this.ball.y - 20, 'WALL x' + this.wallBounceStreak + ' +' + wbBonus, '#5DADE2');
+            this.ui.addPickupRing(this.ball.x, this.ball.y, '93,173,226');
+            if (this.wallBounceStreak >= 5) {
+                this.screenFlash = 0.04;
+                this.cameraZoom = 0.08;
+            }
         }
         SB.audio.playWallHit();
         this.achievements.onWallBounce();
@@ -1300,11 +1314,25 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 ctx.fillStyle = 'rgba(231, 76, 60, ' + dangerAlpha.toFixed(2) + ')';
                 ctx.fillRect(0, ch * 0.6, cw, ch * 0.4);
             }
-            // Slow-motion powerup tint (subtle green overlay)
+            // Slow-motion powerup tint (subtle green overlay + radial lines)
             if (this.powerupEffects.slow) {
                 var slowPulse = (Math.sin((SB.frameTime || 0) * 0.003) + 1) / 2 * 0.02 + 0.02;
                 ctx.fillStyle = 'rgba(46, 204, 113, ' + slowPulse.toFixed(3) + ')';
                 ctx.fillRect(0, 0, cw, ch);
+                if (!SB.reducedMotion) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(46,204,113,0.03)';
+                    ctx.lineWidth = 1;
+                    var slCx = cw / 2, slCy = ch / 2;
+                    for (var sli = 0; sli < 8; sli++) {
+                        var slAngle = SB.TAU * sli / 8 + (SB.frameTime || 0) * 0.0003;
+                        ctx.beginPath();
+                        ctx.moveTo(slCx + Math.cos(slAngle) * 30, slCy + Math.sin(slAngle) * 30);
+                        ctx.lineTo(slCx + Math.cos(slAngle) * Math.max(cw, ch), slCy + Math.sin(slAngle) * Math.max(cw, ch));
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
             }
             // Powerup active border pulse
             var pe = this.powerupEffects;

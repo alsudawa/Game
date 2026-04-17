@@ -292,7 +292,8 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
             var ax = cw * (0.2 + ai * 0.3) + Math.sin(aPhase) * cw * 0.15;
             var aH = ch * 0.3 + Math.sin(aPhase * 0.7) * ch * 0.1;
             var aW = cw * 0.25 + Math.sin(aPhase * 0.5 + 1) * cw * 0.08;
-            var aColor = ai === 0 ? '100,200,255' : (ai === 1 ? '180,100,255' : '100,255,180');
+            var aColorIdx = (ai + Math.floor(ft * 0.15)) % 3;
+            var aColor = aColorIdx === 0 ? '100,200,255' : (aColorIdx === 1 ? '180,100,255' : '100,255,180');
             var aGrad = ctx.createLinearGradient(ax, 0, ax, aH);
             aGrad.addColorStop(0, 'rgba(' + aColor + ',' + auroraAlpha.toFixed(3) + ')');
             aGrad.addColorStop(0.5, 'rgba(' + aColor + ',' + (auroraAlpha * 0.5).toFixed(3) + ')');

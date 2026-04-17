@@ -744,7 +744,15 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.shadowColor = '#FFD54F';
         ctx.shadowBlur = 8;
         var scoreW = ctx.measureText(scoreText).width;
-        ctx.fillText('x2 ' + smSec + 's', cw / 2 + scoreW / 2 + 18, 28);
+        var smX = cw / 2 + scoreW / 2 + 18;
+        ctx.fillText('x2 ' + smSec + 's', smX, 28);
+        // Timer arc around badge
+        var smFrac = this.powerupEffectsRef.scoreMultTimer / (this.powerupEffectsRef.scoreMultDuration || 8);
+        ctx.beginPath();
+        ctx.arc(smX, 28, 12, -Math.PI / 2, -Math.PI / 2 + SB.TAU * smFrac);
+        ctx.strokeStyle = 'rgba(255,213,79,' + (smPulse * 0.4).toFixed(2) + ')';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
         ctx.restore();
     }
 
