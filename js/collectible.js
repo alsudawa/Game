@@ -113,6 +113,11 @@ SB.Collectible.prototype.draw = function(ctx) {
     var pulse = 1 + Math.sin(this.pulsePhase) * 0.15 + proxBoost0 * 0.15;
     var r = this.radius * pulse;
     var bobY = Math.sin(this.lifetime * 2.2) * 4;
+    if (proxBoost0 > 0.3) {
+        var pullF = (proxBoost0 - 0.3) / 0.7;
+        var pullA = Math.sin(this.lifetime * 8) * pullF * 2;
+        bobY += pullA;
+    }
 
     // Subtle vertical bob trail
     if (!SB.reducedMotion) {

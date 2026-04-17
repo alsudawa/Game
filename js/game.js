@@ -992,15 +992,26 @@ SB.Game.prototype._updatePlaying = function(dt) {
         this.scoreTimer -= 1.0;
         this.score += (1 + Math.floor(this.spawner.difficulty * 2)) * scorePuMult;
         SB.audio.playScoreTick();
+        this.ball.bounceGlow = Math.max(this.ball.bounceGlow, 0.3);
     }
 
     // Mid-game PB notification (fire once)
     if (!this.isNewHigh && this.hudHighScore > 0 && this.score > this.hudHighScore) {
         this.isNewHigh = true;
-        this.screenFlash = 0.08;
+        this.screenFlash = 0.1;
+        this.cameraZoom = 0.12;
         this.ui.addScorePopup(cw / 2, ch * 0.15, 'NEW PB!', '#76FF03');
-        SB.audio.playMilestone();
-        if (navigator.vibrate) navigator.vibrate(25);
+        this.ui.addPickupRing(cw / 2, ch * 0.15, '118,255,3');
+        this.ui.addPickupRing(this.ball.x, this.ball.y, '118,255,3');
+        if (!SB.reducedMotion) {
+            this.particles.emit(cw / 2, ch * 0.15, {
+                count: 10, spread: SB.TAU, speedMin: 50, speedMax: 120,
+                lifeMin: 0.3, lifeMax: 0.6, sizeMin: 1, sizeMax: 2.5,
+                color: '118,255,3', gravity: 40, friction: 0.93
+            });
+        }
+        SB.audio.playMilestone(2);
+        if (navigator.vibrate) navigator.vibrate(30);
     }
 
     var currentMilestone = Math.floor(this.score / 10);

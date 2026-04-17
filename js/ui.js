@@ -881,7 +881,12 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.fillRect(cbX, cbY, cbW * ctFrac, cbH);
         if (comboCount >= 2) {
             ctx.save();
-            ctx.font = 'bold ' + Math.min(cw * 0.025, 10) + 'px ' + this.font;
+            var cmScale = comboCount >= 5 ? 1.3 : (comboCount >= 3 ? 1.15 : 1);
+            ctx.font = 'bold ' + Math.min(cw * 0.025 * cmScale, 10 * cmScale) + 'px ' + this.font;
+            if (comboCount >= 3) {
+                ctx.shadowColor = 'rgba(' + ctColor + ',0.5)';
+                ctx.shadowBlur = comboCount >= 5 ? 8 : 4;
+            }
             ctx.fillStyle = 'rgba(' + ctColor + ',' + (0.6 * hudAlpha).toFixed(2) + ')';
             ctx.fillText(comboCount + 'x', cw / 2, 55 + ssOy);
             ctx.restore();
@@ -1395,6 +1400,11 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     var goPulse = (Math.sin(this.blinkPhase * 0.8) + 1) / 2 * 0.03;
     ctx.fillStyle = 'rgba(0, 0, 0, ' + (this.gameOverAlpha * (0.7 + goPulse)).toFixed(3) + ')';
     ctx.fillRect(0, 0, cw, ch);
+    if (this.gameOverAlpha > 0.5) {
+        var goTintFrac = (this.gameOverAlpha - 0.5) / 0.5;
+        ctx.fillStyle = 'rgba(15,10,35,' + (goTintFrac * 0.08).toFixed(3) + ')';
+        ctx.fillRect(0, 0, cw, ch);
+    }
     // Vignette overlay (dark corners)
     if (!SB.reducedMotion) {
         var vigR = Math.max(cw, ch) * 0.7;
