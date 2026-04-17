@@ -244,6 +244,21 @@ SB.Collectible.prototype._drawCoin = function(ctx) {
 
     ctx.restore();
 
+    // Magnet pull sparkle trail
+    if (magnetGlow > 0.3 && !SB.reducedMotion) {
+        var mtCount = Math.floor(magnetGlow * 3);
+        for (var mti = 0; mti < mtCount; mti++) {
+            var mtAngle = this.lifetime * 5 + mti * 2.1;
+            var mtDist = r * 1.5 + magnetGlow * 4;
+            var mtx = this.x + Math.cos(mtAngle) * mtDist;
+            var mty = this.y + Math.sin(mtAngle) * mtDist;
+            ctx.beginPath();
+            ctx.arc(mtx, mty, 1, 0, SB.TAU);
+            ctx.fillStyle = 'rgba(155,89,182,' + (magnetGlow * 0.4).toFixed(2) + ')';
+            ctx.fill();
+        }
+    }
+
     // Value indicator for high-value coins
     if (this.coinValue >= 2 && scaleX > 0.4) {
         var cvAlpha = Math.min(scaleX, 0.8);

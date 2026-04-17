@@ -407,10 +407,22 @@ SB.Obstacle.prototype._drawBlade = function(ctx) {
         ctx.stroke();
     }
 
+    // Center hex nut
     ctx.beginPath();
-    ctx.arc(0, 0, 4, 0, SB.TAU);
+    for (var hi = 0; hi < 6; hi++) {
+        var hAngle = SB.TAU / 6 * hi;
+        var hx = Math.cos(hAngle) * 4;
+        var hy = Math.sin(hAngle) * 4;
+        if (hi === 0) ctx.moveTo(hx, hy); else ctx.lineTo(hx, hy);
+    }
+    ctx.closePath();
     ctx.fillStyle = SB.highContrast ? '#FF0000' : '#2c3e50';
     ctx.fill();
+    if (!SB.highContrast) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+    }
 
     // Spin motion blur arcs + sparks (wider arcs at higher speed)
     if (!SB.reducedMotion) {

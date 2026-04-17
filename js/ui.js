@@ -1078,6 +1078,10 @@ SB.UI.prototype.drawHUD = function(ctx, cw, ch, score, zone, cachedCoins, cached
         ctx.shadowBlur = 8 + Math.min(this.nearMissStreak, 5) * 4;
         var nmText = this.nearMissStreak >= 2 ? 'DAREDEVIL x' + this.nearMissStreak : 'CLOSE!';
         ctx.fillText(nmText, cw / 2, ch * 0.22);
+        if (this.nearMissStreak >= 4) {
+            ctx.shadowBlur = 20 + this.nearMissStreak * 3;
+            ctx.fillText(nmText, cw / 2, ch * 0.22);
+        }
         ctx.restore();
         if (!SB.reducedMotion) {
             var nmEdge = nmAlpha * 0.15;
@@ -1663,13 +1667,14 @@ SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost)
         ctx.restore();
     }
 
-    // Number with pulse
+    // Number with pulse (more urgent when time low)
     var cpulse = 1 + (1 - secFrac) * 0.15;
     ctx.save();
-    ctx.shadowColor = '#E74C3C';
-    ctx.shadowBlur = 5 + (1 - secFrac) * 10;
+    var numGlow = urgency > 0.6 ? 15 + glowPulse * 20 : 5;
+    ctx.shadowColor = urgency > 0.6 ? '#FF2020' : '#E74C3C';
+    ctx.shadowBlur = numGlow + (1 - secFrac) * 10;
     ctx.font = 'bold ' + Math.min(cw * 0.1, 40) * cpulse + 'px ' + this.font;
-    ctx.fillStyle = '#FFFFFF';
+    ctx.fillStyle = urgency > 0.6 ? 'rgba(255,' + Math.floor(255 - urgency * 150) + ',' + Math.floor(255 - urgency * 150) + ',1)' : '#FFFFFF';
     ctx.fillText(countNum, cw / 2, countY);
     ctx.restore();
 
