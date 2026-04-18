@@ -435,6 +435,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this._apexLineY = this.ball.y;
             this._apexLineTimer = 0.4;
         }
+        if (apexHeight > 50) {
+            this.ball.bounceGlow = Math.min(this.ball.bounceGlow + 0.4, 1);
+        }
     }
     if (this._apexLineTimer > 0) this._apexLineTimer -= dt;
 
@@ -1756,6 +1759,22 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
         var puFA = (this.powerupFlashTimer / 0.15) * 0.08;
         ctx.fillStyle = 'rgba(' + this.powerupFlashColor + ',' + puFA.toFixed(3) + ')';
         ctx.fillRect(0, 0, cw, ch);
+    }
+    if (this.state === SB.STATES.PLAYING && !SB.reducedMotion) {
+        var peW = this.powerupEffects;
+        var peExpItems = [];
+        if (peW.shield && peW.shieldTimer < 2) peExpItems.push('52,152,219');
+        if (peW.magnet && peW.magnetTimer < 2) peExpItems.push('155,89,182');
+        if (peW.slow && peW.slowTimer < 2) peExpItems.push('46,204,113');
+        if (peW.scoreMult && peW.scoreMultTimer < 2) peExpItems.push('255,193,7');
+        for (var pei = 0; pei < peExpItems.length; pei++) {
+            var peEP = (Math.sin((SB.frameTime || 0) * 0.012 + pei * 2) + 1) / 2;
+            var peEA = peEP * 0.06;
+            var peEW = 4;
+            ctx.fillStyle = 'rgba(' + peExpItems[pei] + ',' + peEA.toFixed(3) + ')';
+            ctx.fillRect(0, 0, peEW, ch);
+            ctx.fillRect(cw - peEW, 0, peEW, ch);
+        }
     }
     if (this.comboBreakFlash > 0) {
         var cbfA = (this.comboBreakFlash / 0.15) * 0.12;

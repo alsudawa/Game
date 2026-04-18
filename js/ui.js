@@ -594,7 +594,17 @@ SB.UI.prototype._drawDailyChallenge = function(ctx, cw, y, daily) {
     var boxX = cw / 2 - boxW / 2;
     var boxY = y - boxH / 2;
 
-    // Background
+    // Background glow
+    if (!SB.reducedMotion && !daily.completed) {
+        var dcGlowPulse = (Math.sin((SB.frameTime || 0) * 0.003) + 1) / 2;
+        ctx.save();
+        ctx.shadowColor = 'rgba(255,215,0,' + (0.15 + dcGlowPulse * 0.1).toFixed(2) + ')';
+        ctx.shadowBlur = 8 + dcGlowPulse * 6;
+        ctx.fillStyle = 'rgba(255,215,0,0.01)';
+        this._roundRect(ctx, boxX, boxY, boxW, boxH, 10);
+        ctx.fill();
+        ctx.restore();
+    }
     ctx.fillStyle = daily.completed ? 'rgba(46,204,113,0.12)' : 'rgba(255,255,255,0.06)';
     this._roundRect(ctx, boxX, boxY, boxW, boxH, 10);
     ctx.fill();
@@ -1558,8 +1568,21 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.fillRect(0, 0, cw, ch);
     }
 
+    if (this.runStats && this.runStats.zone && this.runStats.zone !== 'CALM' && !SB.reducedMotion) {
+        var goBorderColors = { RISING: '243,156,18', INTENSE: '231,76,60', EXTREME: '155,89,182' };
+        var goBCol = goBorderColors[this.runStats.zone];
+        if (goBCol) {
+            var goBPulse = (Math.sin((SB.frameTime || 0) * 0.004) + 1) / 2;
+            var goBA = this.gameOverAlpha * (0.06 + goBPulse * 0.04);
+            ctx.save();
+            ctx.strokeStyle = 'rgba(' + goBCol + ',' + goBA.toFixed(3) + ')';
+            ctx.lineWidth = 3;
+            ctx.strokeRect(2, 2, cw - 4, ch - 4);
+            ctx.restore();
+        }
+    }
+
     var alpha = this.gameOverAlpha;
-    // Secondary alpha for detail sections (staggered fade-in)
     var detailAlpha = Math.max(0, (this.gameOverAlpha - 0.4) / 0.6);
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';

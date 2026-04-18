@@ -276,6 +276,17 @@ SB.Collectible.prototype._drawCoin = function(ctx) {
         ctx.fillText('$', 0, 0.5);
     }
 
+    if (scaleX < 0.45 && !SB.reducedMotion) {
+        var csA = (0.45 - scaleX) / 0.05 * 0.5;
+        ctx.fillStyle = 'rgba(255,255,200,' + Math.min(csA, 0.5).toFixed(2) + ')';
+        ctx.beginPath();
+        ctx.arc(0, -r * 0.3, 2, 0, SB.TAU);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, r * 0.3, 1.5, 0, SB.TAU);
+        ctx.fill();
+    }
+
     ctx.restore();
 
     // Magnet pull sparkle trail
