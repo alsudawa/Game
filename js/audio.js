@@ -444,12 +444,13 @@ SB.Audio.prototype.playRevive = function() {
     shimmer.stop(sStart + 0.4);
 };
 
-SB.Audio.prototype.playScoreTick = function() {
+SB.Audio.prototype.playScoreTick = function(frac) {
     if (!this.initialized) return;
     var osc = this.ctx.createOscillator();
     var gain = this.ctx.createGain();
     osc.type = 'sine';
-    osc.frequency.value = 1000;
+    var pitch = 800 + (frac || 0) * 600;
+    osc.frequency.value = pitch;
     var now = this.ctx.currentTime;
     gain.gain.setValueAtTime(0.04, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);

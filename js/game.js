@@ -1907,6 +1907,21 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             ctx.restore();
         }
     }
+    if (!SB.reducedMotion) {
+        var ptColors = { shield: '93,173,226', magnet: '175,122,197', slow: '88,214,141', score_mult: '255,213,79' };
+        for (var pt = 0; pt < powerups.length; pt++) {
+            var ppu = powerups[pt];
+            if (!ppu.active) continue;
+            var ptC = ptColors[ppu.type] || '255,255,255';
+            for (var pti = 0; pti < 3; pti++) {
+                var ptAngle = ((SB.frameTime || 0) * 0.003 + pti * 2.1 + pt) % SB.TAU;
+                var ptDist = 8 + Math.sin(ptAngle * 2) * 4;
+                var ptA = 0.2 + Math.sin(ptAngle) * 0.1;
+                ctx.fillStyle = 'rgba(' + ptC + ',' + ptA.toFixed(3) + ')';
+                ctx.fillRect(ppu.x + Math.cos(ptAngle) * ptDist - 1, ppu.y + (ppu.bobY || 0) + Math.sin(ptAngle) * ptDist - 1, 2, 2);
+            }
+        }
+    }
     for (var k = 0; k < powerups.length; k++) {
         powerups[k].draw(ctx);
     }
@@ -2188,8 +2203,9 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         var grW = grFrac * 80 * this._groundRippleStr;
         var grA = (1 - grFrac) * 0.25 * this._groundRippleStr;
         var grY = ch - 2;
+        var grZoneCol = ({ CALM: '200,220,255', RISING: '243,180,80', INTENSE: '231,110,100', EXTREME: '180,130,230' })[this.currentZone.name] || '200,220,255';
         ctx.save();
-        ctx.strokeStyle = 'rgba(200,220,255,' + grA.toFixed(3) + ')';
+        ctx.strokeStyle = 'rgba(' + grZoneCol + ',' + grA.toFixed(3) + ')';
         ctx.lineWidth = 2 * (1 - grFrac);
         ctx.beginPath();
         ctx.moveTo(this._groundRippleX - grW, grY);
@@ -2289,6 +2305,17 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.restore();
         ctx.save();
         ctx.globalAlpha = 0.5 + Math.abs(Math.sin(this.invincibleTimer * 12)) * 0.5;
+    }
+    if (!SB.reducedMotion && this.ball.y < ch - this.ball.radius) {
+        var bsDistFrac = Math.min(Math.max((ch - this.ball.y) / ch, 0), 1);
+        var bsShadowA = (1 - bsDistFrac * 0.8) * 0.12;
+        var bsShadowW = this.ball.radius * (1.2 - bsDistFrac * 0.6);
+        ctx.save();
+        ctx.fillStyle = 'rgba(0,0,0,' + bsShadowA.toFixed(3) + ')';
+        ctx.beginPath();
+        ctx.ellipse(this.ball.x, ch - 1, bsShadowW, 2, 0, 0, SB.TAU);
+        ctx.fill();
+        ctx.restore();
     }
     this.ball.draw(ctx);
     if (this.nearMissSparkTimer > 0 && !SB.reducedMotion) {

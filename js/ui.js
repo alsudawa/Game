@@ -242,6 +242,17 @@ SB.UI.prototype.drawAchievementToast = function(ctx, cw, ch) {
     ctx.fillStyle = 'rgba(255,215,0,0.9)';
     ctx.fillText(this.achievementToast.desc, x + 38, y + h / 2 + 12);
 
+    if (!SB.reducedMotion && t < 0.5) {
+        var atRingFrac = t / 0.5;
+        var atRingR = 20 + atRingFrac * 40;
+        var atRingA = (1 - atRingFrac) * 0.3;
+        ctx.beginPath();
+        ctx.arc(x + 22, y + h / 2, atRingR, 0, SB.TAU);
+        ctx.strokeStyle = 'rgba(255,215,0,' + atRingA.toFixed(3) + ')';
+        ctx.lineWidth = 2 * (1 - atRingFrac);
+        ctx.stroke();
+    }
+
     if (!SB.reducedMotion) {
         var atShT = ((SB.frameTime || 0) * 0.0004) % 1;
         var atShX = x + w * (atShT * 1.4 - 0.2);
@@ -1545,7 +1556,7 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         this.scoreCountUp += Math.max(1, Math.floor(displayScore / 60));
         if (this.scoreCountUp > displayScore) this.scoreCountUp = displayScore;
         if (Math.floor(this.scoreCountUp / 5) !== Math.floor(prevCount / 5)) {
-            SB.audio.playScoreTick();
+            SB.audio.playScoreTick(displayScore > 0 ? this.scoreCountUp / displayScore : 0);
         }
         if (this.scoreCountUp >= displayScore && !this._countUpDone) {
             this._countUpDone = true;
