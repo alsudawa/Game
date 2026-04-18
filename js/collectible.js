@@ -184,6 +184,20 @@ SB.Collectible.prototype.draw = function(ctx) {
         ctx.lineWidth = 2;
         ctx.stroke();
     }
+    if (!SB.reducedMotion) {
+        var rayPhase = this.lifetime * 1.5;
+        for (var ri = 0; ri < 4; ri++) {
+            var rayAngle = rayPhase + ri * (SB.TAU / 4);
+            var rayLen = r * 1.6 + Math.sin(rayPhase * 2 + ri) * r * 0.4;
+            var rayA = 0.06 + Math.sin(rayPhase * 3 + ri * 2) * 0.03;
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(rayAngle) * r * 0.5, Math.sin(rayAngle) * r * 0.5);
+            ctx.lineTo(Math.cos(rayAngle) * rayLen, Math.sin(rayAngle) * rayLen);
+            ctx.strokeStyle = 'rgba(255,230,150,' + rayA.toFixed(3) + ')';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+        }
+    }
 
     ctx.restore();
 
