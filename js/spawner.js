@@ -132,6 +132,7 @@ SB.Spawner.prototype._queueObstacle = function(cw, ch, speedMult, d) {
         else if (roll < 0.66) spawnType = 'pincer';
         else if (roll < 0.74 && this.extraDifficulty > 0.05) spawnType = 'corridor';
         else if (roll < 0.80 && this.extraDifficulty > 0.2) spawnType = 'spiral';
+        else if (roll < 0.88) spawnType = 'ceiling';
     } else if (d >= 0.15) {
         spawnType = Math.random() < 0.25 ? 'spike' : 'platform';
     }
@@ -179,7 +180,8 @@ SB.Spawner.prototype._buildSpawnConfigs = function(type, cw, ch, speedMult, size
         var fromLeft = Math.random() < 0.5;
         var pw = SB.randRange(60, 120) * sizeMult;
         var pspeed = SB.randRange(1.5, 3.5) * speedMult;
-        var py = SB.randRange(ch * 0.1, ch * 0.85);
+        var pyMin = Math.max(ch * 0.02, ch * (0.1 - this.difficulty * 0.08));
+        var py = SB.randRange(pyMin, ch * 0.85);
         side = fromLeft ? -1 : 1;
         warnY = py;
         obstacles.push({
@@ -193,7 +195,8 @@ SB.Spawner.prototype._buildSpawnConfigs = function(type, cw, ch, speedMult, size
         var fromLeft = Math.random() < 0.5;
         var ssize = SB.randRange(22, 30) * sizeMult;
         var sspeed = SB.randRange(1.0, 2.5) * speedMult;
-        var sy = SB.randRange(ch * 0.1, ch * 0.8);
+        var syMin = Math.max(ch * 0.02, ch * (0.1 - this.difficulty * 0.08));
+        var sy = SB.randRange(syMin, ch * 0.8);
         side = fromLeft ? -1 : 1;
         warnY = sy;
         obstacles.push({
@@ -205,7 +208,8 @@ SB.Spawner.prototype._buildSpawnConfigs = function(type, cw, ch, speedMult, size
         var fromLeft = Math.random() < 0.5;
         var bradius = SB.randRange(16, 22) * sizeMult;
         var bspeed = SB.randRange(1.5, 3.0) * speedMult;
-        var by = SB.randRange(ch * 0.15, ch * 0.75);
+        var byMin = Math.max(ch * 0.04, ch * (0.15 - this.difficulty * 0.1));
+        var by = SB.randRange(byMin, ch * 0.75);
         side = fromLeft ? -1 : 1;
         warnY = by;
         obstacles.push({
@@ -219,7 +223,8 @@ SB.Spawner.prototype._buildSpawnConfigs = function(type, cw, ch, speedMult, size
         var fromLeft = Math.random() < 0.5;
         var boomR = SB.randRange(14, 20) * sizeMult;
         var boomSpd = SB.randRange(2.0, 3.5) * speedMult;
-        var boomY = SB.randRange(ch * 0.15, ch * 0.75);
+        var boomYMin = Math.max(ch * 0.04, ch * (0.15 - this.difficulty * 0.1));
+        var boomY = SB.randRange(boomYMin, ch * 0.75);
         var travelDist = SB.randRange(cw * 0.4, cw * 0.7);
         side = fromLeft ? -1 : 1;
         warnY = boomY;
@@ -335,6 +340,29 @@ SB.Spawner.prototype._buildSpawnConfigs = function(type, cw, ch, speedMult, size
             });
         }
         collectibles.push({ x: spCx, y: spCy });
+    } else if (type === 'ceiling') {
+        var ceilFromLeft = Math.random() < 0.5;
+        var ceilW = SB.randRange(80, 140) * sizeMult;
+        var ceilSpeed = SB.randRange(2.0, 3.5) * speedMult;
+        var ceilY = SB.randRange(ch * 0.02, ch * 0.12);
+        side = ceilFromLeft ? -1 : 1;
+        warnY = ceilY;
+        obstacles.push({
+            type: SB.OBSTACLE_TYPES.PLATFORM,
+            x: ceilFromLeft ? -ceilW : cw, y: ceilY, width: ceilW, height: 14,
+            speed: ceilSpeed, direction: ceilFromLeft ? 1 : -1
+        });
+        if (Math.random() < 0.5) {
+            var ceilSpikeSize = SB.randRange(20, 26) * sizeMult;
+            var ceilSpikeX = ceilFromLeft ? -(ceilW + ceilSpikeSize + 30) : cw + ceilSpikeSize + 30;
+            obstacles.push({
+                type: SB.OBSTACLE_TYPES.SPIKE,
+                x: ceilSpikeX, y: ceilY - 5,
+                width: ceilSpikeSize, height: ceilSpikeSize,
+                speed: ceilSpeed, direction: ceilFromLeft ? 1 : -1
+            });
+        }
+        collectibles.push({ x: cw / 2, y: ch * 0.25 });
     }
 
     return { side: side, x: warnX, y: warnY, obstacles: obstacles, collectibles: collectibles };
@@ -553,7 +581,8 @@ SB.Spawner.prototype._spawnBoomerang = function(cw, ch, speedMult) {
 };
 
 SB.Spawner.prototype._spawnLaser = function(cw, ch) {
-    var y = SB.randRange(ch * 0.15, ch * 0.8);
+    var laserYMin = Math.max(ch * 0.05, ch * (0.15 - this.difficulty * 0.1));
+    var y = SB.randRange(laserYMin, ch * 0.8);
     this.obstaclePool.acquire({
         type: SB.OBSTACLE_TYPES.LASER,
         x: 0,

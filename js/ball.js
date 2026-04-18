@@ -27,6 +27,8 @@ SB.Ball = function() {
     this.gravityPullAngle = 0;
     this.gravityPullStrength = 0;
     this.trailBoost = 0;
+    this._lastBounceT = 0;
+    this._rapidBounceDecay = 1;
     this.visualRotation = 0;
     this.anticipation = 0;
 };
@@ -42,17 +44,28 @@ SB.Ball.prototype.reset = function(canvasWidth, canvasHeight) {
     this.gravityMult = 1;
     this.blinking = false;
     this.bounceSquash = 0;
+    this._lastBounceT = 0;
+    this._rapidBounceDecay = 1;
 };
 
 SB.Ball.prototype.bounce = function(tapX) {
-    this.vy = SB.Physics.BOUNCE_IMPULSE;
+    var now = SB.frameTime || 0;
+    var sinceLastBounce = now - this._lastBounceT;
+    if (sinceLastBounce < 150) {
+        this._rapidBounceDecay = Math.max(0.55, this._rapidBounceDecay - 0.12);
+    } else if (sinceLastBounce < 300) {
+        this._rapidBounceDecay = Math.min(1, this._rapidBounceDecay + 0.05);
+    } else {
+        this._rapidBounceDecay = Math.min(1, this._rapidBounceDecay + 0.2);
+    }
+    this._lastBounceT = now;
+    this.vy = SB.Physics.BOUNCE_IMPULSE * this._rapidBounceDecay;
     this.bounceGlow = 1.0;
     this.bounceSquash = 1.0;
 
-    // Directional bounce based on tap position
     if (typeof tapX === 'number') {
         var screenCenter = SB.canvasWidth / 2;
-        var offset = (tapX - screenCenter) / screenCenter; // -1 to 1
+        var offset = (tapX - screenCenter) / screenCenter;
         this.vx += offset * SB.Physics.HORIZONTAL_KICK;
     }
 };
