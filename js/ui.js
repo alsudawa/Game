@@ -305,6 +305,17 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
     }
     ctx.restore();
 
+    var subtitles = ['Tap to Bounce', 'Dodge Everything', 'Collect Stars', 'Chase High Scores', 'Stay Alive'];
+    var subIdx = Math.floor(((SB.frameTime || 0) * 0.0004) % subtitles.length);
+    var subFade = (((SB.frameTime || 0) * 0.0004) % 1);
+    var subA = subFade < 0.15 ? subFade / 0.15 : (subFade > 0.85 ? (1 - subFade) / 0.15 : 1);
+    ctx.save();
+    ctx.globalAlpha = subA * 0.5;
+    ctx.font = Math.min(cw * 0.035, 14) + 'px ' + this.font;
+    ctx.fillStyle = '#FFD700';
+    ctx.fillText(subtitles[subIdx], cw / 2, ch * 0.12);
+    ctx.restore();
+
     // Level & XP bar + Coins
     if (progression) {
         var lvlY = ch * 0.15;
@@ -1671,6 +1682,9 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.save();
         ctx.translate(slSlide0, 0);
         ctx.font = Math.min(cw * 0.028, 11) + 'px ' + this.font;
+        var stGlow = (Math.sin(this.blinkPhase * 1.5) + 1) / 2;
+        ctx.shadowColor = 'rgba(100,180,255,' + (slA0 * 0.3 * stGlow).toFixed(2) + ')';
+        ctx.shadowBlur = 4 + stGlow * 4;
         ctx.fillStyle = 'rgba(255,255,255,' + (slA0 * 0.45).toFixed(2) + ')';
         var runSec = Math.floor(this.runStats.time);
         var timeStr = runSec >= 60 ? Math.floor(runSec / 60) + ':' + (runSec % 60 < 10 ? '0' : '') + (runSec % 60) : runSec + 's';

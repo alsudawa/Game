@@ -263,6 +263,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
         SB._pauseBtnTapped = null;
         this.state = SB.STATES.PAUSED;
         this.ui.pauseFade = 0;
+        SB.audio.playPause();
         SB.audio.stopBGM();
         return;
     }
@@ -655,6 +656,17 @@ SB.Game.prototype._updatePlaying = function(dt) {
                     count: 1, spread: 0, speedMin: 8, speedMax: 20,
                     lifeMin: 0.1, lifeMax: 0.25, sizeMin: 0.5, sizeMax: 1,
                     color: '180,180,190', gravity: 0, friction: 0.85
+                });
+            } else if (obs.type === SB.OBSTACLE_TYPES.GRAVITY_WELL) {
+                var gwCx = obs.x + (obs.radius || 30);
+                var gwCy = obs.y + (obs.radius || 30);
+                var gwA = obs.wellPhase + Math.random() * SB.TAU;
+                var gwDist = (obs.radius || 30) * (0.5 + Math.random() * 0.6);
+                this.particles.emit(gwCx + Math.cos(gwA) * gwDist, gwCy + Math.sin(gwA) * gwDist, {
+                    count: 1, spread: 0, speedMin: 5, speedMax: 15,
+                    lifeMin: 0.2, lifeMax: 0.5, sizeMin: 0.5, sizeMax: 1.5,
+                    color: '155,89,182', angle: gwA + Math.PI * 0.5, angleSpread: 0.3,
+                    gravity: 0, friction: 0.8
                 });
             }
         }
@@ -1137,6 +1149,7 @@ SB.Game.prototype._updatePaused = function(dt) {
         SB._resumeBtn = null;
         SB._quitBtn = null;
         this.state = SB.STATES.PLAYING;
+        SB.audio.playResume();
         SB.audio.startBGM();
         return;
     }
@@ -1153,6 +1166,7 @@ SB.Game.prototype._updatePaused = function(dt) {
         SB._resumeBtn = null;
         SB._quitBtn = null;
         this.state = SB.STATES.PLAYING;
+        SB.audio.playResume();
         SB.audio.startBGM();
     }
 };
@@ -2204,6 +2218,24 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         mgGrad.addColorStop(1, 'rgba(155,89,182,0)');
         ctx.fillStyle = mgGrad;
         ctx.fillRect(this.ball.x - mgR, this.ball.y - mgR, mgR * 2, mgR * 2);
+        var mgCols = this.collectiblePool.getActive();
+        ctx.save();
+        ctx.lineWidth = 0.8;
+        for (var mgi = 0; mgi < mgCols.length; mgi++) {
+            var mgCol = mgCols[mgi];
+            var mgDx = mgCol.x - this.ball.x;
+            var mgDy = mgCol.y - this.ball.y;
+            var mgDist = Math.sqrt(mgDx * mgDx + mgDy * mgDy);
+            if (mgDist < 180) {
+                var mgLA = (1 - mgDist / 180) * 0.15;
+                ctx.strokeStyle = 'rgba(155,89,182,' + mgLA.toFixed(3) + ')';
+                ctx.beginPath();
+                ctx.moveTo(this.ball.x, this.ball.y);
+                ctx.lineTo(mgCol.x, mgCol.y);
+                ctx.stroke();
+            }
+        }
+        ctx.restore();
     }
 
     if (this.powerupEffects.shield && !SB.reducedMotion) {

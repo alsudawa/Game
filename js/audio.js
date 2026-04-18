@@ -838,5 +838,33 @@ SB.Audio.prototype.playObstacleWarn = function() {
     osc.stop(now + 0.05);
 };
 
+SB.Audio.prototype.playPause = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(500, now);
+    osc.frequency.linearRampToValueAtTime(300, now + 0.08);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(gain); gain.connect(this.masterGain);
+    osc.start(now); osc.stop(now + 0.1);
+};
+
+SB.Audio.prototype.playResume = function() {
+    if (!this.initialized) return;
+    var now = this.ctx.currentTime;
+    var osc = this.ctx.createOscillator();
+    var gain = this.ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(300, now);
+    osc.frequency.linearRampToValueAtTime(500, now + 0.08);
+    gain.gain.setValueAtTime(0.08, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+    osc.connect(gain); gain.connect(this.masterGain);
+    osc.start(now); osc.stop(now + 0.1);
+};
+
 SB.audio = new SB.Audio();
 SB.audio.loadMuteState();
