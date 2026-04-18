@@ -201,10 +201,12 @@ SB.Obstacle.prototype.draw = function(ctx) {
         ctx.restore();
     }
 
-    // Danger proximity glow
+    // Danger proximity glow (type-colored)
     if (this.dangerGlow > 0) {
         var dgPulse = 0.5 + Math.sin((SB.frameTime || 0) * 0.012) * 0.3;
         var dgAlpha = this.dangerGlow * dgPulse * 0.4;
+        var dgColors = { platform: '255,50,50', spike: '255,120,30', blade: '200,200,220', boomerang: '255,160,40' };
+        var dgCol = dgColors[this.type] || '255,50,50';
         var dgCx, dgCy, dgR;
         if (this.radius && (this.type === SB.OBSTACLE_TYPES.BLADE || this.type === SB.OBSTACLE_TYPES.BOOMERANG)) {
             dgCx = this.x + this.radius;
@@ -217,8 +219,8 @@ SB.Obstacle.prototype.draw = function(ctx) {
         }
         ctx.save();
         var dgGrad = ctx.createRadialGradient(dgCx, dgCy, dgR * 0.5, dgCx, dgCy, dgR);
-        dgGrad.addColorStop(0, 'rgba(255,50,50,' + dgAlpha.toFixed(3) + ')');
-        dgGrad.addColorStop(1, 'rgba(255,50,50,0)');
+        dgGrad.addColorStop(0, 'rgba(' + dgCol + ',' + dgAlpha.toFixed(3) + ')');
+        dgGrad.addColorStop(1, 'rgba(' + dgCol + ',0)');
         ctx.fillStyle = dgGrad;
         ctx.beginPath();
         ctx.arc(dgCx, dgCy, dgR, 0, SB.TAU);
@@ -360,6 +362,16 @@ SB.Obstacle.prototype._drawPlatform = function(ctx) {
         ctx.lineTo(this.x + this.width - r, this.y + this.height - 1);
         ctx.strokeStyle = 'rgba(0,0,0,0.15)';
         ctx.lineWidth = 1;
+        ctx.stroke();
+    }
+    if (!SB.highContrast && !SB.reducedMotion && platSpd > 1.5) {
+        var leAlpha = Math.min((platSpd - 1.5) / 4, 0.25);
+        var leX = this.speed * this.direction > 0 ? this.x + this.width - 1 : this.x + 1;
+        ctx.strokeStyle = 'rgba(255,220,200,' + leAlpha.toFixed(3) + ')';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(leX, this.y + 2);
+        ctx.lineTo(leX, this.y + this.height - 2);
         ctx.stroke();
     }
     // Corner accent marks

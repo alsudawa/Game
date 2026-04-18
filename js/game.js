@@ -631,6 +631,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
 
         if (obs.type === SB.OBSTACLE_TYPES.BOOMERANG && obs.returnFlash > 0.28) {
             SB.audio.playBoomerangReturn();
+            var brRx = obs.x + (obs.radius || 10);
+            var brRy = obs.y + (obs.radius || 10);
+            this.ui.addPickupRing(brRx, brRy, '255,152,0');
         }
 
         if (obs.type === SB.OBSTACLE_TYPES.LASER && obs.laserPhase === 'charge' && !SB.reducedMotion && Math.random() < 0.5) {

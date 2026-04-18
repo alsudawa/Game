@@ -265,6 +265,10 @@ SB.UI.prototype.drawAchievementToast = function(ctx, cw, ch) {
 SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, achievements, skinManager, daily) {
     // Ambient sparkles drifting upward
     ctx.save();
+    var spColorT = ((SB.frameTime || 0) * 0.0002) % 3;
+    var spR = spColorT < 1 ? 255 : (spColorT < 2 ? Math.floor(255 - (spColorT - 1) * 55) : Math.floor(200 + (spColorT - 2) * 55));
+    var spG = spColorT < 1 ? Math.floor(215 + spColorT * 40) : (spColorT < 2 ? 255 : Math.floor(255 - (spColorT - 2) * 40));
+    var spB = spColorT < 1 ? 0 : (spColorT < 2 ? Math.floor((spColorT - 1) * 150) : Math.floor(150 - (spColorT - 2) * 150));
     for (var si = 0; si < this._sparkles.length; si++) {
         var sp = this._sparkles[si];
         sp.y -= sp.speed * 0.016;
@@ -273,7 +277,7 @@ SB.UI.prototype.drawStartScreen = function(ctx, cw, ch, highScore, progression, 
         var spAlpha = (Math.sin(sp.phase) + 1) / 2 * 0.4 + 0.1;
         ctx.beginPath();
         ctx.arc(sp.x * cw, sp.y * ch, sp.size, 0, SB.TAU);
-        ctx.fillStyle = 'rgba(255,215,0,' + spAlpha.toFixed(2) + ')';
+        ctx.fillStyle = 'rgba(' + spR + ',' + spG + ',' + spB + ',' + spAlpha.toFixed(2) + ')';
         ctx.fill();
     }
     ctx.restore();
@@ -2002,6 +2006,22 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.lineWidth = 1.5;
         this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
         ctx.stroke();
+        if (!SB.reducedMotion) {
+            var paShimT = ((SB.frameTime || 0) * 0.0004) % 1;
+            var paShimX = btnX + (paShimT * 1.4 - 0.2) * btnW;
+            var paShimW = btnW * 0.2;
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            var paShimGrad = ctx.createLinearGradient(paShimX, 0, paShimX + paShimW, 0);
+            paShimGrad.addColorStop(0, 'rgba(255,255,255,0)');
+            paShimGrad.addColorStop(0.5, 'rgba(255,255,255,0.08)');
+            paShimGrad.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.fillStyle = paShimGrad;
+            this._roundRect(ctx, btnX, playBtnY, btnW, btnH, 10);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            ctx.restore();
+        }
         ctx.font = 'bold ' + Math.min(cw * 0.04, 16) + 'px ' + this.font;
         ctx.fillStyle = 'rgba(255,255,255,' + alpha + ')';
         ctx.fillText('PLAY AGAIN', cw / 2, playBtnY + btnH / 2);
