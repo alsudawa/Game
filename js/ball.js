@@ -172,6 +172,21 @@ SB.Ball.prototype.draw = function(ctx) {
         }
     }
 
+    if (this.vy < -6 && !SB.reducedMotion) {
+        var riseStr = Math.min((-this.vy - 6) / 4, 1);
+        ctx.save();
+        ctx.strokeStyle = 'rgba(200,220,255,' + (riseStr * 0.12).toFixed(3) + ')';
+        ctx.lineWidth = 1;
+        for (var rli = 0; rli < 3; rli++) {
+            var rlOff = (rli - 1) * (this.radius * 0.8);
+            ctx.beginPath();
+            ctx.moveTo(this.x + rlOff, this.y + this.radius);
+            ctx.lineTo(this.x + rlOff, this.y + this.radius + 8 + riseStr * 12);
+            ctx.stroke();
+        }
+        ctx.restore();
+    }
+
     // Squash/stretch based on vertical velocity + wall impact
     var vyNorm = SB.clamp(this.vy / SB.Physics.MAX_FALL_SPEED, -1, 1);
     var stretchY = 1 + Math.abs(vyNorm) * 0.2;
@@ -201,6 +216,10 @@ SB.Ball.prototype.draw = function(ctx) {
         var gpStretch = 1 + this.gravityPullStrength * 0.25;
         ctx.scale(gpStretch, 1 / gpStretch);
         ctx.rotate(-this.gravityPullAngle);
+    }
+    if (vyNorm > 0.7 && !SB.reducedMotion) {
+        var airWobble = Math.sin((SB.frameTime || 0) * 0.03) * (vyNorm - 0.7) * 0.06;
+        ctx.rotate(airWobble);
     }
     ctx.scale(stretchX, stretchY);
     ctx.rotate(this.visualRotation);

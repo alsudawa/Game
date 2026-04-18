@@ -219,7 +219,13 @@ SB.UI.prototype.drawAchievementToast = function(ctx, cw, ch) {
     ctx.stroke();
 
     // Trophy icon (procedural)
-    var tX = x + 22, tY = y + h / 2 - 4;
+    var tShakeX = 0, tShakeY = 0;
+    if (t < 0.4 && !SB.reducedMotion) {
+        var tShakeFrac = (0.4 - t) / 0.4;
+        tShakeX = Math.sin(t * 60) * tShakeFrac * 3;
+        tShakeY = Math.cos(t * 45) * tShakeFrac * 2;
+    }
+    var tX = x + 22 + tShakeX, tY = y + h / 2 - 4 + tShakeY;
     var tS = Math.min(cw * 0.02, 8);
     ctx.fillStyle = '#FFD700';
     ctx.beginPath();
@@ -1930,7 +1936,16 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
         ctx.shadowBlur = 6 + (Math.sin(this.blinkPhase * 2) + 1) / 2 * 4;
         var xpFillFrac = Math.min(detailAlpha * 2, 1);
         ctx.fillStyle = 'rgba(255,215,0,0.7)';
-        ctx.fillRect(xpBarX, y, xpBarW * progress * xpFillFrac, xpBarH);
+        var xpFillW = xpBarW * progress * xpFillFrac;
+        ctx.fillRect(xpBarX, y, xpFillW, xpBarH);
+        if (xpFillFrac >= 1 && !SB.reducedMotion) {
+            var xpEdgeX = xpBarX + xpFillW;
+            var xpSpkA = (Math.sin((SB.frameTime || 0) * 0.01) + 1) / 2 * 0.6 + 0.2;
+            ctx.fillStyle = 'rgba(255,255,200,' + xpSpkA.toFixed(2) + ')';
+            ctx.beginPath();
+            ctx.arc(xpEdgeX, y + xpBarH / 2, 3, 0, SB.TAU);
+            ctx.fill();
+        }
         ctx.restore();
         ctx.restore();
         y += xpBarH + gap;

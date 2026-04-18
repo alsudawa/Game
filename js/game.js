@@ -1725,6 +1725,17 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                             gwGrad.addColorStop(1, 'rgba(155,89,182,0)');
                             ctx.fillStyle = gwGrad;
                             ctx.fillRect(gwcx - gwPr, gwcy - gwPr, gwPr * 2, gwPr * 2);
+                            var gwPhase = ((SB.frameTime || 0) * 0.003) % 1;
+                            for (var gri = 0; gri < 3; gri++) {
+                                var grRingFrac = (gwPhase + gri / 3) % 1;
+                                var grRingR = grRingFrac * gwPr;
+                                var grRingA = (1 - grRingFrac) * gwStr * 0.08;
+                                ctx.beginPath();
+                                ctx.arc(gwcx, gwcy, grRingR, 0, SB.TAU);
+                                ctx.strokeStyle = 'rgba(155,89,182,' + grRingA.toFixed(3) + ')';
+                                ctx.lineWidth = 1;
+                                ctx.stroke();
+                            }
                         }
                     }
                 }
