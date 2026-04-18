@@ -279,15 +279,15 @@ SB.Audio.prototype.playWallHit = function() {
     osc.stop(now + 0.05);
 };
 
-SB.Audio.prototype.playNearMiss = function() {
+SB.Audio.prototype.playNearMiss = function(streak) {
     if (!this.initialized) return;
     var now = this.ctx.currentTime;
-    // Quick whoosh: noise-like sweep downward
+    var pitchBoost = Math.min((streak || 1) - 1, 4) * 100;
     var osc = this.ctx.createOscillator();
     var gain = this.ctx.createGain();
     osc.type = 'triangle';
-    osc.frequency.setValueAtTime(600, now);
-    osc.frequency.linearRampToValueAtTime(200, now + 0.08);
+    osc.frequency.setValueAtTime(600 + pitchBoost, now);
+    osc.frequency.linearRampToValueAtTime(200 + pitchBoost * 0.5, now + 0.08);
     gain.gain.setValueAtTime(0.1, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
     osc.connect(gain);

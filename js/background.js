@@ -352,6 +352,26 @@ SB.Background.prototype.draw = function(ctx, cw, ch, ballX, ballY) {
         ctx.restore();
     }
 
+    if (!SB.reducedMotion) {
+        for (var cs = 0; cs < this.clouds.length; cs++) {
+            var csC = this.clouds[cs];
+            var csD = csC.depth || 1;
+            var csA = csC.alpha * 0.03 * csD;
+            if (csA > 0.005) {
+                var csX = csC.x + cloudPx * csD;
+                var csW = csC.width * 0.6 * (1 + d * 0.15);
+                ctx.save();
+                ctx.fillStyle = 'rgba(0,0,0,' + csA.toFixed(3) + ')';
+                ctx.translate(csX + 10, ch - 4);
+                ctx.scale(1, 0.15);
+                ctx.beginPath();
+                ctx.arc(0, 0, csW, 0, SB.TAU);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+    }
+
     var pColor = d > 0.8 ? '200,180,255' : d > 0.5 ? '255,200,180' : d > 0.3 ? '255,230,200' : '255,255,255';
     var pAlphaMult = 1 + d * 0.6;
     for (var k = 0; k < this.particles.length; k++) {

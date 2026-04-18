@@ -2139,7 +2139,13 @@ SB.UI.prototype.drawRevivePrompt = function(ctx, cw, ch, countdown, coins, cost)
     ctx.shadowBlur = numGlow + (1 - secFrac) * 10;
     ctx.font = 'bold ' + Math.min(cw * 0.1, 40) * cpulse + 'px ' + this.font;
     ctx.fillStyle = urgency > 0.6 ? 'rgba(255,' + Math.floor(255 - urgency * 150) + ',' + Math.floor(255 - urgency * 150) + ',1)' : '#FFFFFF';
-    ctx.fillText(countNum, cw / 2, countY);
+    var rvShakeX = 0, rvShakeY = 0;
+    if (urgency > 0.5 && !SB.reducedMotion) {
+        var rvShakeStr = (urgency - 0.5) * 6;
+        rvShakeX = (Math.random() - 0.5) * rvShakeStr;
+        rvShakeY = (Math.random() - 0.5) * rvShakeStr;
+    }
+    ctx.fillText(countNum, cw / 2 + rvShakeX, countY + rvShakeY);
     ctx.restore();
 
     // Revive button (includes countdown in text)

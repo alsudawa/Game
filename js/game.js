@@ -414,6 +414,9 @@ SB.Game.prototype._updatePlaying = function(dt) {
             this._doubleTapStreak = 0;
             SB.audio.playBounce();
         }
+        if (this.runBounces > 0 && this.runBounces % 25 === 0) {
+            this.screenFlash = 0.06;
+        }
         if (this.runBounces === 50 || this.runBounces === 100 || this.runBounces === 200) {
             this.ui.addScorePopup(this.ball.x, this.ball.y - 40, this.runBounces + ' BOUNCES!', '#5DADE2');
             SB.audio.playMilestone(this.runBounces >= 200 ? 3 : this.runBounces >= 100 ? 2 : 1);
@@ -751,7 +754,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                 }
                 this.achievements.onNearMiss();
                 if (navigator.vibrate) navigator.vibrate(15);
-                SB.audio.playNearMiss();
+                SB.audio.playNearMiss(this.nearMissStreak);
                 this.nearMissSparkTimer = 0.5;
                 if (this.nearMissStreak >= 2) {
                     this.ball.trailBoost = Math.min(this.ball.trailBoost + 0.4, 1.5);
