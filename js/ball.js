@@ -235,6 +235,16 @@ SB.Ball.prototype.draw = function(ctx) {
         ctx.ellipse(0, 0, this.radius * 0.85, this.radius * 0.3, 0, 0, Math.PI);
         ctx.stroke();
     }
+    if (!SB.reducedMotion && Math.abs(this.visualRotation) > 0.01) {
+        var crA = Math.min(Math.abs(this.visualRotation) * 0.8, 0.12);
+        var crLen = this.radius * 0.55;
+        ctx.strokeStyle = 'rgba(255,255,255,' + crA.toFixed(3) + ')';
+        ctx.lineWidth = 0.8;
+        ctx.beginPath();
+        ctx.moveTo(-crLen, 0); ctx.lineTo(crLen, 0);
+        ctx.moveTo(0, -crLen); ctx.lineTo(0, crLen);
+        ctx.stroke();
+    }
     if (SB.highContrast) {
         ctx.strokeStyle = '#FFFFFF';
         ctx.lineWidth = 3;

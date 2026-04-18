@@ -103,6 +103,8 @@ SB.Game = function(canvas) {
     this._groundRippleX = 0;
     this._groundRippleTimer = 0;
     this._groundRippleStr = 0;
+    this._milestoneRingTimer = 0;
+    this._milestoneRingColor = '255,215,0';
 
     SB.REVIVE_COST = 20;
 };
@@ -155,6 +157,7 @@ SB.Game.prototype.update = function(dt) {
     if (this._impactWaveTimer > 0) this._impactWaveTimer -= dt;
     if (this._deathMarkerTimer > 0) this._deathMarkerTimer -= dt;
     if (this._groundRippleTimer > 0) this._groundRippleTimer -= dt;
+    if (this._milestoneRingTimer > 0) this._milestoneRingTimer -= dt;
     if (this.transitionAlpha > 0) this.transitionAlpha -= dt * 3;
     if (this.comboTimer > 0) {
         this.comboTimer -= dt;
@@ -1068,6 +1071,8 @@ SB.Game.prototype._updatePlaying = function(dt) {
         this.ui.addPickupRing(this.ball.x, this.ball.y, '255,215,0');
         this.ui.scoreFlash = 0.4;
         this.ui.scoreSizePulse = 0.4;
+        this._milestoneRingTimer = 0.5;
+        this._milestoneRingColor = msTier >= 2 ? '255,100,100' : (msTier >= 1 ? '255,180,50' : '255,215,0');
         // Special celebrations at key milestones
         var milestoneScore = currentMilestone * 10;
         if (milestoneScore === 25 || milestoneScore === 50 || milestoneScore === 100 || milestoneScore === 200) {
@@ -2154,6 +2159,19 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.restore();
     }
 
+    if (this._milestoneRingTimer > 0 && !SB.reducedMotion) {
+        var mrFrac = 1 - this._milestoneRingTimer / 0.5;
+        var mrR = mrFrac * Math.max(cw, ch) * 0.6;
+        var mrA = (1 - mrFrac) * 0.15;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(' + this._milestoneRingColor + ',' + mrA.toFixed(3) + ')';
+        ctx.lineWidth = 3 * (1 - mrFrac);
+        ctx.beginPath();
+        ctx.arc(cw / 2, ch / 2, mrR, 0, SB.TAU);
+        ctx.stroke();
+        ctx.restore();
+    }
+
     if (this.powerupEffects.slow && !SB.reducedMotion) {
         var smRingCount = 3;
         var smPhase = ((SB.frameTime || 0) * 0.002) % 1;
@@ -2379,12 +2397,15 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
             if (arcItems[ai].expiring) {
                 arcAlpha = Math.sin((SB.frameTime || 0) * 0.015) > 0 ? 0.5 : 0.1;
             }
+            ctx.shadowColor = 'rgba(' + arcItems[ai].color + ',' + (arcAlpha * 0.6).toFixed(2) + ')';
+            ctx.shadowBlur = 6;
             ctx.beginPath();
             ctx.arc(this.ball.x, this.ball.y, arcR + ai * 3, arcStart, arcEnd);
             ctx.strokeStyle = 'rgba(' + arcItems[ai].color + ',' + arcAlpha.toFixed(2) + ')';
             ctx.lineWidth = 2;
             ctx.stroke();
         }
+        ctx.shadowBlur = 0;
         ctx.restore();
     }
 

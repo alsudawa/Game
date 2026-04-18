@@ -59,6 +59,7 @@ SB.Audio.prototype.playBounce = function() {
     var gain = this.ctx.createGain();
     osc.type = 'triangle';
     osc.frequency.value = 400;
+    osc.detune.value = (Math.random() - 0.5) * 120;
     var now = this.ctx.currentTime;
     osc.frequency.linearRampToValueAtTime(800, now + 0.08);
     gain.gain.setValueAtTime(0.25, now);
@@ -268,6 +269,7 @@ SB.Audio.prototype.playWallHit = function() {
     var gain = this.ctx.createGain();
     osc.type = 'square';
     osc.frequency.value = 180;
+    osc.detune.value = (Math.random() - 0.5) * 100;
     var now = this.ctx.currentTime;
     gain.gain.setValueAtTime(0.06, now);
     gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
