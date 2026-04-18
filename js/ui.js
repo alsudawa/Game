@@ -1621,6 +1621,24 @@ SB.UI.prototype.drawGameOver = function(ctx, cw, ch, score, highScore, isNewHigh
     }
     ctx.fillText('GAME OVER', cw / 2 + goShakeX, y + goShakeY);
     ctx.restore();
+    if (this.runStats && this.runStats.zone && this.runStats.zone !== 'CALM' && !SB.reducedMotion) {
+        var goLineColors = { RISING: '243,156,18', INTENSE: '231,76,60', EXTREME: '155,89,182' };
+        var goLC = goLineColors[this.runStats.zone];
+        if (goLC) {
+            var goLW = Math.min(cw * 0.35, 140);
+            var goLY = y + Math.min(cw * 0.1, 42) * 0.45;
+            var goLA = alpha * (0.3 + (Math.sin((SB.frameTime || 0) * 0.005) + 1) / 2 * 0.2);
+            ctx.save();
+            var goLGrad = ctx.createLinearGradient(cw / 2 - goLW / 2, 0, cw / 2 + goLW / 2, 0);
+            goLGrad.addColorStop(0, 'rgba(' + goLC + ',0)');
+            goLGrad.addColorStop(0.3, 'rgba(' + goLC + ',' + goLA.toFixed(3) + ')');
+            goLGrad.addColorStop(0.7, 'rgba(' + goLC + ',' + goLA.toFixed(3) + ')');
+            goLGrad.addColorStop(1, 'rgba(' + goLC + ',0)');
+            ctx.fillStyle = goLGrad;
+            ctx.fillRect(cw / 2 - goLW / 2, goLY, goLW, 2);
+            ctx.restore();
+        }
+    }
     y += Math.min(cw * 0.1, 42) * 0.6 + gap;
 
     // Score

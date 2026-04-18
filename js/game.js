@@ -43,6 +43,7 @@ SB.Game = function(canvas) {
     this.screenShake = 0;
     this.screenShakeIntensity = 0;
     this.screenFlash = 0;
+    this.screenFlashColor = '255,255,255';
     this.comboTimer = 0;
     this.comboCount = 0;
     this.runStars = 0;
@@ -143,7 +144,7 @@ SB.Game.prototype.update = function(dt) {
     this.background.update(dt, bgDiff);
 
     if (this.screenShake > 0) this.screenShake -= dt;
-    if (this.screenFlash > 0) this.screenFlash -= dt;
+    if (this.screenFlash > 0) { this.screenFlash -= dt; if (this.screenFlash <= 0) this.screenFlashColor = '255,255,255'; }
     if (this.powerupFlashTimer > 0) this.powerupFlashTimer -= dt;
     if (this.cameraZoom > 0) this.cameraZoom = Math.max(0, this.cameraZoom - dt * 5);
     if (this.wallFlashTimer > 0) this.wallFlashTimer -= dt;
@@ -855,6 +856,7 @@ SB.Game.prototype._updatePlaying = function(dt) {
                              obs.type === SB.OBSTACLE_TYPES.BOOMERANG ? '255,152,0' : '231,76,60';
             this.particles.emit(this.ball.x, this.ball.y, { count: 18, spread: SB.TAU, speedMin: 80, speedMax: 250, lifeMin: 0.3, lifeMax: 0.7, sizeMin: 2, sizeMax: 5, color: deathColor, gravity: 200, friction: 0.95 });
             this._emitBallShatter(this.ball.x, this.ball.y);
+            this.screenFlashColor = deathColor;
             this._handleDeath();
             return;
         }
@@ -1657,6 +1659,11 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
                 ctx.fillStyle = 'rgba(' + zColor + ',' + zPulse.toFixed(3) + ')';
                 ctx.fillRect(0, 0, cw, ch);
             }
+            if (pe.slow && !SB.reducedMotion) {
+                var slTintA = 0.03 + (Math.sin((SB.frameTime || 0) * 0.004) + 1) / 2 * 0.02;
+                ctx.fillStyle = 'rgba(46,204,113,' + slTintA.toFixed(3) + ')';
+                ctx.fillRect(0, 0, cw, ch);
+            }
             // Radial vignette in INTENSE/EXTREME
             if (!SB.reducedMotion) {
                 var vigStr = this.currentZone === SB.ZONES.EXTREME ? 0.12 : 0.06;
@@ -1755,7 +1762,8 @@ SB.Game.prototype.render = function(ctx, cw, ch) {
     this.ui.drawAchievementToast(ctx, cw, ch);
 
     if (this.screenFlash > 0) {
-        ctx.fillStyle = 'rgba(255, 255, 255, ' + (this.screenFlash / 0.15) * 0.4 + ')';
+        var sfC = this.screenFlashColor || '255,255,255';
+        ctx.fillStyle = 'rgba(' + sfC + ',' + ((this.screenFlash / 0.15) * 0.4).toFixed(3) + ')';
         ctx.fillRect(0, 0, cw, ch);
     }
     if (this.powerupFlashTimer > 0) {
@@ -1893,6 +1901,21 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         this._renderObstacles[i].draw(ctx);
     }
     for (var j = 0; j < collectibles.length; j++) {
+        if (!SB.reducedMotion) {
+            var cpDx = collectibles[j].x - (this.ball.x - pxOff);
+            var cpDy = collectibles[j].y - (this.ball.y - pyOff);
+            var cpDist = Math.sqrt(cpDx * cpDx + cpDy * cpDy);
+            if (cpDist < 100) {
+                var cpStr = (1 - cpDist / 100) * 0.15;
+                var cpCol = collectibles[j].type === SB.COLLECTIBLE_TYPES.COIN ? '255,200,50' : '255,230,100';
+                ctx.save();
+                ctx.fillStyle = 'rgba(' + cpCol + ',' + cpStr.toFixed(3) + ')';
+                ctx.beginPath();
+                ctx.arc(collectibles[j].x, collectibles[j].y, collectibles[j].radius + 6, 0, SB.TAU);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
         collectibles[j].draw(ctx);
         if (collectibles[j]._magnetPull > 0) {
             ctx.save();
@@ -2289,6 +2312,23 @@ SB.Game.prototype._renderGameplay = function(ctx, cw, ch) {
         ctx.arc(this.ball.x, this.ball.y, shR, shAngle + Math.PI, shAngle + Math.PI + 0.5);
         ctx.strokeStyle = 'rgba(150,220,255,0.15)';
         ctx.stroke();
+        ctx.restore();
+    }
+
+    if (this.powerupEffects.scoreMult && !SB.reducedMotion) {
+        var smT = ((SB.frameTime || 0) * 0.004) % SB.TAU;
+        var smR = this.ball.radius + 12;
+        ctx.save();
+        for (var smi = 0; smi < 4; smi++) {
+            var smAngle = smT + smi * (SB.TAU / 4);
+            var smX = this.ball.x + Math.cos(smAngle) * smR;
+            var smY = this.ball.y + Math.sin(smAngle) * smR;
+            var smA = 0.3 + Math.sin(smAngle * 2) * 0.15;
+            ctx.fillStyle = 'rgba(255,193,7,' + smA.toFixed(3) + ')';
+            ctx.beginPath();
+            ctx.arc(smX, smY, 2, 0, SB.TAU);
+            ctx.fill();
+        }
         ctx.restore();
     }
 
